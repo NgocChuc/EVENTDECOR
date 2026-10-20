@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full scroll-smooth bg-[#fff7eb]">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Giỏ hàng dịch vụ sự kiện - EventDecor</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Google Font: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body { 
+      font-family: 'Plus Jakarta Sans', sans-serif; 
+    }
+    /* === HIỆU ỨNG KÍNH ĐỤC TRONG (LIGHT FROSTED GLASS) === */
+    .light-frosted-card {
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(174, 196, 212, 0.45);
+      box-shadow: 0 10px 30px -5px rgba(174, 196, 212, 0.25), 0 4px 14px -2px rgba(121, 13, 22, 0.05);
+      transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
+    }
+    .light-frosted-card:hover {
+      background: rgba(255, 255, 255, 0.92);
+      border-color: rgba(121, 13, 22, 0.35);
+      box-shadow: 0 16px 36px -4px rgba(121, 13, 22, 0.12);
+    }
+    .frosted-pill {
+      background: rgba(249, 240, 224, 0.8);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(174, 196, 212, 0.5);
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 4px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(174, 196, 212, 0.6);
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="min-h-full flex flex-col text-slate-800 bg-[#fff7eb] relative overflow-x-hidden pb-28 selection:bg-[#790d16]/20 selection:text-[#790d16]">
+    <!-- GẮN HEADER TỰ ĐỘNG -->
+  {% include "header.html" %}
+  <!-- ==================== HIỆU ỨNG SƯƠNG MỜ VÀ TÁN SẮC NỀN ==================== -->
+  <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <div class="absolute -top-32 left-1/4 w-[650px] h-[450px] bg-[#aec4d4]/30 rounded-full blur-[140px]"></div>
+    <div class="absolute top-[25%] -right-40 w-[550px] h-[550px] bg-[#790d16]/8 rounded-full blur-[160px]"></div>
+    <div class="absolute top-[55%] -left-40 w-[600px] h-[600px] bg-[#a2ab73]/15 rounded-full blur-[150px]"></div>
+    <div class="absolute top-[75%] right-10 w-[650px] h-[550px] bg-[#f9f0e0] rounded-full blur-[160px]"></div>
+    <div class="absolute inset-0 bg-[radial-gradient(rgba(174,196,212,0.3)_1px,transparent_1px)] [background-size:24px_24px] opacity-70"></div>
+  </div>
+
+  <div class="relative z-10 flex-1 flex flex-col">
+
+    <!-- NỘI DUNG CHÍNH -->
+    <main class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 space-y-5">
+      
+      <!-- KHỐI BREADCRUMB ĐƯỢC TỰ ĐỘNG RENDER BỞI JS -->
+      <nav id="breadcrumb" aria-label="Breadcrumb" class="py-1">
+        <!-- breadcrumb.js sẽ tự động render tại đây -->
+      </nav>
+
+      <!-- TIÊU ĐỀ TRANG -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-[#aec4d4]/30">
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-black text-slate-900 flex items-center gap-2.5 tracking-tight">
+            <i class="fa-solid fa-cart-shopping text-[#790d16]"></i>
+            <span>Giỏ hàng của bạn</span>
+          </h1>
+          <p class="text-xs sm:text-sm text-slate-500 mt-1">
+            Chọn một dịch vụ sự kiện bạn muốn đặt để tiến hành thanh toán.
+          </p>
+        </div>
+        <a href="services.html" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl frosted-pill hover:bg-white text-slate-700 hover:text-[#790d16] font-bold text-xs transition-all border border-[#aec4d4]/60 active:scale-95 self-start sm:self-auto shadow-2xs">
+          <span>&larr; Xem thêm dịch vụ</span>
+        </a>
+      </div>
+
+      <!-- DANH SÁCH DỊCH VỤ HIỂN THỊ ĐỘC LẬP TỪNG THẺ -->
+      <div id="cart-list" class="space-y-4">
+        <!-- JavaScript sẽ render danh sách thẻ tại đây -->
+      </div>
+
+      <!-- KHỐI KHI GIỎ HÀNG TRỐNG -->
+      <div id="cart-empty-view" class="hidden text-center py-20 px-4 light-frosted-card rounded-3xl max-w-xl mx-auto my-8">
+        <div class="w-20 h-20 rounded-full bg-[#f9f0e0] border border-[#aec4d4]/50 flex items-center justify-center mx-auto mb-4 text-[#790d16]">
+          <i class="fa-solid fa-cart-shopping text-3xl"></i>
+        </div>
+        <h2 class="text-xl font-extrabold text-slate-900 mb-2">Giỏ hàng của bạn đang trống</h2>
+        <p class="text-xs sm:text-sm text-slate-500 max-w-md mx-auto mb-6">
+          Bạn chưa thêm gói dịch vụ sự kiện nào vào giỏ hàng.
+        </p>
+        <a href="services.html" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-white font-bold text-xs sm:text-sm bg-gradient-to-r from-[#cc3a63] to-[#790d16] hover:brightness-110 shadow-md shadow-[#790d16]/25 active:scale-95 transition-all">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+          <span>Khám phá dịch vụ ngay</span>
+        </a>
+      </div>
+    </main>
+
+    <!-- THANH TIẾN HÀNH THANH TOÁN CỐ ĐỊNH PHÍA DƯỚI -->
+    <div id="bottom-bar" class="fixed bottom-0 inset-x-0 bg-white/85 backdrop-blur-md border-t border-[#aec4d4]/40 py-3.5 px-4 z-40 shadow-lg">
+      <div class="max-w-5xl mx-auto flex items-center justify-between gap-4">
+        <div class="text-xs">
+          <span class="text-slate-500 block font-medium">Dịch vụ đã chọn:</span>
+          <span id="selected-service-hint" class="font-extrabold text-slate-900 text-sm truncate max-w-[220px] sm:max-w-md block">
+            Chưa chọn dịch vụ nào
+          </span>
+        </div>
+
+        <button type="button" id="btn-proceed" disabled onclick="goToPaymentPage()" class="px-6 py-3 rounded-xl text-white font-bold text-xs sm:text-sm bg-gradient-to-r from-[#cc3a63] to-[#790d16] opacity-40 cursor-not-allowed shadow-none transition-all flex items-center gap-2 shrink-0">
+          <i class="fa-solid fa-lock text-xs"></i>
+          <span id="btn-proceed-text">Tiến hành thanh toán (0 ₫)</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ==================== MODAL XEM CHI TIẾT CUSTOM DỊCH VỤ ==================== -->
+  <div id="detail-modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="light-frosted-card rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-in fade-in zoom-in-95 duration-150 bg-white/95 border border-[#aec4d4]/60">
+      
+      <!-- Header Modal -->
+      <div class="p-4 border-b border-[#aec4d4]/30 flex items-center justify-between bg-[#f9f0e0]/70">
+        <div class="flex items-center gap-2.5">
+          <span class="w-8 h-8 rounded-xl bg-white text-[#790d16] border border-[#aec4d4]/50 flex items-center justify-center text-sm shadow-2xs">
+            <i class="fa-solid fa-sliders"></i>
+          </span>
+          <div>
+            <h3 class="text-sm font-extrabold text-slate-900">Chi tiết tùy chỉnh dịch vụ</h3>
+            <span class="text-[11px] font-mono text-slate-400" id="modal-service-code">Mã DV: #---</span>
+          </div>
+        </div>
+        <button type="button" onclick="closeDetailModal()" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 text-lg transition-colors">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Nội dung chi tiết custom -->
+      <div class="p-5 space-y-4 text-xs max-h-[70vh] overflow-y-auto custom-scroll">
+        <div class="p-3.5 bg-white/80 border border-[#aec4d4]/40 rounded-2xl space-y-1">
+          <div class="text-[11px] font-bold text-[#315b8c]" id="modal-partner-name">---</div>
+          <div class="text-sm font-bold text-slate-900" id="modal-service-name">---</div>
+          <div class="text-xs font-mono font-extrabold text-[#790d16]" id="modal-service-price">0 ₫</div>
+        </div>
+
+        <div>
+          <h4 class="font-bold text-slate-800 mb-2 flex items-center gap-1.5">
+            <i class="fa-solid fa-list-check text-slate-400"></i>
+            <span>Các hạng mục đã cấu hình theo yêu cầu:</span>
+          </h4>
+          <div id="modal-custom-list" class="space-y-2 border border-[#aec4d4]/40 rounded-2xl p-3 bg-white/70">
+            <!-- Render động danh sách custom -->
+          </div>
+        </div>
+
+        <div class="p-3 bg-[#f9f0e0]/80 border border-[#aec4d4]/50 rounded-2xl">
+          <span class="font-bold text-[#790d16] block mb-0.5">Ghi chú riêng của bạn:</span>
+          <p class="text-slate-600 text-[11px] leading-relaxed" id="modal-custom-note">
+            Không có ghi chú thêm.
+          </p>
+        </div>
+      </div>
+
+      <!-- Footer Modal -->
+      <div class="p-3.5 border-t border-[#aec4d4]/30 bg-slate-50/50 flex items-center justify-between gap-3">
+        <button type="button" onclick="closeDetailModal()" class="px-4 py-2 bg-white border border-[#aec4d4]/60 text-slate-700 font-semibold rounded-xl text-xs hover:bg-slate-100">
+          Đóng
+        </button>
+        <button type="button" onclick="goToEditCustomPage()" class="px-4 py-2 bg-gradient-to-r from-[#cc3a63] to-[#790d16] text-white font-semibold rounded-xl text-xs flex items-center gap-1.5 active:scale-95 transition-all shadow-xs">
+          <i class="fa-solid fa-pen-ruler"></i>
+          <span>Chỉnh sửa tùy chỉnh</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== MODAL XÁC NHẬN XÓA ==================== -->
+  <div id="delete-modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="light-frosted-card rounded-3xl shadow-2xl w-full max-w-sm p-6 text-center space-y-4 animate-in fade-in zoom-in-95 duration-150 bg-white/95 border border-[#aec4d4]/60">
+      
+      <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 border border-rose-200 flex items-center justify-center mx-auto text-xl">
+        <i class="fa-solid fa-trash-can"></i>
+      </div>
+
+      <div>
+        <h3 class="text-base font-extrabold text-slate-900">Xác nhận xóa dịch vụ</h3>
+        <p class="text-xs text-slate-500 mt-1 leading-relaxed">
+          Bạn có chắc chắn muốn bỏ dịch vụ <span class="font-bold text-slate-800" id="delete-service-name">---</span> ra khỏi giỏ hàng?
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2.5 pt-1">
+        <button type="button" onclick="closeDeleteModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl active:scale-95 transition-all">
+          Hủy bỏ
+        </button>
+        <button type="button" id="confirm-delete-btn" class="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl active:scale-95 transition-all shadow-sm">
+          Xóa khỏi giỏ
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== SCRIPT LOGIC XỬ LÝ ==================== -->
+  <script>
+    /**
+     * js/admin/breadcrumb.js
+     * Tự động render Breadcrumb dựa trên URL hoặc file HTML hiện tại
+     */
+    (function initBreadcrumb() {
+      const routeMap = {
+        'dashboard.html': [
+          { name: 'Dashboard', url: null }
+        ],
+        'services.html': [
+          { name: 'Khám phá dịch vụ', url: null }
+        ],
+        'service-detail.html': [
+          { name: 'Dịch vụ sự kiện', url: 'services.html' },
+          { name: 'Chi tiết dịch vụ', url: null }
+        ],
+        'cart.html': [
+          { name: 'Dịch vụ sự kiện', url: 'services.html' },
+          { name: 'Giỏ hàng của bạn', url: null }
+        ],
+        'payment.html': [
+          { name: 'Dịch vụ sự kiện', url: 'services.html' },
+          { name: 'Giỏ hàng', url: 'cart.html' },
+          { name: 'Thanh toán đơn dịch vụ', url: null }
+        ]
+      };
+
+      document.addEventListener('DOMContentLoaded', () => {
+        const breadcrumbContainer = document.getElementById('breadcrumb');
+        if (!breadcrumbContainer) return;
+
+        const currentFile = window.location.pathname.split('/').pop() || 'cart.html';
+        const crumbs = routeMap[currentFile] || [
+          { name: 'Dịch vụ', url: 'services.html' },
+          { name: 'Giỏ hàng', url: null }
+        ];
+
+        let html = `
+          <ol class="inline-flex items-center text-xs font-medium text-slate-400 select-none">
+            <li class="inline-flex items-center">
+              <a href="index.html" class="hover:text-[#790d16] transition-colors">Trang chủ</a>
+            </li>
+        `;
+
+        crumbs.forEach((crumb, index) => {
+          const isLast = index === crumbs.length - 1;
+          html += `
+            <li class="inline-flex items-center">
+              <span class="text-slate-300 mx-2">&rsaquo;</span>
+            </li>
+          `;
+
+          if (isLast) {
+            html += `
+              <li aria-current="page">
+                <span class="text-slate-700 font-bold">${crumb.name}</span>
+              </li>
+            `;
+          } else {
+            html += `
+              <li>
+                ${crumb.url 
+                  ? `<a href="${crumb.url}" class="hover:text-[#790d16] transition-colors">${crumb.name}</a>` 
+                  : `<span class="hover:text-[#790d16] cursor-pointer transition-colors">\${crumb.name}</span>`
+                }
+              </li>
+            `;
+          }
+        });
+
+        html += `</ol>`;
+        breadcrumbContainer.innerHTML = html;
+      });
+    })();
+
+    // Khởi tạo giỏ hàng từ localStorage (nếu rỗng thì nạp dữ liệu mẫu ban đầu)
+    let cartItems = JSON.parse(localStorage.getItem('cartItems') || 'null');
+
+    if (!cartItems || cartItems.length === 0) {
+      cartItems = [
+        {
+          id: "SRV-101",
+          partnerName: "Công ty TNHH Trang Trí Mẫu Alpha",
+          serviceName: "Gói Trang Trí Tiệc Cưới Phong Cách Tối Giản VIP",
+          price: 5000000,
+          image: "/img/wedding.png",
+          customDetails: {
+            colorTheme: "Tone Trắng - Pastel & Hoa hồng Ohara",
+            backdropType: "Backdrop vòm cung 3 lớp kết hợp hoa lụa cao cấp",
+            lighting: "Dàn đèn hắt sáng LED ấm 3000K",
+            guestSize: "Quy mô 150 - 200 khách",
+            note: "Yêu cầu thợ thi công hoàn thiện và bàn giao trước 15:30 chiều ngày cưới."
+          }
+        },
+        {
+          id: "SRV-102",
+          partnerName: "Hộ Kinh Doanh Sự Kiện Mẫu Beta",
+          serviceName: "Sân Khấu Bong Bóng Nghệ Thuật & Neon LED Sinh Nhật",
+          price: 2500000,
+          image: "/img/birthday.png",
+          customDetails: {
+            colorTheme: "Tone Xanh Pastel & Chrome Bạc",
+            backdropType: "Cổng bong bóng nghệ thuật Freestyle + Tên bé gắn đèn Neon",
+            lighting: "2 đèn pha LED sàn đổi màu RGB",
+            guestSize: "Quy mô 50 khách tại nhà riêng",
+            note: "Bé tròn 3 tuổi, phối thêm 3 trụ tròn để bánh kem và quà tặng."
+          }
+        },
+        {
+          id: "SRV-103",
+          partnerName: "Công ty Cổ phần Sự Kiện Gala Delta",
+          serviceName: "Trọn Gói Tiệc Cuối Năm Doanh Nghiệp & Sân Khấu Âm Thanh",
+          price: 8500000,
+          image: "/img/endYear.png",
+          customDetails: {
+            colorTheme: "Tone Đỏ Rượu & Vàng Gold sang trọng",
+            backdropType: "Photobooth chụp hình 4m x 2.5m in UV sắc nét kèm logo công ty",
+            lighting: "Hệ thống đèn Moving Head và Beam sân khấu",
+            guestSize: "Quy mô 300 nhân sự",
+            note: "Cần khảo sát mặt bằng sảnh tiệc trước 3 ngày diễn ra chương trình."
+          }
+        }
+      ];
+      localStorage.setItem('cartItems', JSON.stringify(cartItems));
+    }
+
+    let selectedServiceId = null;
+    let viewingService = null;
+    let deletingServiceId = null;
+
+    function formatVND(amount) {
+      return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+    }
+
+    /**
+     * RENDER DANH SÁCH THẺ DỊCH VỤ
+     */
+    function renderCartCards() {
+      const listContainer = document.getElementById('cart-list');
+      const emptyView = document.getElementById('cart-empty-view');
+      const bottomBar = document.getElementById('bottom-bar');
+
+      if (!cartItems || cartItems.length === 0) {
+        listContainer.classList.add('hidden');
+        bottomBar.classList.add('hidden');
+        emptyView.classList.remove('hidden');
+        return;
+      }
+
+      listContainer.classList.remove('hidden');
+      bottomBar.classList.remove('hidden');
+      emptyView.classList.add('hidden');
+
+      listContainer.innerHTML = cartItems.map(item => {
+        const isSelected = (item.id === selectedServiceId);
+        return `
+          <div id="card-${item.id}" onclick="selectService('${item.id}')" class="p-4 sm:p-5 rounded-3xl transition-all duration-200 cursor-pointer ${
+            isSelected 
+              ? 'bg-gradient-to-r from-[#cc3a63] to-[#790d16] text-white shadow-lg shadow-[#790d16]/30 scale-[1.01] border-transparent' 
+              : 'light-frosted-card text-slate-800'
+          }">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              
+              <!-- THÔNG TIN CHÍNH VÀ ẢNH -->
+              <div class="flex items-start gap-4 min-w-0">
+                <img id="img-${item.id}" src="${item.image}" onerror="this.src='https://placehold.co/120x120?text=EventDecor'" alt="${item.serviceName}" class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover shrink-0 shadow-2xs ${isSelected ? 'ring-2 ring-white/60' : 'border border-[#aec4d4]/40'}">
+                <div class="space-y-1 min-w-0">
+                  <span id="partner-${item.id}" class="text-[11px] font-bold block ${isSelected ? 'text-amber-100' : 'text-[#315b8c]'}">
+                    ${item.partnerName}
+                  </span>
+                  <h3 id="name-${item.id}" class="font-bold text-sm sm:text-base leading-snug ${isSelected ? 'text-white' : 'text-slate-900'}">
+                    ${item.serviceName}
+                  </h3>
+                  <div class="pt-0.5">
+                    <span id="price-${item.id}" class="text-xs font-mono font-black ${isSelected ? 'text-white' : 'text-[#790d16]'}">
+                      ${formatVND(item.price)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- CÁC NÚT THAO TÁC -->
+              <div class="flex items-center gap-2 self-end sm:self-center shrink-0" onclick="event.stopPropagation()">
+                <!-- Nút xem chi tiết -->
+                <button type="button" id="btn-detail-${item.id}" onclick="openDetailModal('${item.id}')" title="Xem chi tiết" class="px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 shadow-2xs ${
+                  isSelected 
+                    ? 'bg-white/20 hover:bg-white text-white hover:text-slate-900 backdrop-blur-xs' 
+                    : 'frosted-pill text-slate-700 hover:text-[#790d16] hover:bg-white'
+                }">
+                  <i class="fa-solid fa-eye text-[11px]"></i>
+                  <span>Xem chi tiết</span>
+                </button>
+
+                <!-- Nút xóa -->
+                <button type="button" id="btn-del-${item.id}" onclick="openDeleteModal('${item.id}', '${item.serviceName}')" title="Xóa dịch vụ" class="w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-2xs ${
+                  isSelected 
+                    ? 'bg-white/20 hover:bg-rose-600 text-white' 
+                    : 'bg-white/70 border border-[#aec4d4]/50 text-slate-400 hover:text-rose-600 hover:bg-rose-50'
+                }">
+                  <i class="fa-solid fa-trash-can text-xs"></i>
+                </button>
+              </div>
+
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      updateBottomPaymentBar();
+    }
+
+    /**
+     * KHÔNG LOAD LẠI ẢNH KHI THAY ĐỔI DỊCH VỤ:
+     */
+    function applyCardStyles(id, isSelected) {
+      const card = document.getElementById(`card-${id}`);
+      const img = document.getElementById(`img-${id}`);
+      const partner = document.getElementById(`partner-${id}`);
+      const name = document.getElementById(`name-${id}`);
+      const price = document.getElementById(`price-${id}`);
+      const btnDetail = document.getElementById(`btn-detail-${id}`);
+      const btnDel = document.getElementById(`btn-del-${id}`);
+
+      if (!card) return;
+
+      if (isSelected) {
+        card.className = "p-4 sm:p-5 rounded-3xl transition-all duration-200 cursor-pointer bg-gradient-to-r from-[#cc3a63] to-[#790d16] text-white shadow-lg shadow-[#790d16]/30 scale-[1.01] border-transparent";
+        if (img) img.className = "w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover shrink-0 shadow-2xs ring-2 ring-white/60";
+        if (partner) partner.className = "text-[11px] font-bold block text-amber-100";
+        if (name) name.className = "font-bold text-sm sm:text-base leading-snug text-white";
+        if (price) price.className = "text-xs font-mono font-black text-white";
+        if (btnDetail) btnDetail.className = "px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 shadow-2xs bg-white/20 hover:bg-white text-white hover:text-slate-900 backdrop-blur-xs";
+        if (btnDel) btnDel.className = "w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-2xs bg-white/20 hover:bg-rose-600 text-white";
+      } else {
+        card.className = "p-4 sm:p-5 rounded-3xl transition-all duration-200 cursor-pointer light-frosted-card text-slate-800";
+        if (img) img.className = "w-16 h-16 sm:w-20 sm:h-20 rounded-2xl object-cover shrink-0 shadow-2xs border border-[#aec4d4]/40";
+        if (partner) partner.className = "text-[11px] font-bold block text-[#315b8c]";
+        if (name) name.className = "font-bold text-sm sm:text-base leading-snug text-slate-900";
+        if (price) price.className = "text-xs font-mono font-black text-[#790d16]";
+        if (btnDetail) btnDetail.className = "px-3.5 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-all active:scale-95 shadow-2xs frosted-pill text-slate-700 hover:text-[#790d16] hover:bg-white";
+        if (btnDel) btnDel.className = "w-9 h-9 rounded-xl flex items-center justify-center transition-all active:scale-95 shadow-2xs bg-white/70 border border-[#aec4d4]/50 text-slate-400 hover:text-rose-600 hover:bg-rose-50";
+      }
+    }
+
+    /**
+     * CHỌN DỊCH VỤ
+     */
+    function selectService(serviceId) {
+      if (selectedServiceId === serviceId) {
+        applyCardStyles(serviceId, false);
+        selectedServiceId = null;
+      } else {
+        if (selectedServiceId) {
+          applyCardStyles(selectedServiceId, false);
+        }
+        selectedServiceId = serviceId;
+        applyCardStyles(serviceId, true);
+      }
+      updateBottomPaymentBar();
+    }
+
+    /**
+     * CẬP NHẬT THANH THANH TOÁN PHÍA DƯỚI
+     */
+    function updateBottomPaymentBar() {
+      const selectedItem = cartItems.find(item => item.id === selectedServiceId);
+      const btn = document.getElementById('btn-proceed');
+      const btnText = document.getElementById('btn-proceed-text');
+      const hint = document.getElementById('selected-service-hint');
+
+      if (selectedItem) {
+        hint.innerText = `${selectedItem.serviceName} (${selectedItem.partnerName})`;
+        btn.disabled = false;
+        btn.className = "px-6 py-3 rounded-xl text-white font-bold text-xs sm:text-sm bg-gradient-to-r from-[#cc3a63] to-[#790d16] hover:brightness-110 shadow-md shadow-[#790d16]/25 active:scale-95 transition-all flex items-center gap-2 shrink-0 cursor-pointer opacity-100";
+        btnText.innerText = `Tiến hành thanh toán (${formatVND(selectedItem.price)})`;
+      } else {
+        hint.innerText = "Chưa chọn dịch vụ nào (Hãy bấm vào 1 dịch vụ để chọn)";
+        btn.disabled = true;
+        btn.className = "px-6 py-3 rounded-xl text-white font-bold text-xs sm:text-sm bg-gradient-to-r from-[#cc3a63] to-[#790d16] opacity-40 cursor-not-allowed shadow-none transition-all flex items-center gap-2 shrink-0";
+        btnText.innerText = "Tiến hành thanh toán (0 ₫)";
+      }
+    }
+
+    /**
+     * MODAL XÁC NHẬN XÓA
+     */
+    function openDeleteModal(serviceId, serviceName) {
+      deletingServiceId = serviceId;
+      document.getElementById('delete-service-name').innerText = `"${serviceName}"`;
+      document.getElementById('confirm-delete-btn').onclick = executeDelete;
+      document.getElementById('delete-modal').classList.remove('hidden');
+    }
+
+    function closeDeleteModal() {
+      deletingServiceId = null;
+      document.getElementById('delete-modal').classList.add('hidden');
+    }
+
+    function executeDelete() {
+      if (!deletingServiceId) return;
+      cartItems = cartItems.filter(item => item.id !== deletingServiceId);
+      localStorage.setItem('cartItems', JSON.stringify(cartItems));
+
+      if (selectedServiceId === deletingServiceId) {
+        selectedServiceId = null;
+      }
+      closeDeleteModal();
+      renderCartCards();
+    }
+
+    /**
+     * MODAL XEM CHI TIẾT TÙY CHỈNH
+     */
+    function openDetailModal(serviceId) {
+      viewingService = cartItems.find(item => item.id === serviceId);
+      if (!viewingService) return;
+
+      document.getElementById('modal-service-code').innerText = `Mã DV: #${viewingService.id}`;
+      document.getElementById('modal-partner-name').innerText = viewingService.partnerName;
+      document.getElementById('modal-service-name').innerText = viewingService.serviceName;
+      document.getElementById('modal-service-price').innerText = formatVND(viewingService.price);
+
+      const customList = document.getElementById('modal-custom-list');
+      const details = viewingService.customDetails || {};
+
+      customList.innerHTML = `
+        <div class="flex justify-between py-1.5 border-b border-[#aec4d4]/30">
+          <span class="text-slate-400">Tone màu / Tiêu đề:</span>
+          <span class="font-semibold text-slate-800">${details.colorTheme || details.eventTitle || "Gói tiêu chuẩn"}</span>
+        </div>
+        <div class="flex justify-between py-1.5 border-b border-[#aec4d4]/30">
+          <span class="text-slate-400">Kiểu Backdrop / Tùy chọn:</span>
+          <span class="font-semibold text-slate-800">${details.backdropType || details.options || "Theo thiết kế chuẩn"}</span>
+        </div>
+        <div class="flex justify-between py-1.5 border-b border-[#aec4d4]/30">
+          <span class="text-slate-400">Ánh sáng / Thi công:</span>
+          <span class="font-semibold text-slate-800">${details.lighting || details.executionTime || "Chuẩn đối tác"}</span>
+        </div>
+        <div class="flex justify-between py-1.5">
+          <span class="text-slate-400">Quy mô sự kiện:</span>
+          <span class="font-semibold text-slate-800">${details.guestSize || details.scale || "Dưới 100 khách"}</span>
+        </div>
+      `;
+
+      document.getElementById('modal-custom-note').innerText = details.note || "Không có ghi chú thêm.";
+      document.getElementById('detail-modal').classList.remove('hidden');
+    }
+
+    function closeDetailModal() {
+      document.getElementById('detail-modal').classList.add('hidden');
+    }
+
+    function goToEditCustomPage() {
+      if (!viewingService) return;
+      window.location.href = `service-detail.html?id=${viewingService.id}`;
+    }
+
+    /**
+     * CHUYỂN TIẾP SANG TRANG PAYMENT.HTML
+     */
+    function goToPaymentPage() {
+      const selectedItem = cartItems.find(item => item.id === selectedServiceId);
+      if (!selectedItem) {
+        alert("Vui lòng chọn 1 dịch vụ sự kiện bạn muốn đặt!");
+        return;
+      }
+      localStorage.setItem('selectedPaymentService', JSON.stringify(selectedItem));
+      window.location.href = "payment.html";
+    }
+
+    document.addEventListener('DOMContentLoaded', renderCartCards);
+  </script>
+</body>
+</html>

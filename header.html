@@ -1,0 +1,118 @@
+<!-- views/header.html -->
+<header class="border-b border-[#aec4d4]/40 bg-white/70 backdrop-blur-xl sticky top-0 z-50 select-none shadow-2xs">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+    
+    <!-- 1. Logo Brand -> Luôn về Trang chủ (home.html) -->
+    <a href="/" class="flex items-center gap-2 group cursor-pointer" title="Về trang chủ EventDecor">
+      <span class="text-[#790d16] font-black text-lg tracking-wider transition-opacity group-hover:opacity-90">
+        EVENTDECOR
+      </span>
+    </a>
+
+    <!-- Nút Menu Toggle Mobile -->
+    <div class="flex items-center gap-2 lg:hidden">
+      <a href="/cart" class="relative inline-flex items-center justify-center p-2 rounded-xl bg-[#f9f0e0]/80 text-[#790d16] border border-[#790d16]/25">
+        <i class="fa-solid fa-cart-shopping text-sm"></i>
+        <span id="nav-cart-badge-mobile-btn" class="hidden absolute -top-1 -right-1 w-4 h-4 bg-[#790d16] text-white rounded-full text-[9px] font-mono font-bold flex items-center justify-center">0</span>
+      </a>
+      <button type="button" onclick="toggleNavbarMenu()" class="px-3 py-2 rounded-xl text-slate-700 hover:text-[#790d16] hover:bg-white/80 border border-[#aec4d4]/40 text-xs font-bold transition-all active:scale-95">
+        Menu
+      </button>
+    </div>
+
+    <!-- 2. Menu Links Desktop (Đã bỏ About, thống nhất / và /event) -->
+    <nav class="hidden lg:flex items-center gap-1 xl:gap-2 text-xs font-bold text-slate-700" id="desktop-nav-links">
+      <a href="/" data-nav="/" class="nav-item px-3.5 py-2 rounded-xl hover:text-[#790d16] hover:bg-white/60 transition-all">Trang chủ</a>
+      <a href="/event" data-nav="/event" class="nav-item px-3.5 py-2 rounded-xl hover:text-[#790d16] hover:bg-white/60 transition-all">Sự kiện</a>
+      <a href="/partner" data-nav="/partner" class="nav-item px-3.5 py-2 rounded-xl hover:text-[#790d16] hover:bg-white/60 transition-all">Đối tác</a>
+      <a href="/contact" data-nav="/contact" class="nav-item px-3.5 py-2 rounded-xl hover:text-[#790d16] hover:bg-white/60 transition-all">Liên hệ</a>
+    </nav>
+
+    <!-- Giỏ hàng & User Auth -->
+    <div class="hidden lg:flex items-center gap-3">
+      <a href="/cart" class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#f9f0e0]/80 hover:bg-white text-[#790d16] font-bold text-xs transition-all border border-[#790d16]/30 shadow-2xs active:scale-95">
+        <i class="fa-solid fa-cart-shopping"></i>
+        <span>Giỏ hàng</span>
+        <span id="nav-cart-badge-desktop" class="hidden px-1.5 py-0.5 bg-[#790d16] text-white rounded-full text-[10px] font-mono font-bold leading-none">0</span>
+      </a>
+
+      {% if user and user.username %}
+      <div class="flex items-center gap-2.5">
+        <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/70 border border-[#aec4d4]/50 text-xs font-bold text-slate-800">
+          <span class="w-6 h-6 rounded-lg bg-[#315b8c] text-white flex items-center justify-center text-[11px] font-black uppercase">
+            {{ (user.username)[0] or 'U' }}
+          </span>
+          <span class="max-w-[120px] truncate">{{ user.username }}</span>
+        </div>
+        <a href="/logout" class="px-3 py-2 rounded-xl text-slate-500 hover:text-rose-600 font-bold text-xs hover:bg-rose-50 transition-colors">
+          Đăng xuất
+        </a>
+      </div>
+      {% else %}
+      <div class="flex items-center gap-2">
+        <a href="/login" class="px-3.5 py-2 rounded-xl text-slate-700 hover:text-[#790d16] font-bold text-xs transition-all hover:bg-white/60">
+          Đăng nhập
+        </a>
+        <a href="/register" class="px-4 py-2 rounded-xl text-white font-bold text-xs bg-gradient-to-r from-[#cc3a63] to-[#790d16] hover:brightness-110 shadow-sm shadow-[#790d16]/20 active:scale-95 transition-all">
+          Đăng ký
+        </a>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- Mobile Dropdown Menu -->
+  <div id="mobile-dropdown-menu" class="hidden lg:hidden border-t border-[#aec4d4]/30 bg-white/95 backdrop-blur-xl px-4 py-4 space-y-3">
+    <nav class="flex flex-col space-y-1 text-xs font-bold text-slate-700">
+      <a href="/" class="px-3 py-2.5 rounded-xl hover:bg-[#f9f0e0]/70 hover:text-[#790d16]">Trang chủ</a>
+      <a href="/event" class="px-3 py-2.5 rounded-xl hover:bg-[#f9f0e0]/70 hover:text-[#790d16]">Sự kiện</a>
+      <a href="/partner" class="px-3 py-2.5 rounded-xl hover:bg-[#f9f0e0]/70 hover:text-[#790d16]">Đối tác</a>
+      <a href="/contact" class="px-3 py-2.5 rounded-xl hover:bg-[#f9f0e0]/70 hover:text-[#790d16]">Liên hệ</a>
+    </nav>
+    <div class="pt-3 border-t border-[#aec4d4]/30 flex flex-col gap-2">
+      {% if user and user.username %}
+      <div class="px-3.5 py-2.5 rounded-xl bg-[#f9f0e0]/80 border border-[#aec4d4]/40 text-xs font-bold text-slate-800">
+        Xin chào, <span class="text-[#790d16]">{{ user.username }}</span>
+      </div>
+      <a href="/logout" class="text-center py-2 rounded-xl bg-rose-50 text-rose-600 font-bold text-xs">Đăng xuất</a>
+      {% else %}
+      <div class="grid grid-cols-2 gap-2">
+        <a href="/login" class="text-center py-2.5 rounded-xl border border-[#aec4d4]/60 text-slate-700 font-bold text-xs">Đăng nhập</a>
+        <a href="/register" class="text-center py-2.5 rounded-xl bg-gradient-to-r from-[#cc3a63] to-[#790d16] text-white font-bold text-xs">Đăng ký</a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</header>
+
+<script>
+  function toggleNavbarMenu() {
+    const m = document.getElementById('mobile-dropdown-menu');
+    if (m) m.classList.toggle('hidden');
+  }
+
+  (function runNavbarSetup() {
+    const current = window.location.pathname.replace(/\/+$/, '') || '/';
+    const links = document.querySelectorAll('#desktop-nav-links a');
+    
+    links.forEach(a => {
+      const navTarget = a.getAttribute('data-nav');
+      if (navTarget === current) {
+        a.className = "nav-item px-3.5 py-2 rounded-xl bg-white text-[#790d16] font-extrabold shadow-2xs border border-[#aec4d4]/50";
+      } else {
+        a.className = "nav-item px-3.5 py-2 rounded-xl hover:text-[#790d16] hover:bg-white/60 transition-all";
+      }
+    });
+
+    try {
+      const cart = JSON.parse(localStorage.getItem('cartItems') || '[]');
+      if (cart.length > 0) {
+        const dBadge = document.getElementById('nav-cart-badge-desktop');
+        const mBadge = document.getElementById('nav-cart-badge-mobile-btn');
+        if (dBadge) { dBadge.innerText = cart.length; dBadge.classList.remove('hidden'); }
+        if (mBadge) { mBadge.innerText = cart.length; mBadge.classList.remove('hidden'); }
+      }
+    } catch(e) {}
+  })();
+</script>

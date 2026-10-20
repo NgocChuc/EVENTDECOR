@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full scroll-smooth bg-[#fff7eb]">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EventDecor - Nền tảng kết nối dịch vụ sự kiện</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Google Font: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body { 
+      font-family: 'Plus Jakarta Sans', sans-serif; 
+    }
+
+    /* === QUY CHUẨN UI TOÀN DỰ ÁN: KHÔNG ĐỔI MÀU VIỀN, KHÔNG PHÁT SÁNG KHI HOVER === */
+    .light-frosted-card {
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(174, 196, 212, 0.45) !important;
+      outline: none !important;
+      box-shadow: 0 10px 30px -5px rgba(174, 196, 212, 0.25), 0 4px 14px -2px rgba(121, 13, 22, 0.05);
+      transition: background-color 0.25s ease, box-shadow 0.25s ease;
+    }
+    .light-frosted-card:hover {
+      background: rgba(255, 255, 255, 0.94);
+      border-color: rgba(174, 196, 212, 0.45) !important;
+      box-shadow: 0 16px 36px -4px rgba(174, 196, 212, 0.35);
+    }
+
+    .frosted-pill {
+      background: rgba(249, 240, 224, 0.8);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(174, 196, 212, 0.5) !important;
+      outline: none !important;
+      transition: background-color 0.2s ease;
+    }
+    .frosted-pill:hover {
+      background: rgba(255, 255, 255, 0.95);
+      border-color: rgba(174, 196, 212, 0.5) !important;
+    }
+  </style>
+</head>
+<body class="min-h-full flex flex-col text-slate-800 bg-[#fff7eb] relative overflow-x-hidden selection:bg-[#790d16]/20 selection:text-[#790d16]">
+
+  <!-- NẠP HEADER DÙNG CHUNG -->
+  {% include "header.html" %}
+
+  <!-- HIỆU ỨNG SƯƠNG MỜ VÀ TÁN SẮC NỀN -->
+  <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <div class="absolute -top-32 left-1/4 w-[700px] h-[450px] bg-[#aec4d4]/35 rounded-full blur-[140px]"></div>
+    <div class="absolute top-[28%] -right-40 w-[550px] h-[550px] bg-[#790d16]/8 rounded-full blur-[160px]"></div>
+    <div class="absolute top-[55%] -left-40 w-[600px] h-[600px] bg-[#a2ab73]/15 rounded-full blur-[150px]"></div>
+    <div class="absolute top-[75%] right-10 w-[650px] h-[550px] bg-[#f9f0e0] rounded-full blur-[160px]"></div>
+    <div class="absolute inset-0 bg-[radial-gradient(rgba(174,196,212,0.3)_1px,transparent_1px)] [background-size:24px_24px] opacity-70"></div>
+  </div>
+
+  <div class="relative z-10 flex-1 flex flex-col">
+
+    <!-- THANH BREADCRUMB -->
+    <div class="max-w-6xl w-full mx-auto px-4 sm:px-6 pt-4">
+      <nav id="breadcrumb" aria-label="Breadcrumb" class="py-1">
+        <ol class="inline-flex items-center text-xs font-medium text-slate-400 select-none">
+          <li class="inline-flex items-center" aria-current="page">
+            <span class="text-slate-700 font-bold">Trang chủ</span>
+          </li>
+        </ol>
+      </nav>
+    </div>
+
+    <!-- ==================== 1. HERO SECTION ==================== -->
+    <section class="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 text-center flex flex-col items-center justify-center">
+      <div class="max-w-3xl mx-auto space-y-7">
+        
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full frosted-pill text-xs font-bold text-[#790d16] shadow-2xs">
+          <span>Nền tảng cung cấp dịch vụ trang trí & sự kiện toàn diện</span>
+        </div>
+
+        <h1 class="text-4xl sm:text-6xl font-black text-slate-900 tracking-tight leading-[1.18]">
+          Tìm kiếm dịch vụ trang trí sự kiện <br>
+          <span class="bg-gradient-to-r from-[#cc3a63] to-[#790d16] bg-clip-text text-transparent">
+            phù hợp với nhu cầu
+          </span>
+        </h1>
+
+        <p class="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed font-normal">
+          Kết nối khách hàng với các đơn vị cung cấp dịch vụ trang trí sự kiện. Dễ dàng tìm kiếm dịch vụ, tham khảo báo giá, lựa chọn gói phù hợp và gửi yêu cầu đặt lịch trên cùng một nền tảng.
+        </p>
+
+        <!-- Nút bấm điều hướng: Trỏ chuẩn về /event -->
+        <div class="flex flex-wrap items-center justify-center gap-4 pt-3">
+          <a href="/event" class="px-8 py-3.5 rounded-2xl text-white font-extrabold text-sm bg-gradient-to-r from-[#cc3a63] to-[#790d16] hover:brightness-110 shadow-md shadow-[#790d16]/25 active:scale-95 transition-all">
+            Khám phá dịch vụ
+          </a>
+          <a href="#about-overview" class="px-8 py-3.5 rounded-2xl text-slate-700 hover:text-slate-900 font-bold text-sm frosted-pill active:scale-95 transition-all">
+            Tìm hiểu thêm
+          </a>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== 2. KHỐI TỔNG QUAN NỀN TẢNG ==================== -->
+    <section id="about-overview" class="max-w-6xl w-full mx-auto px-4 sm:px-6 py-16 space-y-10">
+      <div class="text-center max-w-2xl mx-auto space-y-2">
+        <span class="text-xs font-bold uppercase tracking-widest text-[#788248]">Tầm nhìn & Định vị</span>
+        <h2 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+          Giải pháp toàn diện
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-500 leading-relaxed">
+          Đồng hành tạo ra những khoảnh khắc đáng nhớ
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="about-cards-container">
+        <!-- Đổ tự động từ Dataset JavaScript -->
+      </div>
+    </section>
+
+    <!-- ==================== 3. KHỐI DANH MỤC DỊCH VỤ ==================== -->
+    <section id="services-section" class="py-20 px-4 sm:px-6 lg:px-8 border-y border-[#aec4d4]/30 bg-white/30 backdrop-blur-md">
+      <div class="max-w-6xl mx-auto space-y-12">
+        
+        <div class="text-center max-w-3xl mx-auto space-y-2">
+          <span class="text-xs font-bold uppercase tracking-widest text-[#788248]">Danh mục hệ sinh thái</span>
+          <h2 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+            Dịch vụ chúng tôi cung cấp
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-500 leading-relaxed">
+            Website EventDecor kết nối và cung cấp toàn diện các danh mục dịch vụ phục vụ mọi quy mô sự kiện
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="services-grid-container">
+          <!-- Render động từ Dataset -->
+        </div>
+
+        <div class="text-center pt-4">
+          <a href="/event" class="inline-flex items-center gap-2 px-7 py-3 rounded-2xl frosted-pill text-[#790d16] font-bold text-xs transition-all shadow-xs active:scale-95">
+            <span>Xem tất cả gói sự kiện trên sàn &rarr;</span>
+          </a>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ==================== 4. KHỐI ĐỐI TÁC BỀN VỮNG ==================== -->
+    <section class="max-w-6xl w-full mx-auto px-4 sm:px-6 py-20 space-y-12">
+      <div class="text-center max-w-2xl mx-auto space-y-2">
+        <span class="text-xs font-bold uppercase tracking-widest text-[#788248]">Mạng lưới liên kết</span>
+        <h2 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+          Đối tác bền vững
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-500 leading-relaxed">
+          Đội ngũ đối tác thi công đã qua kiểm duyệt hồ sơ năng lực pháp lý, giàu kinh nghiệm và cam kết chất lượng dịch vụ minh bạch.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="partners-grid-container">
+        {% if part and part.length > 0 %}
+          {% for partner in part %}
+          <div class="light-frosted-card rounded-3xl p-6 flex flex-col justify-between group">
+            <div class="space-y-4">
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#315b8c] to-[#1e3a5f] text-white font-black text-base flex items-center justify-center shrink-0 shadow-md">
+                    {{ (partner.name)[0] or 'P' }}
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-slate-900 text-sm group-hover:text-[#790d16] transition-colors">
+                      {{ partner.name }}
+                    </h4>
+                    <span class="text-[11px] text-[#788248] font-semibold block mt-0.5">
+                      {{ partner.address or "Đối tác xác thực" }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-3 gap-2 py-2 px-3 rounded-2xl bg-[#f9f0e0]/70 border border-[#aec4d4]/40 text-center text-xs">
+                <div>
+                  <span class="text-slate-400 text-[10px] block">Đánh giá</span>
+                  <span class="font-extrabold text-[#B8860B] flex items-center justify-center gap-1 text-[11px] mt-0.5">
+                    <i class="fa-solid fa-star text-[#D4AF37]"></i> 4.9
+                  </span>
+                </div>
+                <div class="border-x border-[#aec4d4]/40">
+                  <span class="text-slate-400 text-[10px] block">Kinh nghiệm</span>
+                  <span class="font-bold text-slate-700 text-[11px] mt-0.5 block">5+ năm</span>
+                </div>
+                <div>
+                  <span class="text-slate-400 text-[10px] block">Đã thi công</span>
+                  <span class="font-bold text-[#790d16] text-[11px] mt-0.5 block">100+ tiệc</span>
+                </div>
+              </div>
+
+              <p class="text-slate-500 text-xs leading-relaxed line-clamp-2">
+                {{ partner.description or "Thương hiệu thi công sự kiện và trang trí chuyên nghiệp." }}
+              </p>
+            </div>
+
+            <div class="pt-4 mt-3 border-t border-[#aec4d4]/30 flex items-center justify-between">
+              <span class="text-[11px] text-slate-400 font-medium">Bảo chứng hồ sơ</span>
+              <a href="/partner/{{ partner.id }}" class="inline-flex items-center px-3.5 py-1.5 rounded-xl frosted-pill text-[#790d16] text-xs font-bold transition-all">
+                <span>Xem hồ sơ</span>
+              </a>
+            </div>
+          </div>
+          {% endfor %}
+        {% endif %}
+      </div>
+    </section>
+
+    <!-- ==================== 5. FOOTER ==================== -->
+    <footer class="mt-auto border-t border-[#aec4d4]/30 py-8 text-center text-xs text-slate-500 bg-white/40 backdrop-blur-md">
+      <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+          <span class="text-[#790d16] font-black text-sm tracking-wider">EVENTDECOR</span>
+          <span class="text-slate-300">|</span>
+          <span>Nền tảng kết nối dịch vụ sự kiện chuyên nghiệp</span>
+        </div>
+        <p>&copy; 2026 EventDecor. All rights reserved.</p>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ==================== JAVASCRIPT: DATASET & RENDER ==================== -->
+  <script>
+    const homeDataset = {
+      aboutSection: [
+        {
+          id: 1,
+          tag: "CẦU NỐI UY TÍN",
+          title: "Cầu nối trung gian uy tín",
+          paragraphs: [
+            "EventDecor kết nối khách hàng với các đơn vị cung cấp dịch vụ trang trí và tổ chức sự kiện, bao gồm trang trí tiệc, âm thanh – ánh sáng, thiết bị và nhân sự hỗ trợ.",
+            "Khách hàng có thể tìm kiếm dịch vụ, tham khảo thông tin, lựa chọn và gửi yêu cầu đến đối tác phù hợp với nhu cầu và ngân sách."
+          ]
+        },
+        {
+          id: 2,
+          tag: "TRỌN GÓI & ĐỒNG BỘ",
+          title: "Tổ chức sự kiện",
+          paragraphs: [
+            "Từ tiệc cưới, sinh nhật đến các chương trình doanh nghiệp, khách hàng có thể tham khảo nhiều danh mục dịch vụ trên cùng một nền tảng để lựa chọn phương án phù hợp.",
+            "Việc tập trung thông tin dịch vụ và yêu cầu đặt lịch giúp khách hàng thuận tiện hơn trong quá trình tìm kiếm, trao đổi với đối tác và theo dõi tiến độ chuẩn bị."
+          ]
+        }
+      ],
+
+      servicesCategory: [
+        {
+          id: "cat_wedding",
+          name: "Trang trí Tiệc Cưới & Lễ Ăn Hỏi",
+          badgeColor: "bg-[#315b8c]",
+          description: "Thiết kế backdrop gia tiên, lối đi sảnh tiệc, bàn Gallery đón khách, cổng hoa nghệ thuật và phông cưới theo nhiều phong cách từ tối giản đến sang trọng."
+        },
+        {
+          id: "cat_birthday",
+          name: "Trang trí Sinh Nhật & Thôi Nôi",
+          badgeColor: "bg-[#790d16]",
+          description: "Thi công backdrop nghệ thuật freestyle, cổng bong bóng, bảng tên đèn neon sign, bàn trang trí bánh kem theo từng chủ đề và độ tuổi."
+        },
+        {
+          id: "cat_corporate",
+          name: "Sự Kiện Doanh Nghiệp & Khai Trương",
+          badgeColor: "bg-[#788248]",
+          description: "Trọn gói photobooth check-in, thảm đỏ đón khách, khay cắt băng khánh thành, sân khấu Gala Dinner, tiệc tất niên và hội nghị khách hàng."
+        },
+        {
+          id: "cat_av",
+          name: "Âm Thanh, Ánh Sáng & Hiệu Ứng",
+          badgeColor: "bg-[#315b8c]",
+          description: "Hệ thống loa line array công suất lớn, đèn moving beam, par LED hắt sàn, máy khói lạnh, pháo điện và màn hình LED sân khấu sắc nét."
+        },
+        {
+          id: "cat_equipment",
+          name: "Thiết Bị Sự Kiện & Bàn Ghế",
+          badgeColor: "bg-[#788248]",
+          description: "Cho thuê bàn ghế Banquet, ghế Chiavari cao cấp, nhà bạt không gian, dù che sự kiện ngoài trời và rào chắn an ninh hiện trường."
+        },
+        {
+          id: "cat_staff",
+          name: "Nhân Sự & Truyền Thông Sự Kiện",
+          badgeColor: "bg-[#790d16]",
+          description: "Cung cấp MC chuyên nghiệp, PG đón khách, đội ngũ thợ chụp ảnh - quay phim lưu giữ khoảnh khắc và nhân sự giám sát vận hành sảnh tiệc."
+        }
+      ],
+
+      trustedPartners: [
+        {
+          id: "1",
+          shortCode: "AD",
+          name: "Công ty TNHH Alpha",
+          specialty: "Tiệc cưới Minimalism & Hoa lụa",
+          rating: 4.9,
+          experience: "5+ năm",
+          completedEvents: "180+ tiệc",
+          description: "Thương hiệu thi công trang trí sảnh tiệc cưới hàng đầu, chuyên dòng hoa lụa nhập khẩu cao cấp và kỹ thuật backdrop chuẩn châu Âu.",
+          badgeGradient: "from-[#315b8c] to-[#1e3a5f]",
+          detailUrl: "/partner/1"
+        },
+        {
+          id: "2",
+          shortCode: "BS",
+          name: "Sự Kiện Sáng Tạo Beta",
+          specialty: "Sinh nhật & Nghệ thuật Neon LED",
+          rating: 4.8,
+          experience: "4+ năm",
+          completedEvents: "250+ tiệc",
+          description: "Tiên phong tạo hình bong bóng freestyle kết hợp hệ thống đèn neon sign cá nhân hóa theo từng chủ đề kỷ niệm và thôi nôi.",
+          badgeGradient: "from-[#cc3a63] to-[#790d16]",
+          detailUrl: "/partner/2"
+        },
+        {
+          id: "3",
+          shortCode: "GE",
+          name: "Gala Events Delta",
+          specialty: "Thiết bị sân khấu & Gala Dinner",
+          rating: 5.0,
+          experience: "7+ năm",
+          completedEvents: "320+ tiệc",
+          description: "Tổng kho cung ứng thiết bị âm thanh ánh sáng line array công suất lớn, màn hình LED cong và đội ngũ kỹ thuật viên vận hành chuyên nghiệp.",
+          badgeGradient: "from-[#788248] to-[#556030]",
+          detailUrl: "/partner/3"
+        }
+      ]
+    };
+
+    function renderHomePage(data) {
+      // 1. Render khối Giới thiệu
+      const aboutContainer = document.getElementById('about-cards-container');
+      if (aboutContainer && data.aboutSection) {
+        aboutContainer.innerHTML = data.aboutSection.map(card => `
+          <div class="light-frosted-card rounded-3xl p-7 sm:p-8 space-y-4">
+            <span class="text-[11px] font-bold text-[#790d16] bg-[#790d16]/10 px-3 py-1 rounded-full border border-[#790d16]/20 inline-block">
+              ${card.tag}
+            </span>
+            <h3 class="text-xl font-extrabold text-slate-900">
+              ${card.title}
+            </h3>
+            <div class="space-y-3 text-xs sm:text-sm text-slate-600 leading-relaxed font-normal">
+              ${card.paragraphs.map(text => `<p>\${text}</p>`).join('')}
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // 2. Render khối Danh mục Dịch vụ (Trỏ chuẩn về /event)
+      const servicesContainer = document.getElementById('services-grid-container');
+      if (servicesContainer && data.servicesCategory) {
+        servicesContainer.innerHTML = data.servicesCategory.map(item => `
+          <div class="light-frosted-card rounded-3xl p-6 sm:p-7 space-y-3 flex flex-col justify-between group">
+            <div class="space-y-2.5">
+              <span class="inline-block ${item.badgeColor} text-white font-bold text-[10px] px-2.5 py-0.5 rounded-lg shadow-2xs">
+                Danh mục
+              </span>
+              <h3 class="font-bold text-slate-900 text-base sm:text-lg group-hover:text-[#790d16] transition-colors leading-snug">
+                ${item.name}
+              </h3>
+              <p class="text-slate-500 text-xs leading-relaxed">
+                ${item.description}
+              </p>
+            </div>
+            <div class="pt-3 border-t border-[#aec4d4]/30">
+              <a href="/event" class="text-xs font-bold text-[#790d16] hover:underline inline-block">
+                Khám phá gói &rarr;
+              </a>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // 3. Fallback Đối tác nếu CSDL MySQL trống
+      const partnersContainer = document.getElementById('partners-grid-container');
+      if (partnersContainer && partnersContainer.children.length === 0 && data.trustedPartners) {
+        partnersContainer.innerHTML = data.trustedPartners.map(partner => `
+          <div class="light-frosted-card rounded-3xl p-6 flex flex-col justify-between group">
+            <div class="space-y-4">
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr ${partner.badgeGradient} text-white font-black text-base flex items-center justify-center shrink-0 shadow-md">
+                    ${partner.shortCode}
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-slate-900 text-sm group-hover:text-[#790d16] transition-colors">
+                      ${partner.name}
+                    </h4>
+                    <span class="text-[11px] text-[#788248] font-semibold block mt-0.5">
+                      ${partner.specialty}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-3 gap-2 py-2 px-3 rounded-2xl bg-[#f9f0e0]/70 border border-[#aec4d4]/40 text-center text-xs">
+                <div>
+                  <span class="text-slate-400 text-[10px] block">Đánh giá</span>
+                  <span class="font-extrabold text-[#B8860B] flex items-center justify-center gap-1 text-[11px] mt-0.5">
+                    <i class="fa-solid fa-star text-[#D4AF37]"></i> ${partner.rating}
+                  </span>
+                </div>
+                <div class="border-x border-[#aec4d4]/40">
+                  <span class="text-slate-400 text-[10px] block">Kinh nghiệm</span>
+                  <span class="font-bold text-slate-700 text-[11px] mt-0.5 block">${partner.experience}</span>
+                </div>
+                <div>
+                  <span class="text-slate-400 text-[10px] block">Đã thi công</span>
+                  <span class="font-bold text-[#790d16] text-[11px] mt-0.5 block">${partner.completedEvents}</span>
+                </div>
+              </div>
+
+              <p class="text-slate-500 text-xs leading-relaxed line-clamp-2">
+                ${partner.description}
+              </p>
+            </div>
+
+            <div class="pt-4 mt-3 border-t border-[#aec4d4]/30 flex items-center justify-between">
+              <span class="text-[11px] text-slate-400 font-medium">Đối tác xác thực</span>
+              <a href="${partner.detailUrl}" class="inline-flex items-center px-3.5 py-1.5 rounded-xl frosted-pill text-[#790d16] text-xs font-bold transition-all">
+                <span>Xem hồ sơ</span>
+              </a>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderHomePage(homeDataset);
+    });
+  </script>
+</body>
+</html>

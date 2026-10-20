@@ -1,0 +1,30 @@
+#top {
+  background: linear-gradient(to right, #ed4690, #5522cc);
+  max-height: 100vh;
+}
+.hero {
+  background-image: url("../img/hero-img.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  width: 100%;
+  min-height: 350px;
+}
+
+.text-introduce h1,
+.text-introduce h3 {
+  font-size: 40px;
+  font-weight: bold;
+}
+
+.circle {
+  background-color: red;
+  height: 90px;
+  width: 90px;
+  border-radius: 50%;
+}
+.btn-register,
+.btn-login {
+  border: 2px solid white;
+  border-radius: 40px;
+}

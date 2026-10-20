@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full scroll-smooth bg-[#fff7eb]">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Thanh toán đơn dịch vụ - EventDecor</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Font: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body { 
+      font-family: 'Plus Jakarta Sans', sans-serif; 
+    }
+    /* === HIỆU ỨNG KÍNH ĐỤC TRONG (LIGHT FROSTED GLASS) === */
+    .light-frosted-card {
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(174, 196, 212, 0.45);
+      box-shadow: 0 10px 30px -5px rgba(174, 196, 212, 0.25), 0 4px 14px -2px rgba(121, 13, 22, 0.05);
+      transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+    .light-frosted-card:hover {
+      background: rgba(255, 255, 255, 0.92);
+      border-color: rgba(121, 13, 22, 0.35);
+      box-shadow: 0 16px 36px -4px rgba(121, 13, 22, 0.12);
+    }
+    .frosted-pill {
+      background: rgba(249, 240, 224, 0.8);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(174, 196, 212, 0.5);
+    }
+  </style>
+</head>
+<body class="min-h-full flex flex-col text-slate-800 bg-[#fff7eb] relative overflow-x-hidden pb-16 selection:bg-[#790d16]/20 selection:text-[#790d16]">
+
+  <!-- ==================== HIỆU ỨNG SƯƠNG MỜ VÀ TÁN SẮC NỀN ==================== -->
+  <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <div class="absolute -top-32 left-1/4 w-[650px] h-[450px] bg-[#aec4d4]/30 rounded-full blur-[140px]"></div>
+    <div class="absolute top-[25%] -right-40 w-[550px] h-[550px] bg-[#790d16]/8 rounded-full blur-[160px]"></div>
+    <div class="absolute top-[55%] -left-40 w-[600px] h-[600px] bg-[#a2ab73]/15 rounded-full blur-[150px]"></div>
+    <div class="absolute top-[75%] right-10 w-[650px] h-[550px] bg-[#f9f0e0] rounded-full blur-[160px]"></div>
+    <div class="absolute inset-0 bg-[radial-gradient(rgba(174,196,212,0.3)_1px,transparent_1px)] [background-size:24px_24px] opacity-70"></div>
+  </div>
+
+  <div class="relative z-10 flex-1 flex flex-col">
+
+    <!-- ==================== NỘI DUNG CHÍNH (ĐÃ BỎ HEADER THỪA) ==================== -->
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+      <!-- KHỐI BREADCRUMB ĐƯỢC TỰ ĐỘNG RENDER BỞI JS -->
+      <nav id="breadcrumb" aria-label="Breadcrumb" class="py-1">
+        <!-- breadcrumb.js tự động render tại đây -->
+      </nav>
+
+      <!-- TIÊU ĐỀ TRANG -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-[#aec4d4]/30">
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            Thanh toán đơn dịch vụ
+          </h1>
+          <p class="text-xs text-slate-500 mt-0.5">
+            Kiểm tra thông tin chi tiết gói sự kiện và hoàn tất xác nhận thanh toán.
+          </p>
+        </div>
+        <span class="text-xs font-semibold text-[#788248] bg-[#f9f0e0] border border-[#aec4d4]/50 px-3 py-1.5 rounded-xl self-start sm:self-auto">
+          Bảo mật giao dịch trực tuyến
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        
+        <!-- CỘT TRÁI (7 CỘT): ĐỊA ĐIỂM, ƯU ĐÃI, PHƯƠNG THỨC & XÁC NHẬN -->
+        <div class="lg:col-span-7 space-y-6">
+
+          <!-- 1. ĐỊA ĐIỂM THỰC HIỆN SỰ KIỆN -->
+          <section class="light-frosted-card rounded-3xl p-6 shadow-xs space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-[#aec4d4]/30">
+              <h2 class="text-base font-extrabold text-slate-900 tracking-tight">
+                Địa điểm thực hiện sự kiện
+              </h2>
+              <button type="button" onclick="editLocationInfo()" class="px-3 py-1.5 rounded-xl frosted-pill hover:bg-white text-slate-700 hover:text-[#790d16] text-xs font-bold transition-all border border-[#aec4d4]/60 active:scale-95 shadow-2xs">
+                Chỉnh sửa thông tin
+              </button>
+            </div>
+
+            <div class="p-4 bg-white/60 border border-[#aec4d4]/40 rounded-2xl space-y-3 text-xs">
+              <div>
+                <span class="text-slate-400 block text-[11px] font-medium mb-0.5">Địa điểm cụ thể:</span>
+                <p class="font-bold text-slate-900 text-sm leading-snug" id="display-location">
+                  <!-- Đổ từ JS -->
+                </p>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2.5 border-t border-[#aec4d4]/30">
+                <div>
+                  <span class="text-slate-400 block text-[11px] font-medium mb-0.5">Ngày tổ chức sự kiện:</span>
+                  <span class="font-semibold text-slate-800" id="display-date"><!-- Đổ từ JS --></span>
+                </div>
+                <div>
+                  <span class="text-slate-400 block text-[11px] font-medium mb-0.5">Khung giờ bàn giao hoàn tất:</span>
+                  <span class="font-semibold text-slate-800" id="display-time"><!-- Đổ từ JS --></span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 2. ƯU ĐÃI SỰ KIỆN -->
+          <section class="light-frosted-card rounded-3xl p-6 shadow-xs space-y-4">
+            <div class="pb-3 border-b border-[#aec4d4]/30">
+              <h2 class="text-base font-extrabold text-slate-900 tracking-tight">
+                Ưu đãi sự kiện
+              </h2>
+            </div>
+
+            <div class="space-y-2 text-xs">
+              <label class="block font-bold text-slate-800">Mã ưu đãi áp dụng</label>
+              <div class="flex items-center gap-2">
+                <input type="text" id="selected-voucher-display" readonly placeholder="Chưa chọn ưu đãi nào" class="flex-1 bg-white/80 border border-[#aec4d4]/60 rounded-xl px-3.5 py-2.5 text-slate-900 font-bold text-xs cursor-pointer focus:outline-none" onclick="openVoucherModal()">
+                <button type="button" onclick="openVoucherModal()" class="px-4 py-2.5 bg-gradient-to-r from-[#cc3a63] to-[#790d16] hover:brightness-110 text-white font-bold rounded-xl text-xs active:scale-95 transition-all shadow-sm shadow-[#790d16]/25 shrink-0">
+                  Chọn ưu đãi
+                </button>
+              </div>
+              <p class="text-[11px] text-slate-400">Ưu đãi giảm giá trực tiếp theo phần trăm vào giá trị hợp đồng dịch vụ.</p>
+            </div>
+          </section>
+
+          <!-- 3. PHƯƠNG THỨC THANH TOÁN -->
+          <section class="light-frosted-card rounded-3xl p-6 shadow-xs space-y-4">
+            <div class="pb-3 border-b border-[#aec4d4]/30">
+              <h2 class="text-base font-extrabold text-slate-900 tracking-tight">
+                Phương thức thanh toán
+              </h2>
+            </div>
+
+            <div class="text-xs">
+              <div id="payment-qr-card" onclick="selectPaymentMethod('qr')" class="p-4 rounded-2xl bg-white/80 border-2 border-[#790d16]/40 cursor-pointer transition-all flex items-start gap-4 shadow-2xs">
+                <div class="w-10 h-10 rounded-xl bg-[#f9f0e0] text-[#790d16] font-mono font-black border border-[#aec4d4]/50 flex items-center justify-center text-xs shrink-0">
+                  QR
+                </div>
+                <div class="flex-1 space-y-1">
+                  <span class="font-bold text-slate-900 text-sm block">Chuyển khoản trực tuyến qua mã VietQR</span>
+                  <p class="text-slate-500 leading-relaxed text-[11.5px]">
+                    Hệ thống khởi tạo mã VietQR tự động kèm số tiền chính xác để bạn quét và thanh toán tức thì qua App Ngân hàng hoặc Ví điện tử.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 4. XÁC NHẬN QUA EMAIL -->
+          <section class="light-frosted-card rounded-3xl p-6 shadow-xs space-y-4">
+            <div class="pb-3 border-b border-[#aec4d4]/30">
+              <h2 class="text-base font-extrabold text-slate-900 tracking-tight">
+                Xác nhận thông tin đơn hàng
+              </h2>
+            </div>
+
+            <div class="space-y-4 text-xs">
+              <div class="p-3 bg-[#f9f0e0]/80 border border-[#aec4d4]/50 rounded-xl text-slate-700 leading-relaxed text-[11.5px]">
+                Mã xác nhận bảo mật gồm 6 số sẽ được gửi tới email đăng ký tài khoản của bạn để đảm bảo tính xác thực đơn đặt chỗ.
+              </div>
+
+              <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                <button type="button" id="btn-send-mail" onclick="sendVerificationCode()" class="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs active:scale-95 transition-all shrink-0">
+                  <span id="send-btn-text">Gửi mã xác nhận</span>
+                </button>
+
+                <div class="flex-1 relative flex items-center">
+                  <input type="text" id="otp-input" maxlength="6" placeholder="Nhập mã 6 số (VD: 888999)" class="w-full tracking-widest text-center font-mono font-bold text-sm bg-white/80 border border-[#aec4d4]/60 rounded-xl px-3.5 py-2.5 text-slate-900 focus:outline-none focus:border-[#790d16]" oninput="handleOtpInput(this.value)">
+                  <div id="otp-spinner-container" class="absolute right-3.5 text-[#790d16] font-mono text-xs font-bold hidden">
+                    Đang kiểm tra...
+                  </div>
+                </div>
+              </div>
+
+              <div id="otp-status-msg" class="text-[11px] font-semibold text-slate-400">
+                Vui lòng bấm gửi mã và nhập vào ô phía trên.
+              </div>
+            </div>
+          </section>
+
+        </div>
+
+        <!-- CỘT PHẢI (5 CỘT): TÓM TẮT ĐƠN HÀNG (STICKY) -->
+        <div class="lg:col-span-5 lg:sticky lg:top-6 space-y-4">
+          <section class="light-frosted-card rounded-3xl overflow-hidden shadow-xs border border-[#aec4d4]/50">
+            
+            <div class="bg-gradient-to-r from-[#cc3a63] to-[#790d16] px-6 py-4 text-white">
+              <h2 class="font-bold text-sm sm:text-base">
+                Tóm tắt đơn hàng
+              </h2>
+            </div>
+
+            <div class="p-6 space-y-5 text-xs sm:text-sm">
+              
+              <!-- THÔNG TIN GÓI: TÊN ĐỐI TÁC TRÊN, TÊN GÓI DƯỚI -->
+              <div class="p-4 bg-white/70 border border-[#aec4d4]/40 rounded-2xl space-y-1.5">
+                <div class="text-[11px] font-bold text-[#315b8c]" id="order-partner">
+                  <!-- Đổ từ JS -->
+                </div>
+                <h3 id="order-service" class="font-bold text-slate-900 text-sm leading-snug">
+                  <!-- Đổ từ JS -->
+                </h3>
+              </div>
+
+              <!-- TIỀN, ƯU ĐÃI & PHƯƠNG THỨC -->
+              <div class="space-y-3 pt-1 text-xs">
+                <div class="flex items-center justify-between text-slate-600">
+                  <span class="font-medium">Tổng thành tiền:</span>
+                  <span class="font-mono font-bold text-slate-900 text-sm" id="summary-subtotal">0 ₫</span>
+                </div>
+                <div class="flex items-center justify-between text-[#788248] font-semibold">
+                  <span>Ưu đãi giảm trừ:</span>
+                  <span class="font-mono text-sm" id="summary-discount">-0 ₫</span>
+                </div>
+                <div class="flex items-center justify-between text-slate-600 pt-2 border-t border-[#aec4d4]/30">
+                  <span class="font-medium">Phương thức:</span>
+                  <span class="font-bold text-slate-800" id="summary-payment-method">Chuyển khoản VietQR</span>
+                </div>
+              </div>
+
+              <!-- DÒNG TRẠNG THÁI XÁC NHẬN -->
+              <div class="pt-3 border-t border-[#aec4d4]/30">
+                <div id="confirm-status-box" class="flex items-center justify-center p-3 rounded-xl border border-slate-200 bg-white/60 text-slate-400 transition-all duration-300">
+                  <span class="text-xs font-bold" id="confirm-status-text">Chưa xác nhận thông tin đơn hàng</span>
+                </div>
+              </div>
+
+              <!-- TỔNG THANH TOÁN -->
+              <div class="pt-2 border-t border-[#aec4d4]/30 flex items-center justify-between">
+                <span class="text-sm font-extrabold text-slate-900">Tổng thanh toán:</span>
+                <span id="summary-final-total" class="text-xl sm:text-2xl font-black text-[#790d16] font-mono">
+                  0 ₫
+                </span>
+              </div>
+
+              <!-- NÚT THANH TOÁN (KHÓA KHI CHƯA NHẬP OTP) -->
+              <button type="button" id="btn-pay" disabled onclick="submitPayment()" class="w-full inline-flex items-center justify-center py-3.5 px-5 rounded-xl text-white font-bold text-sm bg-gradient-to-r from-[#cc3a63] to-[#790d16] opacity-40 cursor-not-allowed shadow-none transition-all">
+                <span>Thanh toán ngay</span>
+              </button>
+
+              <!-- THỜI GIAN ĐẾM NGƯỢC (GOLD TRUYỀN THỐNG #D4AF37) -->
+              <div class="pt-2 border-t border-[#aec4d4]/30 text-center space-y-1.5">
+                <p class="text-[11px] text-slate-500 leading-normal">
+                  Bạn cần thanh toán đơn hàng trong vòng 24h để dịch vụ/sự kiện được xác nhận lịch thi công chính thức.
+                </p>
+                <div class="flex items-center justify-center gap-1.5 text-[#B8860B] font-bold text-xs bg-[#D4AF37]/10 py-1.5 rounded-lg border border-[#D4AF37]/25">
+                  <span>Thời gian còn lại:</span>
+                  <span id="countdown-timer" class="font-mono tracking-wider text-sm font-black">23:59:59</span>
+                </div>
+              </div>
+
+            </div>
+          </section>
+        </div>
+
+      </div>
+
+    </main>
+
+    <!-- ==================== FOOTER ==================== -->
+    <footer class="mt-auto border-t border-[#aec4d4]/30 py-8 text-center text-xs text-slate-500 bg-white/40 backdrop-blur-md">
+      <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+          <span class="text-[#790d16] font-black text-sm tracking-wider">EVENTDECOR</span>
+          <span class="text-slate-300">|</span>
+          <span>Nền tảng kết nối dịch vụ sự kiện chuyên nghiệp</span>
+        </div>
+        <p>&copy; 2026 EventDecor. All rights reserved.</p>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ==================== MODAL CHỌN MÃ ƯU ĐÃI ==================== -->
+  <div id="voucher-modal" class="fixed inset-0 bg-slate-950/70 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="light-frosted-card rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in-95 duration-150 bg-white/95 border border-[#aec4d4]/60">
+      
+      <div class="p-4 border-b border-[#aec4d4]/30 flex items-center justify-between bg-[#f9f0e0]/60">
+        <h3 class="text-sm font-bold text-slate-900">
+          Danh sách ưu đãi hiện có
+        </h3>
+        <button type="button" onclick="closeVoucherModal()" class="w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 text-lg">
+          &times;
+        </button>
+      </div>
+
+      <div class="p-4 space-y-3 max-h-80 overflow-y-auto text-xs" id="voucher-list-container">
+        <!-- Render từ JS -->
+      </div>
+
+      <div class="p-3.5 border-t border-[#aec4d4]/30 bg-slate-50/50 flex justify-end">
+        <button type="button" onclick="closeVoucherModal()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold rounded-xl text-xs transition-colors">
+          Đóng
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== JAVASCRIPT: LOGIC BREADCRUMB & THANH TOÁN ==================== -->
+  <script>
+    /**
+     * js/admin/breadcrumb.js
+     * Tự động render Breadcrumb dựa trên URL hoặc file HTML hiện tại
+     */
+    (function initBreadcrumb() {
+      const routeMap = {
+        'dashboard.html': [
+          { name: 'Dashboard', url: null }
+        ],
+        'accounts.html': [
+          { name: 'Quản lý Tài khoản', url: null }
+        ],
+        'services.html': [
+          { name: 'Khám phá Dịch vụ', url: null }
+        ],
+        'service-detail.html': [
+          { name: 'Dịch vụ sự kiện', url: 'services.html' },
+          { name: 'Chi tiết dịch vụ', url: null }
+        ],
+        'cart.html': [
+          { name: 'Giỏ hàng', url: null }
+        ],
+        'payment.html': [
+          { name: 'Dịch vụ sự kiện', url: 'services.html' },
+          { name: 'Giỏ hàng', url: 'cart.html' },
+          { name: 'Thanh toán đơn dịch vụ', url: null }
+        ],
+        'orders.html': [
+          { name: 'Quản lý Đơn hàng', url: null }
+        ]
+      };
+
+      document.addEventListener('DOMContentLoaded', () => {
+        const breadcrumbContainer = document.getElementById('breadcrumb');
+        if (!breadcrumbContainer) return;
+
+        const currentFile = window.location.pathname.split('/').pop() || 'payment.html';
+        const crumbs = routeMap[currentFile] || [
+          { name: 'Giỏ hàng', url: 'cart.html' },
+          { name: 'Thanh toán đơn dịch vụ', url: null }
+        ];
+
+        let html = `
+          <ol class="inline-flex items-center text-xs font-medium text-slate-400 select-none">
+            <li class="inline-flex items-center">
+              <a href="index.html" class="hover:text-[#790d16] transition-colors">Trang chủ</a>
+            </li>
+        `;
+
+        crumbs.forEach((crumb, index) => {
+          const isLast = index === crumbs.length - 1;
+          html += `
+            <li class="inline-flex items-center">
+              <span class="text-slate-300 mx-2">&rsaquo;</span>
+            </li>
+          `;
+
+          if (isLast) {
+            html += `
+              <li aria-current="page">
+                <span class="text-slate-700 font-bold">${crumb.name}</span>
+              </li>
+            `;
+          } else {
+            html += `
+              <li>
+                ${crumb.url 
+                  ? `<a href="${crumb.url}" class="hover:text-[#790d16] transition-colors">${crumb.name}</a>` 
+                  : `<span class="hover:text-[#790d16] cursor-pointer transition-colors">\${crumb.name}</span>`
+                }
+              </li>
+            `;
+          }
+        });
+
+        html += `</ol>`;
+        breadcrumbContainer.innerHTML = html;
+      });
+    })();
+
+    /**
+     * DỮ LIỆU ĐƠN HÀNG (Ưu tiên lấy từ localStorage nếu chuyển tiếp từ cart.html)
+     */
+    const storedService = JSON.parse(localStorage.getItem('selectedPaymentService') || 'null');
+
+    const orderMockData = {
+      orderId: "ORD-20261019-01",
+      customerEmail: "khachhang@example.com",
+      location: {
+        address: "Số 142 Võ Văn Ngân, Phường Bình Thọ, TP. Thủ Đức, TP. Hồ Chí Minh",
+        eventDate: storedService && storedService.customDetails ? (storedService.customDetails.eventDate || "24/10/2026") : "24/10/2026",
+        deliveryTime: storedService && storedService.customDetails ? (storedService.customDetails.executionTime || "16:00 (Trước giờ đón khách)") : "16:00 (Trước giờ đón khách)"
+      },
+      service: {
+        id: storedService ? storedService.id : "SRV-101",
+        partnerName: storedService ? storedService.partnerName : "Công ty TNHH Trang Trí Mẫu Alpha",
+        serviceName: storedService ? storedService.serviceName : "Gói Trang Trí Tiệc Cưới Phong Cách Tối Giản VIP",
+        price: storedService ? storedService.price : 5000000
+      },
+      vouchers: [
+        { id: 1, code: "WED10", name: "Giảm 10%", percent: 10, desc: "Ưu đãi đặt lịch sớm cho tiệc cưới" },
+        { id: 2, code: "NEW15", name: "Giảm 15%", percent: 15, desc: "Ưu đãi dành cho thành viên mới" },
+        { id: 3, code: "VIP20", name: "Giảm 20%", percent: 20, desc: "Chương trình siêu ưu đãi mùa cưới 2026" }
+      ]
+    };
+
+    let selectedVoucher = null;
+    const correctOtp = "888999";
+    let isConfirmed = false;
+    let verifyTimeout = null;
+
+    function formatVND(amount) {
+      return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+    }
+
+    /**
+     * DATA BINDING ĐƠN HÀNG LÊN GIAO DIỆN
+     */
+    function renderOrderData(data) {
+      document.getElementById('display-location').innerText = data.location.address;
+      document.getElementById('display-date').innerText = data.location.eventDate;
+      document.getElementById('display-time').innerText = data.location.deliveryTime;
+
+      document.getElementById('order-partner').innerText = data.service.partnerName;
+      document.getElementById('order-service').innerText = data.service.serviceName;
+
+      updateBillSummary(data.service.price);
+    }
+
+    function updateBillSummary(basePrice) {
+      let discountVal = 0;
+      if (selectedVoucher) {
+        discountVal = Math.round((basePrice * selectedVoucher.percent) / 100);
+      }
+      const finalTotal = Math.max(0, basePrice - discountVal);
+      document.getElementById('summary-subtotal').innerText = formatVND(basePrice);
+      document.getElementById('summary-discount').innerText = '-' + formatVND(discountVal);
+      document.getElementById('summary-final-total').innerText = formatVND(finalTotal);
+    }
+
+    function editLocationInfo() {
+      const current = document.getElementById('display-location').innerText;
+      const newLoc = prompt("Nhập địa điểm thực hiện sự kiện mới:", current);
+      if (newLoc && newLoc.trim() !== "") {
+        orderMockData.location.address = newLoc.trim();
+        document.getElementById('display-location').innerText = newLoc.trim();
+      }
+    }
+
+    function selectPaymentMethod(type) {
+      const card = document.getElementById('payment-qr-card');
+      card.className = "p-4 rounded-2xl bg-white/90 cursor-pointer transition-all flex items-start gap-4 ring-2 ring-[#790d16]/50 shadow-xs";
+      document.getElementById('summary-payment-method').innerText = "Chuyển khoản VietQR";
+    }
+
+    function openVoucherModal() {
+      const container = document.getElementById('voucher-list-container');
+      container.innerHTML = orderMockData.vouchers.map(v => `
+        <div class="p-3.5 rounded-2xl border border-[#aec4d4]/50 hover:border-[#790d16] bg-white flex items-center justify-between gap-3 transition-all">
+          <div>
+            <div class="font-bold text-slate-900 text-sm text-[#790d16]">${v.name}</div>
+            <p class="text-slate-500 text-[11px] mt-0.5">${v.desc}</p>
+          </div>
+          <button type="button" onclick="chooseVoucher(${v.id})" class="px-3 py-1.5 bg-[#315b8c] hover:bg-[#790d16] text-white font-bold rounded-lg text-xs active:scale-95 transition-all shrink-0">
+            Chọn
+          </button>
+        </div>
+      `).join('');
+      document.getElementById('voucher-modal').classList.remove('hidden');
+    }
+
+    function closeVoucherModal() {
+      document.getElementById('voucher-modal').classList.add('hidden');
+    }
+
+    function chooseVoucher(id) {
+      selectedVoucher = orderMockData.vouchers.find(v => v.id === id);
+      if (selectedVoucher) {
+        document.getElementById('selected-voucher-display').value = selectedVoucher.name;
+        updateBillSummary(orderMockData.service.price);
+      }
+      closeVoucherModal();
+    }
+
+    function sendVerificationCode() {
+      const msg = document.getElementById('otp-status-msg');
+      msg.className = "text-[11px] font-semibold text-[#788248]";
+      msg.innerText = `Mã xác nhận 6 số đã được gửi tới email ${orderMockData.customerEmail}. (Mã thử nghiệm: 888999)`;
+      document.getElementById('otp-input').focus();
+    }
+
+    function handleOtpInput(code) {
+      const spinner = document.getElementById('otp-spinner-container');
+      const msg = document.getElementById('otp-status-msg');
+      clearTimeout(verifyTimeout);
+
+      if (code.trim().length === 6) {
+        spinner.classList.remove('hidden');
+        msg.className = "text-[11px] font-semibold text-[#cc3a63]";
+        msg.innerText = "Đang kiểm tra tính hợp lệ của mã xác nhận...";
+        verifyTimeout = setTimeout(() => {
+          spinner.classList.add('hidden');
+          applyOtpVerification(code.trim());
+        }, 600);
+      } else {
+        spinner.classList.add('hidden');
+        resetOtpStatus();
+      }
+    }
+
+    function applyOtpVerification(code) {
+      const confirmBox = document.getElementById('confirm-status-box');
+      const confirmText = document.getElementById('confirm-status-text');
+      const btnPay = document.getElementById('btn-pay');
+      const msg = document.getElementById('otp-status-msg');
+
+      if (code === correctOtp) {
+        isConfirmed = true;
+        confirmBox.className = "flex items-center justify-center p-3 rounded-xl border border-emerald-300 bg-emerald-50/80 text-emerald-800 transition-all duration-300 font-bold";
+        confirmText.innerText = "Đã xác nhận thông tin đơn hàng thành công";
+
+        msg.className = "text-[11px] font-semibold text-emerald-700";
+        msg.innerText = "Mã xác nhận chính xác!";
+
+        btnPay.disabled = false;
+        btnPay.className = "w-full inline-flex items-center justify-center py-3.5 px-5 rounded-xl text-white font-bold text-sm bg-gradient-to-r from-[#cc3a63] to-[#790d16] hover:brightness-110 shadow-md shadow-[#790d16]/25 active:scale-95 transition-all cursor-pointer opacity-100";
+      } else {
+        isConfirmed = false;
+        resetOtpStatus();
+        msg.className = "text-[11px] font-semibold text-rose-600";
+        msg.innerText = "Mã xác nhận chưa chính xác. Vui lòng kiểm tra lại.";
+      }
+    }
+
+    function resetOtpStatus() {
+      const confirmBox = document.getElementById('confirm-status-box');
+      const confirmText = document.getElementById('confirm-status-text');
+      const btnPay = document.getElementById('btn-pay');
+
+      confirmBox.className = "flex items-center justify-center p-3 rounded-xl border border-slate-200 bg-white/60 text-slate-400 transition-all duration-300";
+      confirmText.innerText = "Chưa xác nhận thông tin đơn hàng";
+
+      btnPay.disabled = true;
+      btnPay.className = "w-full inline-flex items-center justify-center py-3.5 px-5 rounded-xl text-white font-bold text-sm bg-gradient-to-r from-[#cc3a63] to-[#790d16] opacity-40 cursor-not-allowed shadow-none transition-all";
+    }
+
+    function startCountdown() {
+      let duration = 24 * 60 * 60 - 1;
+      const timerDisplay = document.getElementById('countdown-timer');
+      setInterval(() => {
+        const hours = Math.floor(duration / 3600);
+        const minutes = Math.floor((duration % 3600) / 60);
+        const seconds = Math.floor(duration % 60);
+        timerDisplay.innerText = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        if (duration > 0) duration--;
+      }, 1000);
+    }
+
+    function submitPayment() {
+      if (!isConfirmed) return;
+      alert(`Đang khởi tạo cổng thanh toán VietQR cho đơn hàng ${orderMockData.orderId}...`);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderOrderData(orderMockData);
+      startCountdown();
+    });
+  </script>
+</body>
+</html>
