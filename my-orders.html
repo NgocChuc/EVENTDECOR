@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full scroll-smooth bg-[#fff7eb]">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đơn hàng của tôi - EventDecor</title>
+  <meta name="description" content="Xem và quản lý các đơn hàng dịch vụ sự kiện của bạn trên EventDecor.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .light-frosted-card {
+      background: rgba(255,255,255,0.72);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(174,196,212,0.45) !important;
+      box-shadow: 0 10px 30px -5px rgba(174,196,212,0.25), 0 4px 14px -2px rgba(121,13,22,0.05);
+      transition: background-color 0.25s ease, box-shadow 0.25s ease;
+    }
+    .light-frosted-card:hover {
+      background: rgba(255,255,255,0.94);
+      border-color: rgba(174,196,212,0.45) !important;
+      box-shadow: 0 16px 36px -4px rgba(174,196,212,0.35);
+    }
+    .tab-active {
+      background: #790d16;
+      color: #fff;
+      border-color: #790d16 !important;
+    }
+    .order-card-enter {
+      animation: fadeSlideIn 0.3s ease forwards;
+    }
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes toastIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .toast-animate { animation: toastIn 0.3s ease forwards; }
+  </style>
+</head>
+<body class="min-h-full flex flex-col text-slate-800 bg-[#fff7eb] relative overflow-x-hidden pb-24 selection:bg-[#790d16]/20 selection:text-[#790d16]">
+
+  {% include "header.html" %}
+
+  <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <div class="absolute -top-32 left-1/4 w-[650px] h-[450px] bg-[#aec4d4]/30 rounded-full blur-[140px]"></div>
+    <div class="absolute top-[30%] -right-40 w-[500px] h-[500px] bg-[#790d16]/8 rounded-full blur-[160px]"></div>
+    <div class="absolute top-[65%] -left-40 w-[550px] h-[550px] bg-[#a2ab73]/12 rounded-full blur-[150px]"></div>
+    <div class="absolute inset-0 bg-[radial-gradient(rgba(174,196,212,0.25)_1px,transparent_1px)] [background-size:24px_24px] opacity-60"></div>
+  </div>
+
+  <div class="relative z-10 flex-1 flex flex-col">
+    <main class="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-8 space-y-6">
+
+      <!-- Breadcrumb -->
+      <nav class="flex items-center gap-2 text-xs font-medium text-slate-400 select-none">
+        <a href="/" class="hover:text-[#790d16] transition-colors">Trang chủ</a>
+        <span><i class="fa-solid fa-chevron-right text-[10px]"></i></span>
+        <span class="text-slate-700 font-bold">Đơn hàng của tôi</span>
+      </nav>
+
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-black text-slate-900 flex items-center gap-3 tracking-tight">
+            <span class="w-10 h-10 rounded-2xl bg-[#790d16] flex items-center justify-center shrink-0">
+              <i class="fa-solid fa-box-open text-white text-base"></i>
+            </span>
+            Đơn hàng của tôi
+          </h1>
+          <p class="text-sm text-slate-500 mt-1.5 ml-1">Theo dõi và quản lý tất cả dịch vụ bạn đã đặt</p>
+        </div>
+        <a href="/event" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#790d16] text-white text-sm font-semibold hover:bg-[#5e0b11] active:scale-95 transition-all shrink-0">
+          <i class="fa-solid fa-plus text-xs"></i>
+          Đặt thêm dịch vụ
+        </a>
+      </div>
+
+      <div class="flex gap-2 flex-wrap">
+        <button data-tab="all" onclick="setTab('all')" class="tab-btn tab-active px-4 py-2 rounded-xl border border-[#aec4d4]/50 text-sm font-semibold transition-all">Tất cả</button>
+        <button data-tab="pending" onclick="setTab('pending')" class="tab-btn px-4 py-2 rounded-xl border border-[#aec4d4]/50 bg-white/60 text-slate-600 text-sm font-semibold hover:bg-white/80 transition-all">Chờ xác nhận</button>
+        <button data-tab="processing" onclick="setTab('processing')" class="tab-btn px-4 py-2 rounded-xl border border-[#aec4d4]/50 bg-white/60 text-slate-600 text-sm font-semibold hover:bg-white/80 transition-all">Đang thực hiện</button>
+        <button data-tab="done" onclick="setTab('done')" class="tab-btn px-4 py-2 rounded-xl border border-[#aec4d4]/50 bg-white/60 text-slate-600 text-sm font-semibold hover:bg-white/80 transition-all">Hoàn thành</button>
+        <button data-tab="cancelled" onclick="setTab('cancelled')" class="tab-btn px-4 py-2 rounded-xl border border-[#aec4d4]/50 bg-white/60 text-slate-600 text-sm font-semibold hover:bg-white/80 transition-all">Đã hủy</button>
+      </div>
+
+      <div id="orders-list" class="space-y-4"></div>
+
+      <div id="empty-state" class="hidden py-20 flex-col items-center justify-center text-center">
+        <div class="w-16 h-16 rounded-full bg-[#aec4d4]/20 flex items-center justify-center mb-4">
+          <i class="fa-regular fa-folder-open text-3xl text-[#aec4d4]"></i>
+        </div>
+        <p class="font-bold text-slate-600 text-lg">Không có đơn hàng nào</p>
+        <p class="text-slate-400 text-sm mt-1">Hãy khám phá và đặt dịch vụ sự kiện phù hợp với bạn</p>
+        <a href="/event" class="mt-5 px-5 py-2.5 bg-[#790d16] text-white rounded-xl font-semibold text-sm hover:bg-[#5e0b11] transition-all">Khám phá dịch vụ</a>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- MODAL XÁC NHẬN HỦY -->
+  <div id="cancel-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-7 space-y-5">
+      <div class="flex items-start gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-red-100 flex items-center justify-center shrink-0">
+          <i class="fa-solid fa-triangle-exclamation text-red-600 text-xl"></i>
+        </div>
+        <div>
+          <h3 class="text-lg font-black text-slate-900">Xác nhận hủy đơn</h3>
+          <p class="text-sm text-slate-500 mt-0.5">Mã đơn: <span id="cancel-modal-id" class="font-mono font-bold text-[#790d16]"></span></p>
+        </div>
+      </div>
+      <div class="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-sm text-amber-800">
+        <i class="fa-solid fa-circle-info mr-1.5"></i>
+        Sau khi hủy, đơn hàng <strong>không thể khôi phục</strong>. Vui lòng chỉ hủy khi thực sự cần thiết.
+      </div>
+      <div>
+        <label class="text-sm font-bold text-slate-700 block mb-2">Lý do hủy <span class="font-normal text-slate-400">(không bắt buộc)</span></label>
+        <textarea id="cancel-reason" rows="3" placeholder="Ví dụ: Tôi muốn thay đổi ngày tổ chức sự kiện..."
+          class="w-full border border-[#aec4d4]/60 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:border-[#790d16]/40 resize-none transition-colors bg-white/80"></textarea>
+      </div>
+      <div class="flex gap-3">
+        <button onclick="closeCancelModal()"
+          class="flex-1 py-3 border border-[#aec4d4]/60 rounded-2xl text-slate-700 font-bold text-sm hover:bg-slate-50 active:scale-95 transition-all">
+          Không, giữ lại
+        </button>
+        <button onclick="confirmCancel()"
+          class="flex-1 py-3 bg-red-600 text-white font-bold rounded-2xl text-sm hover:bg-red-700 active:scale-95 transition-all">
+          Xác nhận hủy
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="fixed bottom-6 right-6 z-[60] hidden">
+    <div class="toast-animate flex items-center gap-3 bg-white border border-slate-100 rounded-2xl shadow-2xl px-5 py-4 min-w-[300px]">
+      <div class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center shrink-0">
+        <i class="fa-solid fa-check text-red-600"></i>
+      </div>
+      <div>
+        <p class="font-bold text-slate-800 text-sm">Đã hủy đơn hàng</p>
+        <p id="toast-text" class="text-xs text-slate-500 mt-0.5"></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ORDERS = [
+      { id:'ORD-2026-001', service:'Gói Trang Trí Tiệc Cưới Phong Cách Tối Giản', partner:'Công ty TNHH Trang Trí Alpha', price:12500000, date:'2026-10-10', event_date:'2026-11-15', status:'confirmed', icon:'fa-heart', cancel_reason:null },
+      { id:'ORD-2026-002', service:'Sân Khấu Bong Bóng & LED Sinh Nhật VIP', partner:'Hộ Kinh Doanh Sự Kiện Beta', price:4800000, date:'2026-10-12', event_date:'2026-10-20', status:'in_progress', icon:'fa-cake-candles', cancel_reason:null },
+      { id:'ORD-2026-003', service:'Dàn Âm Thanh Sân Khấu Hội Nghị 300 Khách', partner:'Công ty Cổ phần Âm Thanh Gamma', price:22000000, date:'2026-10-05', event_date:'2026-10-08', status:'delivered', icon:'fa-microphone', cancel_reason:null },
+      { id:'ORD-2026-004', service:'Trọn Gói Khai Trương Văn Phòng Doanh Nghiệp', partner:'Công ty TNHH Sự Kiện Delta', price:8900000, date:'2026-10-18', event_date:'2026-11-01', status:'created', icon:'fa-store', cancel_reason:null },
+      { id:'ORD-2026-005', service:'Gói Chụp Ảnh Sự Kiện Cao Cấp', partner:'Studio Ảnh Sự Kiện Epsilon', price:3500000, date:'2026-09-20', event_date:'2026-09-25', status:'cancelled', icon:'fa-camera', cancel_reason:'Thay đổi lịch tổ chức sự kiện' }
+    ];
+
+    const TAB_MAP = {
+      all: null,
+      pending: ['created'],
+      processing: ['confirmed','in_progress'],
+      done: ['delivered'],
+      cancelled: ['cancelled']
+    };
+
+    const STATUS_CONFIG = {
+      created:     { label:'Chờ xác nhận', cls:'bg-amber-50 text-amber-700 border-amber-200', icon:'fa-clock' },
+      confirmed:   { label:'Đã xác nhận',  cls:'bg-blue-50 text-blue-700 border-blue-200',   icon:'fa-circle-check' },
+      in_progress: { label:'Đang thi công', cls:'bg-violet-50 text-violet-700 border-violet-200', icon:'fa-gear' },
+      delivered:   { label:'Hoàn thành',    cls:'bg-emerald-50 text-emerald-700 border-emerald-200', icon:'fa-circle-check' },
+      cancelled:   { label:'Đã hủy',        cls:'bg-red-50 text-red-600 border-red-200',     icon:'fa-ban' }
+    };
+
+    let pendingCancelId = null;
+
+    function setTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('tab-active');
+        btn.classList.add('bg-white/60','text-slate-600');
+      });
+      const active = document.querySelector(`[data-tab="${tab}"]`);
+      active.classList.add('tab-active');
+      active.classList.remove('bg-white/60','text-slate-600');
+      renderOrders(tab);
+    }
+
+    function renderOrders(tab = 'all') {
+      const filters = TAB_MAP[tab];
+      const list = filters ? ORDERS.filter(o => filters.includes(o.status)) : ORDERS;
+      const container = document.getElementById('orders-list');
+      const empty = document.getElementById('empty-state');
+
+      if (list.length === 0) {
+        container.innerHTML = '';
+        empty.classList.remove('hidden');
+        empty.classList.add('flex');
+        return;
+      }
+      empty.classList.add('hidden');
+      empty.classList.remove('flex');
+
+      container.innerHTML = list.map((o, i) => {
+        const s = STATUS_CONFIG[o.status];
+        const canCancel = ['created','confirmed'].includes(o.status);
+        return `
+          <div class="light-frosted-card rounded-3xl p-5 sm:p-6 order-card-enter" style="animation-delay:${i*0.06}s">
+            <div class="flex items-start gap-4">
+              <div class="w-12 h-12 rounded-2xl bg-[#790d16]/10 flex items-center justify-center shrink-0">
+                <i class="fa-solid ${o.icon} text-[#790d16] text-lg"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-start justify-between gap-3 flex-wrap">
+                  <div>
+                    <p class="font-black text-slate-900 text-base leading-snug">${o.service}</p>
+                    <p class="text-sm text-slate-500 mt-0.5"><i class="fa-regular fa-building mr-1.5"></i>${o.partner}</p>
+                  </div>
+                  <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl border text-xs font-bold ${s.cls} shrink-0">
+                    <i class="fa-solid ${s.icon} text-[10px]"></i>${s.label}
+                  </span>
+                </div>
+
+                <div class="mt-4 grid grid-cols-3 gap-3">
+                  <div class="bg-[#fff7eb]/80 rounded-xl px-3 py-2">
+                    <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">Mã đơn</p>
+                    <p class="text-xs font-bold text-slate-700 font-mono mt-0.5">${o.id}</p>
+                  </div>
+                  <div class="bg-[#fff7eb]/80 rounded-xl px-3 py-2">
+                    <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">Ngày đặt</p>
+                    <p class="text-xs font-bold text-slate-700 mt-0.5">${o.date}</p>
+                  </div>
+                  <div class="bg-[#fff7eb]/80 rounded-xl px-3 py-2">
+                    <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">Ngày sự kiện</p>
+                    <p class="text-xs font-bold text-slate-700 mt-0.5">${o.event_date}</p>
+                  </div>
+                </div>
+
+                ${o.cancel_reason ? `
+                <div class="mt-3 flex items-center gap-2 text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+                  <i class="fa-solid fa-circle-info shrink-0"></i>
+                  <span>Lý do hủy: <span class="font-semibold">${o.cancel_reason}</span></span>
+                </div>` : ''}
+
+                <div class="mt-4 flex items-center justify-between gap-3 flex-wrap">
+                  <div>
+                    <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">Tổng giá trị</p>
+                    <p class="text-xl font-black text-[#790d16] mt-0.5">${o.price.toLocaleString('vi-VN')} ₫</p>
+                  </div>
+                  <div class="flex gap-2">
+                    ${canCancel ? `
+                    <button onclick="openCancelModal('${o.id}')"
+                      class="px-4 py-2 rounded-xl border border-red-200 bg-red-50 text-red-600 text-sm font-bold hover:bg-red-100 active:scale-95 transition-all">
+                      <i class="fa-solid fa-xmark mr-1.5"></i>Yêu cầu hủy
+                    </button>` : ''}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function openCancelModal(orderId) {
+      pendingCancelId = orderId;
+      document.getElementById('cancel-modal-id').innerText = orderId;
+      document.getElementById('cancel-reason').value = '';
+      const m = document.getElementById('cancel-modal');
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+    }
+
+    function closeCancelModal() {
+      const m = document.getElementById('cancel-modal');
+      m.classList.add('hidden');
+      m.classList.remove('flex');
+      pendingCancelId = null;
+    }
+
+    function confirmCancel() {
+      if (!pendingCancelId) return;
+      const reason = document.getElementById('cancel-reason').value.trim();
+      const order = ORDERS.find(o => o.id === pendingCancelId);
+      if (!order) return;
+      order.status = 'cancelled';
+      order.cancel_reason = reason || 'Khách hàng yêu cầu hủy';
+      const id = pendingCancelId;
+      closeCancelModal();
+      const activeTab = document.querySelector('.tab-btn.tab-active')?.dataset.tab || 'all';
+      renderOrders(activeTab);
+      showToast(id);
+    }
+
+    function showToast(orderId) {
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-text').innerText = `Mã đơn ${orderId} đã được hủy thành công.`;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 3800);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => renderOrders('all'));
+    document.getElementById('cancel-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeCancelModal(); });
+  </script>
+
+</body>
+</html>

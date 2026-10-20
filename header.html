@@ -44,6 +44,9 @@
           </span>
           <span class="max-w-[120px] truncate">{{ user.username }}</span>
         </div>
+        <a href="/my-orders" class="px-3 py-2 rounded-xl text-slate-600 hover:text-[#790d16] font-bold text-xs hover:bg-white/60 transition-colors">
+          Đơn hàng
+        </a>
         <a href="/logout" class="px-3 py-2 rounded-xl text-slate-500 hover:text-rose-600 font-bold text-xs hover:bg-rose-50 transition-colors">
           Đăng xuất
         </a>
@@ -75,6 +78,7 @@
       <div class="px-3.5 py-2.5 rounded-xl bg-[#f9f0e0]/80 border border-[#aec4d4]/40 text-xs font-bold text-slate-800">
         Xin chào, <span class="text-[#790d16]">{{ user.username }}</span>
       </div>
+      <a href="/my-orders" class="text-center py-2 rounded-xl bg-[#f9f0e0] text-[#790d16] font-bold text-xs border border-[#790d16]/20">Đơn hàng của tôi</a>
       <a href="/logout" class="text-center py-2 rounded-xl bg-rose-50 text-rose-600 font-bold text-xs">Đăng xuất</a>
       {% else %}
       <div class="grid grid-cols-2 gap-2">
