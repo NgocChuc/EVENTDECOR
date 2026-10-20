@@ -20,7 +20,7 @@ app.use("/css", express.static(path.join(__dirname, "css")));
 app.use("/img", express.static(path.join(__dirname, "img")));
 app.use("/js", express.static(path.join(__dirname, "js")));
 app.use(express.static(path.join(__dirname, "public"), { index: false }));
-app.use("/admin", express.static(path.join(__dirname, "views", "admin")));
+app.use("/admin", express.static(path.join(__dirname, "admin")));
 
 // =========================================================================
 // 2. CẤU HÌNH SESSION & MIDDLEWARE
@@ -45,13 +45,16 @@ app.use((req, res, next) => {
 // =========================================================================
 // 3. CẤU HÌNH NUNJUCKS
 // =========================================================================
-nunjucks.configure(path.join(__dirname, "views"), {
+nunjucks.configure([
+  path.join(__dirname),           // HTML gốc: home.html, event.html...
+  path.join(__dirname, "admin"),  // Admin pages: admin/*.html
+], {
   autoescape: true,
   express: app,
   watch: true,
 });
 app.set("view engine", "html");
-app.set("views", path.join(__dirname, "views"));
+app.set("views", path.join(__dirname));
 
 // =========================================================================
 // 4. CƠ SỞ DỮ LIỆU MYSQL
@@ -114,13 +117,13 @@ app.get("/admin/:page", requireAdmin, (req, res) => {
   }
 
   const fileName = `${page}.html`;
-  const filePath = path.join(__dirname, "views", "admin", fileName);
+  const filePath = path.join(__dirname, "admin", fileName);
 
   if (!fs.existsSync(filePath)) {
     return res.status(404).send("Trang quản trị không tồn tại!");
   }
 
-  res.render(`admin/${fileName}`, {
+  res.render(fileName, {
     currentPage: fileName,
     adminUser: req.session?.user || { username: "QTV", role: "admin" },
   });
@@ -232,6 +235,7 @@ app.get("/partner/:id", async (req, res) => {
 });
 
 app.get("/cart", (req, res) => res.render("cart.html"));
+app.get("/my-orders", (req, res) => res.render("my-orders.html"));
 app.get("/cart.html", (req, res) => res.redirect("/cart"));
 app.get("/payment", requireAuth, (req, res) => res.render("payment.html"));
 app.get("/payment.html", (req, res) => res.redirect("/payment"));

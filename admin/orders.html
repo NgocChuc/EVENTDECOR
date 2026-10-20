@@ -93,6 +93,7 @@
                 <option value="confirmed">Đối tác đã xác nhận</option>
                 <option value="in_progress">Bắt đầu thi công</option>
                 <option value="delivered">Đã bàn giao</option>
+                <option value="cancelled">Đã hủy</option>
                 <option value="complaint">Đơn đang khiếu nại</option>
               </select>
               <span class="material-symbols-outlined text-[18px] text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">arrow_drop_down</span>
@@ -313,13 +314,63 @@
       </div>
 
       <!-- ĐUÔI MODAL -->
-      <div class="p-4 bg-slate-50/75 border-t border-slate-100 flex items-center justify-end shrink-0">
+      <div class="p-4 bg-slate-50/75 border-t border-slate-100 flex items-center justify-between shrink-0">
+        <button type="button" id="btn-cancel-order" onclick="openCancelModal()"
+          class="hidden items-center gap-1.5 px-4 py-2 bg-red-600 text-white font-semibold rounded-xl hover:bg-red-700 active:scale-95 transition-all text-sm">
+          <span class="material-symbols-outlined text-[17px]">cancel</span>
+          Hủy đơn hàng
+        </button>
         <button type="button" onclick="closeOrderModal()"
           class="px-5 py-2 bg-white border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-100 active:scale-95 transition-all">
           Đóng
         </button>
       </div>
 
+    </div>
+  </div>
+
+  <!-- MODAL XÁC NHẬN HỦY ĐƠN -->
+  <div id="cancel-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[60] hidden items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined text-red-600 text-[22px]">cancel</span>
+        </div>
+        <div>
+          <h3 class="font-bold text-slate-800">Xác nhận hủy đơn hàng</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Mã đơn: <span id="cancel-order-id" class="font-mono font-bold text-red-600"></span></p>
+        </div>
+      </div>
+      <p class="text-sm text-slate-600 leading-relaxed">Đơn hàng sẽ bị hủy và <strong>không thể khôi phục</strong>. Bạn có chắc chắn muốn hủy?</p>
+      <div>
+        <label class="text-xs font-semibold text-slate-600 block mb-1.5">Lý do hủy <span class="text-slate-400 font-normal">(không bắt buộc)</span></label>
+        <textarea id="cancel-reason" rows="3"
+          placeholder="Nhập lý do hủy đơn..."
+          class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 focus:outline-none focus:border-red-400 resize-none transition-colors"></textarea>
+      </div>
+      <div class="flex gap-3 pt-1">
+        <button onclick="closeCancelModal()"
+          class="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-slate-700 font-semibold text-sm hover:bg-slate-50 active:scale-95 transition-all">
+          Không, giữ lại
+        </button>
+        <button onclick="confirmCancel()"
+          class="flex-1 px-4 py-2.5 bg-red-600 text-white font-semibold rounded-xl text-sm hover:bg-red-700 active:scale-95 transition-all">
+          Xác nhận hủy
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST THÔNG BÁO -->
+  <div id="cancel-toast" class="fixed bottom-6 right-6 z-[70] hidden">
+    <div class="flex items-center gap-3 bg-white border border-slate-200 rounded-2xl shadow-xl px-4 py-3 min-w-[280px]">
+      <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+        <span class="material-symbols-outlined text-red-600 text-[18px]">check_circle</span>
+      </div>
+      <div>
+        <p class="text-xs font-bold text-slate-800">Đã hủy đơn hàng</p>
+        <p class="text-[11px] text-slate-500 mt-0.5" id="toast-msg"></p>
+      </div>
     </div>
   </div>
 
@@ -440,6 +491,8 @@
           return '<span class="inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-600 border border-blue-200">Đang thi công</span>';
         case 'delivered':
           return '<span class="inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">Đã bàn giao</span>';
+        case 'cancelled':
+          return '<span class="inline-flex px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-600 border border-red-200">Đã hủy</span>';
         default:
           return '';
       }
@@ -578,6 +631,11 @@
         : '---';
 
       document.getElementById('order-modal').classList.remove('hidden');
+
+      const cancelBtn = document.getElementById('btn-cancel-order');
+      const canCancel = ['created', 'confirmed'].includes(selectedOrder.current_status);
+      cancelBtn.classList.toggle('hidden', !canCancel);
+      cancelBtn.classList.toggle('flex', canCancel);
     }
 
     function closeOrderModal() {
@@ -596,6 +654,43 @@
         renderOrdersTable();
       });
     });
+  </script>
+
+  <script>
+    function openCancelModal() {
+      if (!selectedOrder) return;
+      document.getElementById('cancel-order-id').innerText = selectedOrder.order_id;
+      document.getElementById('cancel-reason').value = '';
+      const modal = document.getElementById('cancel-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeCancelModal() {
+      const modal = document.getElementById('cancel-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function confirmCancel() {
+      if (!selectedOrder) return;
+      const reason = document.getElementById('cancel-reason').value.trim();
+      const orderId = selectedOrder.order_id;
+      selectedOrder.current_status = 'cancelled';
+      selectedOrder.cancel_reason = reason || null;
+      selectedOrder.timeline_cancelled = new Date().toLocaleString('vi-VN');
+      closeCancelModal();
+      closeOrderModal();
+      renderOrdersTable();
+      showCancelToast(orderId);
+    }
+
+    function showCancelToast(orderId) {
+      const toast = document.getElementById('cancel-toast');
+      document.getElementById('toast-msg').innerText = `Mã đơn ${orderId} đã được hủy thành công.`;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 3500);
+    }
   </script>
 
 </body>
