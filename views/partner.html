@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full scroll-smooth bg-[#fff7eb]">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đối tác sự kiện & thi công - EventDecor</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Google Font: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .light-frosted-card {
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(174, 196, 212, 0.45) !important;
+      outline: none !important;
+      box-shadow: 0 10px 30px -5px rgba(174, 196, 212, 0.25), 0 4px 14px -2px rgba(121, 13, 22, 0.05);
+      transition: background-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+    }
+    .light-frosted-card:hover {
+      background: rgba(255, 255, 255, 0.94);
+      border-color: rgba(174, 196, 212, 0.45) !important;
+      box-shadow: 0 16px 36px -4px rgba(174, 196, 212, 0.35);
+      transform: translateY(-2px);
+    }
+    .frosted-pill {
+      background: rgba(249, 240, 224, 0.8);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(174, 196, 212, 0.5) !important;
+      outline: none !important;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+    .frosted-pill:hover {
+      background: rgba(255, 255, 255, 0.95);
+      border-color: rgba(174, 196, 212, 0.5) !important;
+    }
+  </style>
+</head>
+
+<body class="min-h-full flex flex-col text-slate-800 bg-[#fff7eb] relative overflow-x-hidden selection:bg-[#790d16]/20 selection:text-[#790d16]">
+
+  <!-- NẠP HEADER DÙNG CHUNG -->
+  {% include "header.html" %}
+
+  <!-- HIỆU ỨNG SƯƠNG MỜ VÀ TÁN SẮC NỀN -->
+  <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <div class="absolute -top-32 left-1/4 w-[700px] h-[450px] bg-[#aec4d4]/35 rounded-full blur-[140px]"></div>
+    <div class="absolute top-[28%] -right-40 w-[550px] h-[550px] bg-[#790d16]/8 rounded-full blur-[160px]"></div>
+    <div class="absolute top-[55%] -left-40 w-[600px] h-[600px] bg-[#a2ab73]/15 rounded-full blur-[150px]"></div>
+    <div class="absolute top-[75%] right-10 w-[650px] h-[550px] bg-[#f9f0e0] rounded-full blur-[160px]"></div>
+    <div class="absolute inset-0 bg-[radial-gradient(rgba(174,196,212,0.3)_1px,transparent_1px)] [background-size:24px_24px] opacity-70"></div>
+  </div>
+
+  <div class="relative z-10 flex-1 flex flex-col">
+
+    <!-- THANH BREADCRUMB -->
+    <div class="max-w-6xl w-full mx-auto px-4 sm:px-6 pt-4">
+      <nav id="breadcrumb" aria-label="Breadcrumb" class="py-1">
+        <ol class="inline-flex items-center text-xs font-medium text-slate-400 select-none">
+          <li class="inline-flex items-center">
+            <a href="/" class="hover:text-[#790d16] transition-colors">Trang chủ</a>
+          </li>
+          <li class="inline-flex items-center">
+            <i class="fa-solid fa-chevron-right text-[10px] mx-2 text-slate-400"></i>
+            <span class="text-slate-700 font-bold" aria-current="page">Đối tác</span>
+          </li>
+        </ol>
+      </nav>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <main class="max-w-6xl w-full mx-auto px-4 sm:px-6 py-10 space-y-10">
+
+      <!-- BANNER TIÊU ĐỀ -->
+      <section class="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#315b8c] to-[#790d16] p-8 sm:p-12 text-white shadow-lg">
+        <div class="relative z-10 max-w-2xl space-y-3">
+          <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/20 text-[11px] font-bold uppercase tracking-wider backdrop-blur-md">
+            <span>Mạng lưới liên kết</span>
+          </div>
+          <h1 class="text-3xl sm:text-4xl font-black tracking-tight text-white leading-snug">
+            Đối Tác Trang Trí & Thi Công
+          </h1>
+          <p class="text-slate-100 text-xs sm:text-sm leading-relaxed font-normal opacity-90">
+            Kết nối cùng các đơn vị trang trí sự kiện uy tín, chuyên nghiệp và giàu kinh nghiệm trên hệ thống.
+          </p>
+        </div>
+        <div class="absolute -right-10 -bottom-10 w-72 h-72 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+      </section>
+
+      <!-- THANH TÌM KIẾM THEO TÊN & BỘ ĐẾM SỐ LƯỢNG -->
+      <section class="light-frosted-card rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="relative w-full sm:w-80">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+          <input 
+            type="text" 
+            id="partner-search-input" 
+            oninput="filterPartners()" 
+            placeholder="Tìm theo tên đối tác..." 
+            class="w-full pl-9 pr-4 py-2 text-xs sm:text-sm rounded-xl bg-white/80 border border-[#aec4d4]/60 text-slate-800 placeholder-slate-400 focus:outline-hidden focus:border-[#790d16] focus:bg-white transition-all"
+          >
+        </div>
+        <div class="text-xs text-slate-600 font-medium">
+          Tổng số đối tác: <span id="partner-count" class="font-extrabold text-[#790d16]">{{ part | length }}</span>
+        </div>
+      </section>
+
+      <!-- DANH SÁCH ĐỐI TÁC TRUY VẤN TỪ CSDL -->
+      <section id="partner-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% if part and part.length > 0 %}
+          {% for item in part %}
+          <div class="partner-card light-frosted-card rounded-3xl overflow-hidden flex flex-col justify-between group"
+               data-name="{{ (item.name or '') | lower }}">
+            
+            <div>
+              <!-- ẢNH TO PHÍA TRÊN (Tỉ lệ 16:9) -->
+              <div class="aspect-[16/9] w-full overflow-hidden bg-slate-100 relative">
+                <img 
+                  src="{{ item.image if item.image else 'https://placehold.co/600x350/e2e8f0/475569?text=EventDecor+Partner' }}" 
+                  onerror="this.src='https://placehold.co/600x350/e2e8f0/475569?text=Partner'"
+                  alt="{{ item.name }}" 
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                >
+              </div>
+
+              <!-- PHẦN THÔNG TIN BÊN DƯỚI ẢNH -->
+              <div class="p-6 space-y-3">
+                <!-- Tên đối tác ngay dưới ảnh -->
+                <h3 class="font-black text-slate-900 text-lg group-hover:text-[#790d16] transition-colors line-clamp-1 leading-snug">
+                  {{ item.name }}
+                </h3>
+
+                <!-- Giới thiệu ngắn -->
+                <p class="text-slate-600 text-xs sm:text-sm leading-relaxed line-clamp-3">
+                  {{ item.description or "Thương hiệu thi công sự kiện và trang trí chuyên nghiệp." }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Nút Xem thông tin ở đáy thẻ -->
+            <div class="px-6 pb-6 pt-2">
+              <a 
+  href="/partner/{{ item.id }}" 
+  class="w-full inline-flex items-center justify-center py-2.5 rounded-xl frosted-pill text-[#790d16] text-xs font-bold transition-all active:scale-95 shadow-2xs"
+>
+  <span>Xem thông tin</span>
+  <i class="fa-solid fa-chevron-right text-[10px] ml-1.5"></i>
+</a>
+            </div>
+
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="col-span-full py-16 text-center space-y-3">
+            <i class="fa-regular fa-folder-open text-4xl text-slate-300"></i>
+            <p class="text-slate-500 text-sm">Hiện chưa có đối tác nào trong hệ thống.</p>
+          </div>
+        {% endif %}
+      </section>
+
+      <!-- Khối thông báo khi lọc không tìm thấy -->
+      <div id="no-search-result" class="hidden py-16 text-center space-y-3">
+        <i class="fa-solid fa-magnifying-glass text-3xl text-slate-300"></i>
+        <p class="text-slate-500 text-sm">Không tìm thấy đối tác nào phù hợp với từ khóa.</p>
+      </div>
+
+    </main>
+
+    <!-- FOOTER ĐỒNG BỘ HOME -->
+    <footer class="mt-auto border-t border-[#aec4d4]/30 py-8 text-center text-xs text-slate-500 bg-white/40 backdrop-blur-md">
+      <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+          <span class="text-[#790d16] font-black text-sm tracking-wider">EVENTDECOR</span>
+          <span class="text-slate-300">|</span>
+          <span>Nền tảng kết nối dịch vụ sự kiện chuyên nghiệp</span>
+        </div>
+        <p>&copy; 2026 EventDecor. All rights reserved.</p>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- SCRIPT LỌC TÌM KIẾM -->
+  <script>
+    function filterPartners() {
+      const keyword = (document.getElementById('partner-search-input')?.value || '').trim().toLowerCase();
+      const cards = document.querySelectorAll('.partner-card');
+      const noResult = document.getElementById('no-search-result');
+      let visibleCount = 0;
+
+      cards.forEach(card => {
+        const name = card.getAttribute('data-name') || '';
+        if (!keyword || name.includes(keyword)) {
+          card.style.display = 'flex';
+          visibleCount++;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      const countEl = document.getElementById('partner-count');
+      if (countEl) countEl.innerText = visibleCount;
+
+      if (noResult) {
+        if (visibleCount === 0 && cards.length > 0) {
+          noResult.classList.remove('hidden');
+        } else {
+          noResult.classList.add('hidden');
+        }
+      }
+    }
+  </script>
+</body>
+</html>

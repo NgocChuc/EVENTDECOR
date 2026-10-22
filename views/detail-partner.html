@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full scroll-smooth bg-[#fff7eb]">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ partner.name }} - Thông tin đối tác EventDecor</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Google Font: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .light-frosted-card {
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(174, 196, 212, 0.45) !important;
+      outline: none !important;
+      box-shadow: 0 10px 30px -5px rgba(174, 196, 212, 0.25), 0 4px 14px -2px rgba(121, 13, 22, 0.05);
+      transition: background-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+    }
+    .light-frosted-card:hover {
+      background: rgba(255, 255, 255, 0.94);
+      border-color: rgba(174, 196, 212, 0.45) !important;
+      box-shadow: 0 16px 36px -4px rgba(174, 196, 212, 0.35);
+      transform: translateY(-2px);
+    }
+    .frosted-pill {
+      background: rgba(249, 240, 224, 0.8);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(174, 196, 212, 0.5) !important;
+      outline: none !important;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+    .frosted-pill:hover {
+      background: rgba(255, 255, 255, 0.95);
+      border-color: rgba(174, 196, 212, 0.5) !important;
+    }
+  </style>
+</head>
+
+<body class="min-h-full flex flex-col text-slate-800 bg-[#fff7eb] relative overflow-x-hidden selection:bg-[#790d16]/20 selection:text-[#790d16]">
+
+  <!-- NẠP HEADER DÙNG CHUNG -->
+  {% include "header.html" %}
+
+  <!-- HIỆU ỨNG SƯƠNG MỜ VÀ TÁN SẮC NỀN -->
+  <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <div class="absolute -top-32 left-1/4 w-[700px] h-[450px] bg-[#aec4d4]/35 rounded-full blur-[140px]"></div>
+    <div class="absolute top-[28%] -right-40 w-[550px] h-[550px] bg-[#790d16]/8 rounded-full blur-[160px]"></div>
+    <div class="absolute top-[55%] -left-40 w-[600px] h-[600px] bg-[#a2ab73]/15 rounded-full blur-[150px]"></div>
+    <div class="absolute top-[75%] right-10 w-[650px] h-[550px] bg-[#f9f0e0] rounded-full blur-[160px]"></div>
+    <div class="absolute inset-0 bg-[radial-gradient(rgba(174,196,212,0.3)_1px,transparent_1px)] [background-size:24px_24px] opacity-70"></div>
+  </div>
+
+  <div class="relative z-10 flex-1 flex flex-col">
+
+    <!-- THANH BREADCRUMB -->
+    <div class="max-w-6xl w-full mx-auto px-4 sm:px-6 pt-4">
+      <nav id="breadcrumb" aria-label="Breadcrumb" class="py-1">
+        <ol class="inline-flex items-center text-xs font-medium text-slate-400 select-none">
+          <li class="inline-flex items-center">
+            <a href="/" class="hover:text-[#790d16] transition-colors">Trang chủ</a>
+          </li>
+          <li class="inline-flex items-center">
+            <i class="fa-solid fa-chevron-right text-[10px] mx-2 text-slate-400"></i>
+            <a href="/partner" class="hover:text-[#790d16] transition-colors">Đối tác</a>
+          </li>
+          <li class="inline-flex items-center">
+            <i class="fa-solid fa-chevron-right text-[10px] mx-2 text-slate-400"></i>
+            <span class="text-slate-700 font-bold" aria-current="page">{{ partner.name }}</span>
+          </li>
+        </ol>
+      </nav>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-6xl w-full mx-auto px-4 sm:px-6 py-8 space-y-12">
+
+      <!-- ==================== 1. KHỐI THÔNG TIN ĐỐI TÁC ==================== -->
+      <section class="light-frosted-card rounded-3xl overflow-hidden p-6 sm:p-8 space-y-6">
+        <div class="flex flex-col md:flex-row gap-8 items-start">
+          
+          <!-- Ảnh đại diện / Logo lớn -->
+          <div class="w-full md:w-80 shrink-0 aspect-[4/3] rounded-2xl overflow-hidden bg-slate-100 border border-[#aec4d4]/40 shadow-xs relative">
+            {% if partner.image %}
+              <img 
+                src="{{ partner.image }}" 
+                alt="{{ partner.name }}" 
+                onerror="this.src='https://placehold.co/600x450/e2e8f0/475569?text=EventDecor+Partner'"
+                class="w-full h-full object-cover"
+              >
+            {% else %}
+              <div class="w-full h-full bg-gradient-to-tr from-[#315b8c] to-[#1e3a5f] text-white font-black text-5xl flex items-center justify-center">
+                {{ (partner.name)[0] or 'P' }}
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Chi tiết thông tin đối tác -->
+          <div class="flex-1 space-y-5">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-widest text-[#788248]">Hồ sơ năng lực</span>
+              <h1 class="text-2xl sm:text-3xl font-black text-slate-900 mt-1 leading-snug">
+                {{ partner.name }}
+              </h1>
+            </div>
+
+            <!-- Giới thiệu ngắn -->
+            <div class="space-y-2">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Giới thiệu</h4>
+              <p class="text-slate-600 text-xs sm:text-sm leading-relaxed whitespace-pre-line font-normal">
+                {{ partner.description if partner.description else 'Đơn vị cung cấp giải pháp thiết kế, thi công decor trọn gói chuyên nghiệp, luôn đồng hành cùng quý khách hàng tạo nên những khoảnh khắc đáng nhớ.' }}
+              </p>
+            </div>
+
+            <!-- Chỉ giữ lại hòm thư email -->
+            <div class="pt-3 border-t border-[#aec4d4]/30 text-xs">
+              <div class="flex items-center gap-3 p-3.5 rounded-2xl bg-[#f9f0e0]/70 border border-[#aec4d4]/40 max-w-md">
+                <div class="w-8 h-8 rounded-xl bg-white flex items-center justify-center text-[#790d16] shrink-0 shadow-2xs">
+                  <i class="fa-solid fa-envelope"></i>
+                </div>
+                <div class="truncate">
+                  <span class="text-[10px] text-slate-400 block font-medium">Hòm thư đối tác</span>
+                  <span class="font-bold text-slate-700 truncate block">{{ partner.email or 'contact@eventdecor.vn' }}</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ==================== 2. KHỐI CÁC GÓI DỊCH VỤ CỦA ĐỐI TÁC ==================== -->
+      <section class="space-y-6">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-widest text-[#788248]">Hệ sinh thái thi công</span>
+          <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-1">
+            Dịch Vụ Đang Cung Cấp ({{ services | length }})
+          </h2>
+        </div>
+
+        <!-- Lưới dịch vụ của đối tác -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {% if services and services.length > 0 %}
+            {% for srv in services %}
+            <div class="light-frosted-card rounded-3xl overflow-hidden flex flex-col justify-between group">
+              <div>
+                <!-- Ảnh dịch vụ -->
+                <div class="aspect-[16/10] w-full overflow-hidden bg-slate-100 relative">
+                  <img 
+                    src="{{ srv.image if srv.image else 'https://placehold.co/600x375/e2e8f0/475569?text=Event+Decor+Service' }}" 
+                    onerror="this.src='https://placehold.co/600x375/e2e8f0/475569?text=Service'"
+                    alt="{{ srv.name }}" 
+                    class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  >
+                  <span class="absolute top-3 left-3 bg-white/90 backdrop-blur-md text-[#315b8c] text-[10px] font-bold px-2.5 py-1 rounded-lg border border-[#aec4d4]/30 shadow-2xs">
+                    {{ srv.categoryName or "Sự kiện" }}
+                  </span>
+                </div>
+
+                <!-- Thông tin dịch vụ -->
+                <div class="p-5 space-y-3">
+                  <div class="flex items-center justify-between gap-2">
+                    <h3 class="font-bold text-slate-900 text-base group-hover:text-[#790d16] transition-colors line-clamp-1">
+                      {{ srv.name }}
+                    </h3>
+                    <div class="inline-flex items-center gap-1 text-[11px] font-extrabold text-[#B8860B] bg-[#D4AF37]/15 px-2 py-0.5 rounded-md shrink-0">
+                      <i class="fa-solid fa-star text-[#D4AF37]"></i>
+                      <span>{{ (srv.rating or 5.0) | round(1) }}</span>
+                    </div>
+                  </div>
+
+                  <p class="text-slate-600 text-xs leading-relaxed line-clamp-2">
+                    {{ srv.description or "Gói dịch vụ trang trí trọn gói, linh hoạt điều chỉnh theo yêu cầu không gian và ngân sách." }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Chi phí & Nút xem chi tiết gói -->
+              <div class="px-5 pb-5 pt-2 border-t border-[#aec4d4]/30 flex items-center justify-between gap-3">
+                <div>
+                  <span class="text-[10px] text-slate-400 block font-medium">Chi phí từ</span>
+                  <span class="text-sm font-black text-[#790d16]">
+                    {{ (srv.basePrice or 0).toLocaleString('vi-VN') }} <span class="text-[10px]">VNĐ</span>
+                  </span>
+                </div>
+                <a 
+                  href="/event/detail?id={{ srv.id }}" 
+                  class="inline-flex items-center px-4 py-2 rounded-xl frosted-pill text-[#790d16] text-xs font-bold transition-all active:scale-95 shadow-2xs"
+                >
+                  <span>Chi tiết gói</span>
+                  <i class="fa-solid fa-chevron-right text-[9px] ml-1.5"></i>
+                </a>
+              </div>
+
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="col-span-full py-14 text-center light-frosted-card rounded-3xl space-y-3">
+              <i class="fa-regular fa-calendar-xmark text-4xl text-slate-300"></i>
+              <p class="text-slate-500 text-xs sm:text-sm">Hiện đối tác này chưa đăng tải gói dịch vụ nào trên sàn.</p>
+            </div>
+          {% endif %}
+        </div>
+      </section>
+
+      <!-- ==================== 3. KHỐI BÌNH LUẬN & ĐÁNH GIÁ ==================== -->
+      <section class="space-y-6">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-widest text-[#788248]">Ý kiến trải nghiệm</span>
+          <h2 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight mt-1">
+            Đánh Giá & Phản Hồi ({{ reviews | length if reviews else 0 }})
+          </h2>
+        </div>
+
+        {% if reviews and reviews.length > 0 %}
+          <div class="space-y-4">
+            {% for rv in reviews %}
+            <div class="light-frosted-card rounded-2xl p-5 sm:p-6 space-y-3">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#315b8c] to-[#790d16] text-white font-bold flex items-center justify-center text-sm shadow-xs">
+                    {{ (rv.userName)[0] if rv.userName else 'K' }}
+                  </div>
+                  <div>
+                    <h4 class="font-bold text-slate-900 text-sm">{{ rv.userName or 'Khách hàng' }}</h4>
+                    <span class="text-[11px] text-slate-400 block">{{ rv.createdAt or 'Gần đây' }}</span>
+                  </div>
+                </div>
+                <div class="flex items-center gap-1 text-[#D4AF37] text-xs bg-[#D4AF37]/10 px-2.5 py-1 rounded-lg">
+                  <i class="fa-solid fa-star"></i>
+                  <span class="font-bold text-slate-800">{{ rv.rating or 5 }}</span>
+                </div>
+              </div>
+              <p class="text-slate-600 text-xs sm:text-sm leading-relaxed">
+                {{ rv.comment }}
+              </p>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <!-- Trạng thái trống khi chưa có dữ liệu đánh giá -->
+          <div class="light-frosted-card rounded-3xl py-14 text-center space-y-3">
+            <div class="w-12 h-12 mx-auto rounded-2xl bg-[#f9f0e0] border border-[#aec4d4]/40 flex items-center justify-center text-slate-400 shadow-2xs">
+              <i class="fa-regular fa-comment-dots text-xl"></i>
+            </div>
+            <p class="text-slate-500 text-xs sm:text-sm">Chưa có bình luận hoặc đánh giá nào cho đối tác này.</p>
+          </div>
+        {% endif %}
+      </section>
+
+    </main>
+
+    <!-- FOOTER ĐỒNG BỘ HOME -->
+    <footer class="mt-auto border-t border-[#aec4d4]/30 py-8 text-center text-xs text-slate-500 bg-white/40 backdrop-blur-md">
+      <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+          <span class="text-[#790d16] font-black text-sm tracking-wider">EVENTDECOR</span>
+          <span class="text-slate-300">|</span>
+          <span>Nền tảng kết nối dịch vụ sự kiện chuyên nghiệp</span>
+        </div>
+        <p>&copy; 2026 EventDecor. All rights reserved.</p>
+      </div>
+    </footer>
+
+  </div>
+
+</body>
+</html>
