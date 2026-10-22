@@ -1,3 +1,4 @@
+
 require("dotenv").config();
 const express = require("express");
 const nunjucks = require("nunjucks");
@@ -45,16 +46,20 @@ app.use((req, res, next) => {
 // =========================================================================
 // 3. CẤU HÌNH NUNJUCKS
 // =========================================================================
+const viewsPath = path.join(__dirname, "views");
 nunjucks.configure([
-  path.join(__dirname),           // HTML gốc: home.html, event.html...
-  path.join(__dirname, "admin"),  // Admin pages: admin/*.html
+  viewsPath,
+  path.join(viewsPath, "admin"),
+  path.join(__dirname, "admin")
 ], {
   autoescape: true,
   express: app,
   watch: true,
+  noCache: true
 });
+
 app.set("view engine", "html");
-app.set("views", path.join(__dirname));
+app.set("views", viewsPath);
 
 // =========================================================================
 // 4. CƠ SỞ DỮ LIỆU MYSQL
@@ -63,7 +68,7 @@ const pool = mysql.createPool({
   host: process.env.DB_HOST || "localhost",
   user: process.env.DB_USER || "root",
   password: process.env.DB_PASSWORD || "",
-  database: process.env.DB_NAME || "node_auth_demo",
+  database: process.env.DB_NAME || "auth_demo",
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
