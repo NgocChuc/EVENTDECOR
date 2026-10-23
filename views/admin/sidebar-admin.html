@@ -1,4 +1,4 @@
-<aside class="w-[270px] h-screen bg-[#0d1527] border-r border-[#17233d] flex flex-col flex-shrink-0 select-none shadow-2xl z-20">
+<aside class="w-[270px] h-full bg-[#0d1527] border-r border-[#17233d] flex flex-col shrink-0 select-none shadow-2xl z-20">
   <!-- BRAND / LOGO HEADER -->
   <div class="px-5 pt-6 pb-6 flex items-center gap-3.5">
     <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#06b6d4] to-[#2563eb] flex items-center justify-center shadow-lg shadow-cyan-500/15 shrink-0 ring-1 ring-white/10 text-white">
@@ -34,7 +34,7 @@
       <div class="mt-2 space-y-1">
         <!-- 1. Quản lý Tài khoản -->
         <div class="space-y-1">
-          <button type="button" id="btn-account-toggle" class="relative w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[13.5px] font-medium text-[#94a3b8] hover:text-white hover:bg-[#15223c] transition-all group focus:outline-none">
+          <button type="button" id="btn-account-toggle" class="relative w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[13.5px] font-medium text-[#94a3b8] hover:text-white hover:bg-[#15223c] transition-all group focus:outline-none cursor-pointer">
             <div class="flex items-center gap-3.5">
               <span class="material-symbols-outlined text-[20px]">group</span>
               <span>Quản lý Tài khoản</span>
@@ -55,7 +55,7 @@
 
         <!-- 2. Quản lý sự kiện -->
         <div class="space-y-1">
-          <button type="button" id="btn-service-toggle" class="relative w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[13.5px] font-medium text-[#94a3b8] hover:text-white hover:bg-[#15223c] transition-all group focus:outline-none">
+          <button type="button" id="btn-service-toggle" class="relative w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-[13.5px] font-medium text-[#94a3b8] hover:text-white hover:bg-[#15223c] transition-all group focus:outline-none cursor-pointer">
             <div class="flex items-center gap-3.5">
               <span class="material-symbols-outlined text-[20px]">calendar_month</span>
               <span>Quản lý sự kiện</span>
@@ -106,7 +106,7 @@
 
   <!-- ĐĂNG XUẤT -->
   <div class="p-3.5 border-t border-[#17233d] bg-[#0b1222]/60">
-    <a href="/logout" class="flex items-center gap-3.5 px-3.5 py-2.5 rounded-lg text-[13.5px] font-medium text-red-400 hover:text-red-300 transition-all">
+    <a href="/logout" class="flex items-center gap-3.5 px-3.5 py-2.5 rounded-lg text-[13.5px] font-medium text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all">
       <span class="material-symbols-outlined text-[20px]">logout</span>
       <span>Đăng xuất</span>
     </a>
@@ -119,23 +119,34 @@
     document.getElementById('account-submenu')?.classList.toggle('hidden');
     document.getElementById('account-arrow')?.classList.toggle('rotate-90');
   });
+
   document.getElementById('btn-service-toggle')?.addEventListener('click', () => {
     document.getElementById('service-submenu')?.classList.toggle('hidden');
     document.getElementById('service-arrow')?.classList.toggle('rotate-90');
   });
 
-  // Tự động active menu tương ứng URL
+  // Tự động active menu thông minh (Khớp cả khi URL có hoặc không có đuôi .html)
   (function() {
-    const curPath = window.location.pathname;
+    const curPath = window.location.pathname.replace(/\/$/, ""); // Loại bỏ slash cuối nếu có
+    const normalize = path => path.replace(/\.html$/, "");
+
     document.querySelectorAll('.nav-link').forEach(link => {
       const href = link.getAttribute('href');
-      if (href && (curPath === href || (href.endsWith('dashboard.html') && curPath === '/admin/dashboard'))) {
+      if (!href) return;
+
+      const normHref = normalize(href);
+      const normCur = normalize(curPath);
+
+      if (normCur === normHref || (normCur === '/admin' && normHref === '/admin/dashboard')) {
         link.classList.add('bg-[#15223c]', 'text-white');
         link.classList.remove('text-[#94a3b8]');
+        
+        // Mở submenu cha nếu menu này nằm bên trong
         const sub = link.closest('#account-submenu, #service-submenu');
         if (sub) {
           sub.classList.remove('hidden');
-          sub.previousElementSibling?.querySelector('.material-symbols-outlined:last-child')?.classList.add('rotate-90');
+          const toggleBtn = sub.previousElementSibling;
+          toggleBtn?.querySelector('.material-symbols-outlined:last-child')?.classList.add('rotate-90');
         }
       }
     });

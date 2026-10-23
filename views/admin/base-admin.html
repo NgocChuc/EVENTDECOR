@@ -5,10 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}EventDecor Admin{% endblock %}</title>
 
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Fonts & Material Symbols -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -16,29 +13,21 @@
 
   <style>
     body { font-family: 'Inter', sans-serif; }
-    .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
-    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
-    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
   </style>
   {% block head_extra %}{% endblock %}
 </head>
 <body class="h-full m-0 p-0 bg-[#f8fafc] overflow-hidden flex">
 
-  <!-- 1. SIDEBAR CỐ ĐỊNH BÊN TRÁI (Sửa đường dẫn có admin/) -->
+  <!-- 1. SIDEBAR (Chỉ định rõ trong thư mục admin/) -->
   {% include "admin/sidebar-admin.html" %}
 
-  <!-- 2. CỘT PHẢI (HEADER + MAIN CONTENT) -->
-  <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-    
-    <!-- HEADER QUẢN TRỊ (Sửa đường dẫn có admin/) -->
+  <!-- 2. NỘI DUNG CHÍNH -->
+  <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
     {% include "admin/header-admin.html" %}
 
-    <!-- NỘI DUNG THAY ĐỔI CỦA TỪNG TRANG -->
-    <main class="flex-1 overflow-y-auto p-6 bg-[#f8fafc] custom-scroll">
+    <main class="flex-1 overflow-y-auto p-6 bg-[#f8fafc]">
       {% block content %}{% endblock %}
     </main>
-
   </div>
 
   {% block scripts %}{% endblock %}

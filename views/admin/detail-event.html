@@ -1,809 +1,491 @@
-<!DOCTYPE html>
-<html lang="vi" class="h-full bg-[#f8fafc]">
+{% extends "admin/base-admin.html" %}
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EventDecor - Chi tiết Gói Sự kiện</title>
+{% block title %}Chi tiết Gói Sự kiện - EventDecor Admin{% endblock %}
 
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
+{% block content %}
+<!-- BREADCRUMB -->
+<nav class="flex items-center text-xs font-medium text-slate-400 mb-5 select-none" aria-label="Breadcrumb">
+  <ol class="inline-flex items-center space-x-1.5 md:space-x-2">
+    <li class="inline-flex items-center">
+      <a href="/admin/dashboard" class="hover:text-blue-600 transition-colors">Trang chủ</a>
+    </li>
+    <li><span class="text-slate-300 mx-1">&rsaquo;</span></li>
+    <li class="inline-flex items-center">
+      <a href="/admin/available-event" class="hover:text-blue-600 transition-colors">Sự kiện khả dụng</a>
+    </li>
+    <li><span class="text-slate-300 mx-1">&rsaquo;</span></li>
+    <li aria-current="page">
+      <span class="text-slate-600 font-semibold" id="crumb-event-id">Chi tiết sự kiện</span>
+    </li>
+  </ol>
+</nav>
 
-  <!-- Fonts & Material Symbols -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
-
-  <style>
-    *, ::before, ::after { box-sizing: border-box; }
-    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
-    .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
-    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
-    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-  </style>
-</head>
-
-<body class="h-full m-0 p-0 bg-[#f8fafc] overflow-hidden flex">
-
-  <!-- SIDEBAR CONTAINER -->
-  <div id="sidebar-container" class="shrink-0"></div>
-
-  <!-- CỘT NỘI DUNG CHÍNH -->
-  <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-
-    <!-- HEADER CONTAINER -->
-    <div id="header-container" class="w-full shrink-0"></div>
-
-    <!-- MAIN SCROLLABLE CONTENT -->
-    <main class="flex-1 overflow-y-auto p-6 bg-[#f8fafc]">
-
-      <!-- BREADCRUMB -->
-      <nav class="flex items-center text-xs font-medium text-slate-400 mb-5 select-none" aria-label="Breadcrumb">
-        <ol class="inline-flex items-center space-x-1.5 md:space-x-2">
-          <li class="inline-flex items-center">
-            <a href="/admin/dashboard" class="hover:text-blue-600 transition-colors">Trang chủ</a>
-          </li>
-          <li><span class="text-slate-300 mx-1">&rsaquo;</span></li>
-          <li class="inline-flex items-center">
-            <a href="/admin/available-event" class="hover:text-blue-600 transition-colors">Sự kiện khả dụng</a>
-          </li>
-          <li><span class="text-slate-300 mx-1">&rsaquo;</span></li>
-          <li aria-current="page">
-            <span class="text-slate-600 font-semibold" id="crumb-event-id">Chi tiết sự kiện</span>
-          </li>
-        </ol>
-      </nav>
-
-      <!-- 1. KHỐI THÔNG TIN TỔNG QUAN & ACTION BAR TRỰC TIẾP -->
-      <section class="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs mb-7">
-        
-        <!-- Dòng trên: Back, Tên gói, Trạng thái & Action buttons -->
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-slate-100">
-          <div class="flex items-start gap-3">
-            <a href="/admin/available-event" 
-              class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-600 hover:text-blue-600 hover:bg-slate-100 transition-all shrink-0 mt-0.5">
-              <span class="material-symbols-outlined text-[20px]">arrow_back</span>
-            </a>
-            <div>
-              <div class="flex items-center gap-2 flex-wrap">
-                <span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-blue-50 text-blue-700 font-mono" id="detail-code">---</span>
-                <span class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700" id="detail-category">---</span>
-                <span id="detail-visibility-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold">---</span>
-              </div>
-              <h1 class="text-xl md:text-2xl font-bold text-[#0f172a] tracking-tight mt-1" id="detail-name">
-                Đang tải thông tin gói dịch vụ...
-              </h1>
-            </div>
-          </div>
-
-          <!-- NÚT HÀNH ĐỘNG TRỰC TIẾP -->
-          <div class="flex items-center gap-2.5 shrink-0 flex-wrap">
-            <button type="button" onclick="openVisibilityModal()" id="btn-toggle-status"
-              class="inline-flex items-center gap-1.5 px-3.5 py-2 border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 active:scale-95 text-xs font-semibold rounded-xl transition-all shadow-2xs">
-              <span class="material-symbols-outlined text-[17px]">tune</span>
-              <span id="btn-toggle-status-text">Cấu hình hiển thị</span>
-            </button>
-
-            <button type="button" onclick="confirmDeleteEvent()"
-              class="inline-flex items-center gap-1.5 px-3.5 py-2 border border-rose-200 text-rose-600 bg-rose-50 hover:bg-rose-100 active:scale-95 text-xs font-semibold rounded-xl transition-all shadow-2xs">
-              <span class="material-symbols-outlined text-[17px]">delete</span>
-              <span>Hủy niêm yết</span>
-            </button>
-          </div>
+<!-- 1. KHỐI THÔNG TIN TỔNG QUAN & ACTION BAR TRỰC TIẾP -->
+<section class="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs mb-7">
+  <!-- Dòng trên: Back, Tên gói, Trạng thái & Action buttons -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-6 border-b border-slate-100">
+    <div class="flex items-start gap-3">
+      <a href="/admin/available-event" class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-600 hover:text-blue-600 hover:bg-slate-100 transition-all shrink-0 mt-0.5 cursor-pointer">
+        <span class="material-symbols-outlined text-[20px]">arrow_back</span>
+      </a>
+      <div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-blue-50 text-blue-700 font-mono" id="detail-code">---</span>
+          <span class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700" id="detail-category">---</span>
+          <span id="detail-visibility-badge" class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-500">---</span>
         </div>
-
-        <!-- Dòng dưới: Danh sách thông số phân bố -->
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 pt-5 text-xs">
-          <div>
-            <span class="text-slate-400 block mb-1">Giá niêm yết</span>
-            <span class="text-base font-bold text-blue-600" id="detail-price">0 ₫</span>
-          </div>
-          <div>
-            <span class="text-slate-400 block mb-1">Ngày đăng ký</span>
-            <span class="font-semibold text-slate-700" id="detail-reg-date">--/--/----</span>
-          </div>
-          <div>
-            <span class="text-slate-400 block mb-1">Ngày duyệt sự kiện</span>
-            <span class="font-semibold text-emerald-600" id="detail-approval-date">--/--/----</span>
-          </div>
-          <div>
-            <span class="text-slate-400 block mb-1">Đối tác cung ứng</span>
-            <span class="font-semibold text-slate-800 truncate block" id="detail-partner">---</span>
-          </div>
-          <div>
-            <span class="text-slate-400 block mb-1">Lượt đặt mua</span>
-            <span class="font-semibold text-slate-800" id="detail-bookings">0 lượt</span>
-          </div>
-          <div>
-            <span class="text-slate-400 block mb-1">Điểm đánh giá</span>
-            <span class="font-semibold text-slate-900" id="detail-rating">0.0 / 5.0</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- BỐ CỤC 2 CỘT CHÍNH -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-
-        <!-- CỘT TRÁI (2/3): GALLERY, MÔ TẢ CHI TIẾT, BẢNG VẬT TƯ & LỊCH SỬ ĐẶT ĐƠN -->
-        <div class="lg:col-span-2 space-y-6">
-
-          <!-- 2. BỘ SƯU TẬP ẢNH GÓC CHỤP THỰC TẾ (GALLERY) -->
-          <section class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
-            <div class="flex items-center justify-between mb-4">
-              <div>
-                <h2 class="text-sm font-bold text-slate-800">Bộ sưu tập hình ảnh thực tế</h2>
-                <p class="text-[11px] text-slate-400 mt-0.5">Ảnh chụp các góc decor, không gian thi công đã kiểm duyệt</p>
-              </div>
-              <span class="text-xs text-slate-400" id="gallery-count">0 hình ảnh</span>
-            </div>
-
-            <!-- Ảnh xem lớn -->
-            <div class="w-full h-80 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 mb-3 relative group">
-              <img id="main-gallery-view" src="" alt="Ảnh chi tiết" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-102">
-            </div>
-
-            <!-- Hàng thumbnail bên dưới -->
-            <div class="grid grid-cols-4 sm:grid-cols-5 gap-3" id="gallery-thumbnails">
-              <!-- Render động -->
-            </div>
-          </section>
-
-          <!-- 3. Ô NỘI DUNG MÔ TẢ CHI TIẾT DỊCH VỤ -->
-          <section class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
-            <div class="flex items-center justify-between pb-3 mb-3.5 border-b border-slate-100">
-              <div>
-                <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2">
-                  <span class="material-symbols-outlined text-blue-600 text-[18px]">article</span>
-                  <span>Mô tả chi tiết gói dịch vụ</span>
-                </h2>
-                <p class="text-[11px] text-slate-400 mt-0.5">Ý tưởng thiết kế, thông số mỹ thuật </p>
-              </div>
-              <span class="text-[11px] text-slate-400 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">Hồ sơ đối tác cung cấp</span>
-            </div>
-
-            <div id="detail-description-container" class="text-xs text-slate-600 leading-relaxed space-y-3 bg-slate-50/60 p-4 rounded-xl border border-slate-100">
-              <!-- Render  -->
-            </div>
-          </section>
-
-          <!-- 4. MÔ TẢ HẠNG MỤC TRỌN GÓI & BẢNG VẬT TƯ -->
-          <section class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
-            <div class="mb-4">
-              <h2 class="text-sm font-bold text-slate-800">Bảng kê chi tiết vật tư & Hạng mục thi công</h2>
-              <p class="text-[11px] text-slate-400 mt-0.5">Danh mục trang thiết bị, vật tư hoa, bàn ghế và thông số kỹ thuật cam kết</p>
-            </div>
-
-            <div class="overflow-x-auto border border-slate-100 rounded-xl">
-              <table class="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr class="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase border-b border-slate-200/70">
-                    <th class="py-3 px-3.5 w-36">Hạng mục</th>
-                    <th class="py-3 px-3.5 min-w-[150px]">Kích thước / Quy cách</th>
-                    <th class="py-3 px-3.5 min-w-[140px]">Chất liệu / Chủng loại</th>
-                    <th class="py-3 px-3.5 w-20 text-center">Số lượng</th>
-                    <th class="py-3 px-3.5 w-20 text-center">Đơn vị</th>
-                    <th class="py-3 px-3.5 min-w-[160px]">Ghi chú thực hiện</th>
-                  </tr>
-                </thead>
-                <tbody id="materials-table-body" class="divide-y divide-slate-100 text-slate-700">
-                  <!-- Render động -->
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          <!-- 5. BẢNG LỊCH SỬ ĐƠN ĐẶT CỦA RIÊNG GÓI NÀY -->
-          <section class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-              <div>
-                <h2 class="text-sm font-bold text-slate-800">Lịch sử Đơn đặt của gói này</h2>
-                <p class="text-[11px] text-slate-400 mt-0.5">Theo dõi các đơn hàng khách đã đặt theo từng mốc thời gian</p>
-              </div>
-
-              <!-- BỘ LỌC THỜI GIAN & TÌM KIẾM ĐƠN HÀNG -->
-              <div class="flex items-center gap-2 flex-wrap">
-                <div class="relative w-44">
-                  <input type="text" id="order-search-input" placeholder="Mã đơn, tên khách..."
-                    class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-blue-500">
-                </div>
-
-                <div class="relative">
-                  <select id="filter-order-time-range"
-                    class="appearance-none bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-lg pl-3 pr-7 py-1.5 focus:outline-none cursor-pointer">
-                    <option value="all">Tất cả thời gian</option>
-                    <option value="24h">Trong 24 giờ</option>
-                    <option value="1week">Trong 1 tuần</option>
-                    <option value="month">Trong tháng</option>
-                    <option value="year">Trong năm</option>
-                  </select>
-                  <span class="material-symbols-outlined text-[16px] text-slate-400 absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none">arrow_drop_down</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- BẢNG DANH SÁCH ĐƠN HÀNG-->
-            <div class="overflow-x-auto border border-slate-100 rounded-xl">
-              <table class="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr class="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase border-b border-slate-200/70">
-                    <th class="py-2.5 px-3 w-24">Mã đơn</th>
-                    <th class="py-2.5 px-3 min-w-[140px]">Khách hàng</th>
-                    <th class="py-2.5 px-3 w-28">Ngày đặt đơn</th>
-                    <th class="py-2.5 px-3 w-24">Ngày tổ chức</th>
-                    <th class="py-2.5 px-3 text-right min-w-[100px]">Tổng tiền</th>
-                    <th class="py-2.5 px-3 text-center w-24">Đánh giá</th>
-                    <th class="py-2.5 px-3 text-center w-28">Phí hệ thống</th>
-                    <th class="py-2.5 px-3 text-center w-28">Trạng thái</th>
-                  </tr>
-                </thead>
-                <tbody id="orders-table-body" class="divide-y divide-slate-100 text-slate-700">
-                  <!-- Render động -->
-                </tbody>
-              </table>
-            </div>
-            
-            <div class="mt-3 text-right">
-              <span class="text-[11px] text-slate-400" id="order-count-info">Hiển thị 0 đơn đặt</span>
-            </div>
-          </section>
-
-          <!-- 6. QUY ĐỊNH & CHÍNH SÁCH  -->
-          <section class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
-            <div class="mb-3">
-              <h2 class="text-sm font-bold text-slate-800">Quy định & Chính sách</h2>
-              <p class="text-[11px] text-slate-400 mt-0.5">Điều khoản hoàn hủy, phụ thu vượt giờ và trách nhiệm bồi hoàn</p>
-            </div>
-
-            <div class="min-h-[100px] border border-dashed border-slate-200 rounded-xl bg-slate-50/50 flex items-center justify-center p-4">
-              <span class="text-xs text-slate-400 italic">Chưa có điều khoản quy định nào được ghi nhận cho gói sự kiện này.</span>
-            </div>
-          </section>
-
-        </div>
-
-        <!-- CỘT PHẢI (1/3): THÔNG TIN VẬN HÀNH & NỘI BỘ BỔ SUNG -->
-        <div class="space-y-6">
-
-          <!-- THÔNG SỐ VẬN HÀNH -->
-          <section class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs text-xs space-y-4">
-            <h3 class="text-sm font-bold text-slate-800 pb-3 border-b border-slate-100">Thông tin triển khai</h3>
-
-            <div>
-              <span class="text-slate-400 block mb-1">Thời gian chuẩn bị tối thiểu</span>
-              <span class="font-semibold text-slate-700" id="detail-lead-time">---</span>
-            </div>
-
-            <div>
-              <span class="text-slate-400 block mb-1">Thời gian thi công thực tế</span>
-              <span class="font-semibold text-slate-700" id="detail-setup-time">---</span>
-            </div>
-
-            <div>
-              <span class="text-slate-400 block mb-1">Quy mô khách đề xuất</span>
-              <span class="font-semibold text-slate-700" id="detail-capacity">---</span>
-            </div>
-
-            <div>
-              <span class="text-slate-400 block mb-1">Địa điểm áp dụng</span>
-              <span class="font-semibold text-slate-700" id="detail-scope">---</span>
-            </div>
-          </section>
-
-          <!-- THÔNG TIN ĐỐI TÁC -->
-          <section class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs text-xs space-y-3">
-            <h3 class="text-sm font-bold text-slate-800 pb-3 border-b border-slate-100">Đơn vị cung ứng</h3>
-            
-            <div>
-              <span class="text-slate-400 block mb-0.5">Tên đơn vị:</span>
-              <span class="font-semibold text-slate-800" id="detail-partner-name">---</span>
-            </div>
-
-            <div>
-              <span class="text-slate-400 block mb-0.5">Mã đối tác:</span>
-              <span class="font-mono text-slate-600" id="detail-partner-code">---</span>
-            </div>
-
-            <div>
-              <span class="text-slate-400 block mb-0.5">Hotline phụ trách kỹ thuật:</span>
-              <span class="font-semibold text-blue-600" id="detail-partner-phone">---</span>
-            </div>
-          </section>
-
-          <!-- NHẬT KÝ DUYỆT -->
-          <section class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs text-xs space-y-3">
-            <h3 class="text-sm font-bold text-slate-800 pb-3 border-b border-slate-100">Kiểm duyệt nội bộ</h3>
-            
-            <div class="flex items-start gap-2.5">
-              <span class="material-symbols-outlined text-[16px] text-emerald-600 mt-0.5">verified_user</span>
-              <div>
-                <span class="font-medium text-slate-700 block">Đã duyệt bởi Admin</span>
-                <span class="text-[11px] text-slate-400" id="detail-verifier">Hệ thống kiểm duyệt tự động</span>
-              </div>
-            </div>
-          </section>
-
-        </div>
-
+        <h1 class="text-xl md:text-2xl font-bold text-[#0f172a] tracking-tight mt-1" id="detail-name">
+          Đang tải thông tin gói dịch vụ...
+        </h1>
       </div>
+    </div>
 
-    </main>
-  </div>
-
-  <!-- ==================== MODAL CẤU HÌNH HIỂN THỊ ==================== -->
-  <div id="visibility-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-    <div class="bg-white border border-slate-200/90 rounded-2xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-      
-      <div class="p-5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/50">
-        <div class="flex items-center gap-2">
-          <span class="material-symbols-outlined text-blue-600 text-[22px]">tune</span>
-          <h3 class="text-base font-bold text-slate-800">Cấu hình trạng thái gói</h3>
-        </div>
-        <button type="button" onclick="closeVisibilityModal()" class="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 transition-colors">
-          <span class="material-symbols-outlined text-[20px]">close</span>
-        </button>
-      </div>
-
-      <div class="p-6 space-y-5 text-xs">
-        <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl">
-          <span class="text-slate-400 block text-[11px]">Đang thao tác gói sự kiện:</span>
-          <h4 id="modal-event-name" class="font-bold text-slate-800 text-sm mt-0.5"></h4>
-        </div>
-
-        <div class="space-y-3">
-          <label class="block font-bold text-slate-700">Trạng thái trên trang đặt hàng:</label>
-
-          <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 cursor-pointer hover:bg-blue-50/40 hover:border-blue-200 transition-all has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50/50">
-            <input type="radio" name="event-visibility-option" value="true" class="mt-0.5 text-blue-600 focus:ring-0">
-            <div>
-              <span class="font-semibold text-slate-800 block">Hiển thị công khai</span>
-              <span class="text-slate-500 text-[11px] block mt-0.5">Khách hàng có thể tìm kiếm, xem chi tiết và đặt lịch dịch vụ này.</span>
-            </div>
-          </label>
-
-          <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 cursor-pointer hover:bg-rose-50/40 hover:border-rose-200 transition-all has-[:checked]:border-rose-500 has-[:checked]:bg-rose-50/50">
-            <input type="radio" name="event-visibility-option" value="false" class="mt-0.5 text-rose-600 focus:ring-0">
-            <div>
-              <span class="font-semibold text-slate-800 block">Đang khóa (Tạm ẩn)</span>
-              <span class="text-slate-500 text-[11px] block mt-0.5">Gói sự kiện sẽ bị khóa và ẩn khỏi danh mục đặt hàng của khách.</span>
-            </div>
-          </label>
-        </div>
-      </div>
-
-      <div class="p-4 bg-slate-50/75 border-t border-slate-100 flex items-center justify-end gap-2.5 shrink-0">
-        <button type="button" onclick="closeVisibilityModal()" class="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-100 active:scale-95 transition-all">
-          Hủy bỏ
-        </button>
-        <button type="button" onclick="saveVisibilitySettings()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-xs active:scale-95 transition-all">
-          Xác nhận lưu
-        </button>
-      </div>
-
+    <!-- NÚT HÀNH ĐỘNG TRỰC TIẾP -->
+    <div class="flex items-center gap-2.5 shrink-0 flex-wrap">
+      <button type="button" onclick="openVisibilityModal()" id="btn-toggle-status" class="inline-flex items-center gap-1.5 px-3.5 py-2 border border-slate-200 text-slate-700 bg-white hover:bg-slate-50 active:scale-95 text-xs font-semibold rounded-xl transition-all shadow-2xs cursor-pointer">
+        <span class="material-symbols-outlined text-[17px]">tune</span>
+        <span id="btn-toggle-status-text">Cấu hình hiển thị</span>
+      </button>
+      <button type="button" onclick="confirmDeleteEvent()" class="inline-flex items-center gap-1.5 px-3.5 py-2 border border-rose-200 text-rose-600 bg-rose-50 hover:bg-rose-100 active:scale-95 text-xs font-semibold rounded-xl transition-all shadow-2xs cursor-pointer">
+        <span class="material-symbols-outlined text-[17px]">delete</span>
+        <span>Hủy niêm yết</span>
+      </button>
     </div>
   </div>
 
+  <!-- Dòng dưới: Danh sách thông số -->
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-6 pt-5 text-xs">
+    <div>
+      <span class="text-slate-400 block mb-1">Giá niêm yết</span>
+      <span class="text-base font-bold text-blue-600" id="detail-price">0 ₫</span>
+    </div>
+    <div>
+      <span class="text-slate-400 block mb-1">Ngày đăng ký</span>
+      <span class="font-semibold text-slate-700" id="detail-reg-date">--/--/----</span>
+    </div>
+    <div>
+      <span class="text-slate-400 block mb-1">Ngày duyệt sự kiện</span>
+      <span class="font-semibold text-emerald-600" id="detail-approval-date">--/--/----</span>
+    </div>
+    <div>
+      <span class="text-slate-400 block mb-1">Đối tác cung ứng</span>
+      <span class="font-semibold text-slate-800 truncate block" id="detail-partner">---</span>
+    </div>
+    <div>
+      <span class="text-slate-400 block mb-1">Lượt đặt mua</span>
+      <span class="font-semibold text-slate-800" id="detail-bookings">0 lượt</span>
+    </div>
+    <div>
+      <span class="text-slate-400 block mb-1">Điểm đánh giá</span>
+      <span class="font-semibold text-slate-900" id="detail-rating">0.0 / 5.0</span>
+    </div>
+  </div>
+</section>
 
-  <script src="layout-loader.js"></script>
+<!-- BỐ CỤC 2 CỘT CHÍNH -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+  <!-- CỘT TRÁI (2/3) -->
+  <div class="lg:col-span-2 space-y-6">
+    <!-- 2. BỘ SƯU TẬP ẢNH (GALLERY) -->
+    <section class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h2 class="text-sm font-bold text-slate-800">Bộ sưu tập hình ảnh thực tế</h2>
+          <p class="text-[11px] text-slate-400 mt-0.5">Ảnh chụp các góc decor, không gian thi công đã kiểm duyệt</p>
+        </div>
+        <span class="text-xs text-slate-400" id="gallery-count">0 hình ảnh</span>
+      </div>
+      <!-- Ảnh xem lớn -->
+      <div class="w-full h-80 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 mb-3 relative group flex items-center justify-center">
+        <img id="main-gallery-view" src="" alt="Ảnh chi tiết" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-102 hidden">
+        <span id="main-gallery-empty" class="text-xs text-slate-400 italic">Chưa có hình ảnh</span>
+      </div>
+      <!-- Hàng thumbnail -->
+      <div class="grid grid-cols-4 sm:grid-cols-5 gap-3" id="gallery-thumbnails"></div>
+    </section>
 
-  <!-- ==================== SCRIPT DỮ LIỆU & RENDER ==================== -->
-  <script>
-    // Dữ liệu mẫu
-    const eventDetailDatabase = {
-      "EVT-1001": {
-        id: "EVT-1001",
-        name: "[Mẫu] Gói Trang Trí Tiệc Cưới Phong Cách Tối Giản",
-        category: "Tiệc cưới",
-        partner: "Công ty TNHH Trang Trí Mẫu Alpha",
-        partnerCode: "DT-1001",
-        partnerPhone: "0900 111 222",
-        price: 18500000,
-        registrationDate: "15/03/2026",
-        approvalDate: "18/03/2026",
-        bookingCount: 24,
-        rating: 4.9,
-        isVisible: true,
-        verifier: "Admin - Kiểm Duyệt Viên Mẫu A",
-        leadTime: "Đặt trước tối thiểu 5 ngày",
-        setupTime: "4 - 6 giờ trước giờ khai tiệc",
-        capacity: "Phù hợp từ 150 - 300 khách",
-        scope: "Nội thành TP. Hồ Chí Minh",
-        detailedDescription: `
-          <p class="font-medium text-slate-700">Gói trang trí tiệc cưới mang phong cách Minimalism (Tối giản hiện đại) được thiết kế nhằm tối ưu hóa tính trang trọng, thanh lịch nhưng vẫn giữ trọn sự ấm cúng và tinh tế cho không gian ngày trọng đại của các cặp đôi.</p>
-          
-          <div class="space-y-1.5 pt-1">
-            <span class="font-bold text-slate-800 block">1. Triết lý thiết kế & Bố cục không gian:</span>
-            <p>Khác biệt với các phong cách rườm rà truyền thống, gói dịch vụ tập trung vào việc tạo chiều sâu thị giác thông qua nghệ thuật sắp đặt hình khối bất đối xứng kết hợp cùng dải màu Pastel nhẹ nhàng (trắng ngà, be nhạt và hồng thạch anh). Toàn bộ khu vực đón khách và sảnh chính được đồng bộ màu sắc nhằm làm nổi bật chủ thể là cô dâu và chú rể trong mọi góc chụp ảnh lưu niệm.</p>
+    <!-- 3. MÔ TẢ CHI TIẾT -->
+    <section class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
+      <div class="flex items-center justify-between pb-3 mb-3.5 border-b border-slate-100">
+        <div>
+          <h2 class="text-sm font-bold text-slate-800 flex items-center gap-2">
+            <span class="material-symbols-outlined text-blue-600 text-[18px]">article</span>
+            <span>Mô tả chi tiết gói dịch vụ</span>
+          </h2>
+          <p class="text-[11px] text-slate-400 mt-0.5">Ý tưởng thiết kế, thông số mỹ thuật</p>
+        </div>
+        <span class="text-[11px] text-slate-400 bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-100">Hồ sơ đối tác cung cấp</span>
+      </div>
+      <div id="detail-description-container" class="text-xs text-slate-600 leading-relaxed space-y-3 bg-slate-50/60 p-4 rounded-xl border border-slate-100">
+        <p class="text-slate-400 italic">Đang tải mô tả dịch vụ...</p>
+      </div>
+    </section>
+
+    <!-- 4. BẢNG VẬT TƯ -->
+    <section class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
+      <div class="mb-4">
+        <h2 class="text-sm font-bold text-slate-800">Bảng kê chi tiết vật tư & Hạng mục thi công</h2>
+        <p class="text-[11px] text-slate-400 mt-0.5">Danh mục trang thiết bị, vật tư hoa, bàn ghế và thông số kỹ thuật cam kết</p>
+      </div>
+      <div class="overflow-x-auto border border-slate-100 rounded-xl">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase border-b border-slate-200/70">
+              <th class="py-3 px-3.5 w-36">Hạng mục</th>
+              <th class="py-3 px-3.5 min-w-[150px]">Kích thước / Quy cách</th>
+              <th class="py-3 px-3.5 min-w-[140px]">Chất liệu / Chủng loại</th>
+              <th class="py-3 px-3.5 w-20 text-center">Số lượng</th>
+              <th class="py-3 px-3.5 w-20 text-center">Đơn vị</th>
+              <th class="py-3 px-3.5 min-w-[160px]">Ghi chú thực hiện</th>
+            </tr>
+          </thead>
+          <tbody id="materials-table-body" class="divide-y divide-slate-100 text-slate-700"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 5. BẢNG LỊCH SỬ ĐƠN ĐẶT -->
+    <section class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+        <div>
+          <h2 class="text-sm font-bold text-slate-800">Lịch sử Đơn đặt của gói này</h2>
+          <p class="text-[11px] text-slate-400 mt-0.5">Theo dõi các đơn hàng khách đã đặt theo từng mốc thời gian</p>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <div class="relative w-44">
+            <input type="text" id="order-search-input" placeholder="Mã đơn, tên khách..." class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-blue-500">
           </div>
-
-         
-         .....
-        `,
-        gallery: [
-          "https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&h=500&q=80",
-          "https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=800&h=500&q=80",
-          "https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&w=800&h=500&q=80",
-          "https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=800&h=500&q=80"
-        ],
-        materials: [
-          {
-            item: "[Mẫu] Backdrop chụp ảnh chính",
-            spec: "Khung sắt tròn đường kính 3.2m x 2.8m",
-            material: "Ván Formex bo viền, hoa hồng pastel & hoa baby tươi 100%",
-            qty: "1",
-            unit: "Bộ",
-            note: "Có kèm logo đèn neon uốn tên theo yêu cầu"
-          },
-          {
-            item: "[Mẫu] Bàn Gallery đón khách",
-            spec: "Bàn chữ nhật 1.8m x 0.8m phủ khăn voan",
-            material: "Gỗ sồi, chân kim loại phủ nhũ vàng",
-            qty: "1",
-            unit: "Bàn",
-            note: "Kèm 5 khung ảnh để bàn, chân nến đồng, thùng tiền mừng mẫu hộp kính"
-          },
-          {
-            item: "[Mẫu] Hệ thống ghế lễ đường",
-            spec: "Ghế Tiffany cao cấp thắt nơ lụa",
-            material: "Hợp kim sơn tĩnh điện trắng ngà",
-            qty: "30",
-            unit: "Ghế",
-            note: "Dành riêng cho 2 hàng ghế khách mời danh dự phía trước"
-          },
-          {
-            item: "[Mẫu] Hệ thống chiếu sáng",
-            spec: "Đèn Par LED 54 bóng kết hợp đèn rọi spotlight",
-            material: "Hệ khung nhôm treo đèn chuyên dụng",
-            qty: "6",
-            unit: "Bộ",
-            note: "Ánh sáng vàng ấm (Warm White 3200K) hỗ trợ chụp ảnh sắc nét"
-          },
-          {
-            item: "[Mẫu] Trụ hoa lối đi lễ đường",
-            spec: "Trụ đứng cao 1.2m cắm hoa tú cầu & cúc calimero",
-            material: "Khung kim loại thanh mảnh uốn mỹ thuật",
-            qty: "8",
-            unit: "Trụ",
-            note: "Bố trí đối xứng dọc thảm dẫn lên sân khấu"
-          }
-        ],
-        orders: [
-          {
-            code: "BK-1001",
-            customer: "Khách hàng Mẫu Nguyễn Văn An",
-            orderTimestamp: "2026-10-10T09:30:00",
-            eventDate: "20/10/2026",
-            total: 18500000,
-            rating: 5.0,
-            status: "processing"
-          },
-          {
-            code: "BK-1002",
-            customer: "Khách hàng Mẫu Trần Thị Mai Hoa",
-            orderTimestamp: "2026-10-06T14:15:00",
-            eventDate: "18/10/2026",
-            total: 18500000,
-            rating: 4.8,
-            status: "preparing"
-          },
-          {
-            code: "BK-1003",
-            customer: "Khách hàng Mẫu Lê Hoàng Phúc",
-            orderTimestamp: "2026-10-02T11:00:00",
-            eventDate: "12/10/2026",
-            total: 18500000,
-            rating: 4.9,
-            status: "completed"
-          },
-          {
-            code: "BK-1004",
-            customer: "Khách hàng Mẫu Phạm Thùy Dung",
-            orderTimestamp: "2026-04-20T16:45:00",
-            eventDate: "24/04/2026",
-            total: 18500000,
-            rating: 5.0,
-            status: "completed"
-          }
-        ]
-      },
-      "EVT-1002": {
-        id: "EVT-1002",
-        name: "[Mẫu] Sân Khấu Bong Bóng & LED Sinh Nhật VIP",
-        category: "Sinh nhật",
-        partner: "Hộ Kinh Doanh Sự Kiện Mẫu Beta",
-        partnerCode: "DT-1002",
-        partnerPhone: "0911 222 333",
-        price: 6800000,
-        registrationDate: "20/04/2026",
-        approvalDate: "22/04/2026",
-        bookingCount: 18,
-        rating: 4.7,
-        isVisible: true,
-        verifier: "Admin - Kiểm Duyệt Viên Mẫu B",
-        leadTime: "Đặt trước tối thiểu 2 ngày",
-        setupTime: "3 giờ trước sự kiện",
-        capacity: "Phù hợp tiệc gia đình, nhà hàng (30 - 80 khách)",
-        scope: "TP. Hồ Chí Minh & Bình Dương",
-        detailedDescription: `
-          <p class="font-medium text-slate-700">Giải pháp decor trọn gói cho tiệc thôi nôi, sinh nhật thiếu nhi và party gia đình với concept bong bóng nghệ thuật uốn lượn phong cách Hàn Quốc.</p>
-          <div class="space-y-1 pt-1">
-            <span class="font-bold text-slate-800 block">1. Điểm nhấn thị giác:</span>
-            <p>Backdrop tạo hình vòm lượn sóng kết hợp cụm bóng Jumbo tráng gương (chrome bóng cao cấp) phối cùng tông pastel mịn màng không mùi, an toàn cho trẻ nhỏ. Đèn neon sign dẻo uốn theo biệt danh hoặc tên riêng của chủ nhân bữa tiệc.</p>
+          <div class="relative">
+            <select id="filter-order-time-range" class="appearance-none bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-lg pl-3 pr-7 py-1.5 focus:outline-none cursor-pointer">
+              <option value="all">Tất cả thời gian</option>
+              <option value="24h">Trong 24 giờ</option>
+              <option value="1week">Trong 1 tuần</option>
+              <option value="month">Trong tháng</option>
+              <option value="year">Trong năm</option>
+            </select>
+            <span class="material-symbols-outlined text-[16px] text-slate-400 absolute right-1.5 top-1/2 -translate-y-1/2 pointer-events-none">arrow_drop_down</span>
           </div>
-          <div class="space-y-1 pt-1">
-            <span class="font-bold text-slate-800 block">2. Tiện ích đi kèm:</span>
-            <p>Hệ thống bàn trụ tròn 3 kích thước để bánh kem và phụ kiện chụp ảnh sinh nhật, tặng kèm 10 mũ sinh nhật và kệ bánh cupcake đồng bộ tone màu.</p>
+        </div>
+      </div>
+      <div class="overflow-x-auto border border-slate-100 rounded-xl">
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase border-b border-slate-200/70">
+              <th class="py-2.5 px-3 w-24">Mã đơn</th>
+              <th class="py-2.5 px-3 min-w-[140px]">Khách hàng</th>
+              <th class="py-2.5 px-3 w-28">Ngày đặt đơn</th>
+              <th class="py-2.5 px-3 w-24">Ngày tổ chức</th>
+              <th class="py-2.5 px-3 text-right min-w-[100px]">Tổng tiền</th>
+              <th class="py-2.5 px-3 text-center w-24">Đánh giá</th>
+              <th class="py-2.5 px-3 text-center w-28">Phí hệ thống</th>
+              <th class="py-2.5 px-3 text-center w-28">Trạng thái</th>
+            </tr>
+          </thead>
+          <tbody id="orders-table-body" class="divide-y divide-slate-100 text-slate-700"></tbody>
+        </table>
+      </div>
+      <div class="mt-3 text-right">
+        <span class="text-[11px] text-slate-400" id="order-count-info">Hiển thị 0 đơn đặt</span>
+      </div>
+    </section>
+
+    <!-- 6. QUY ĐỊNH & CHÍNH SÁCH -->
+    <section class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
+      <div class="mb-3">
+        <h2 class="text-sm font-bold text-slate-800">Quy định & Chính sách</h2>
+        <p class="text-[11px] text-slate-400 mt-0.5">Điều khoản hoàn hủy, phụ thu vượt giờ và trách nhiệm bồi hoàn</p>
+      </div>
+      <div class="min-h-[100px] border border-dashed border-slate-200 rounded-xl bg-slate-50/50 flex items-center justify-center p-4">
+        <span class="text-xs text-slate-400 italic">Chưa có điều khoản quy định nào được ghi nhận cho gói sự kiện này.</span>
+      </div>
+    </section>
+  </div>
+
+  <!-- CỘT PHẢI (1/3) -->
+  <div class="space-y-6">
+    <!-- THÔNG SỐ VẬN HÀNH -->
+    <section class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs text-xs space-y-4">
+      <h3 class="text-sm font-bold text-slate-800 pb-3 border-b border-slate-100">Thông tin triển khai</h3>
+      <div>
+        <span class="text-slate-400 block mb-1">Thời gian chuẩn bị tối thiểu</span>
+        <span class="font-semibold text-slate-700" id="detail-lead-time">---</span>
+      </div>
+      <div>
+        <span class="text-slate-400 block mb-1">Thời gian thi công thực tế</span>
+        <span class="font-semibold text-slate-700" id="detail-setup-time">---</span>
+      </div>
+      <div>
+        <span class="text-slate-400 block mb-1">Quy mô khách đề xuất</span>
+        <span class="font-semibold text-slate-700" id="detail-capacity">---</span>
+      </div>
+      <div>
+        <span class="text-slate-400 block mb-1">Địa điểm áp dụng</span>
+        <span class="font-semibold text-slate-700" id="detail-scope">---</span>
+      </div>
+    </section>
+
+    <!-- THÔNG TIN ĐỐI TÁC -->
+    <section class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs text-xs space-y-3">
+      <h3 class="text-sm font-bold text-slate-800 pb-3 border-b border-slate-100">Đơn vị cung ứng</h3>
+      <div>
+        <span class="text-slate-400 block mb-0.5">Tên đơn vị:</span>
+        <span class="font-semibold text-slate-800" id="detail-partner-name">---</span>
+      </div>
+      <div>
+        <span class="text-slate-400 block mb-0.5">Mã đối tác:</span>
+        <span class="font-mono text-slate-600" id="detail-partner-code">---</span>
+      </div>
+      <div>
+        <span class="text-slate-400 block mb-0.5">Hotline phụ trách kỹ thuật:</span>
+        <span class="font-semibold text-blue-600" id="detail-partner-phone">---</span>
+      </div>
+    </section>
+
+    <!-- NHẬT KÝ DUYỆT -->
+    <section class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs text-xs space-y-3">
+      <h3 class="text-sm font-bold text-slate-800 pb-3 border-b border-slate-100">Kiểm duyệt nội bộ</h3>
+      <div class="flex items-start gap-2.5">
+        <span class="material-symbols-outlined text-[16px] text-emerald-600 mt-0.5">verified_user</span>
+        <div>
+          <span class="font-medium text-slate-700 block">Đã duyệt bởi Admin</span>
+          <span class="text-[11px] text-slate-400" id="detail-verifier">---</span>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<!-- ==================== MODAL CẤU HÌNH HIỂN THỊ ==================== -->
+<div id="visibility-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+  <div class="bg-white border border-slate-200/90 rounded-2xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden">
+    <div class="p-5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/50">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-blue-600 text-[22px]">tune</span>
+        <h3 class="text-base font-bold text-slate-800">Cấu hình trạng thái gói</h3>
+      </div>
+      <button type="button" onclick="closeVisibilityModal()" class="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 transition-colors cursor-pointer">
+        <span class="material-symbols-outlined text-[20px]">close</span>
+      </button>
+    </div>
+    <div class="p-6 space-y-5 text-xs">
+      <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl">
+        <span class="text-slate-400 block text-[11px]">Đang thao tác gói sự kiện:</span>
+        <h4 id="modal-event-name" class="font-bold text-slate-800 text-sm mt-0.5">---</h4>
+      </div>
+      <div class="space-y-3">
+        <label class="block font-bold text-slate-700">Trạng thái trên sàn đặt hàng:</label>
+        <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 cursor-pointer hover:bg-blue-50/40 hover:border-blue-200 transition-all has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50/50">
+          <input type="radio" name="event-visibility-option" value="true" class="mt-0.5 text-blue-600 focus:ring-0">
+          <div>
+            <span class="font-semibold text-slate-800 block">Hiển thị công khai</span>
+            <span class="text-slate-500 text-[11px] block mt-0.5">Khách hàng có thể tìm kiếm, xem chi tiết và đặt lịch dịch vụ này.</span>
           </div>
-        `,
-        gallery: [
-          "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=800&h=500&q=80",
-          "https://images.unsplash.com/photo-1464349095431-e9a21285b5f3?auto=format&fit=crop&w=800&h=500&q=80"
-        ],
-        materials: [
-          {
-            item: "[Mẫu] Backdrop tạo hình",
-            spec: "Khung vòm kép cao 2.4m x rộng 3.0m",
-            material: "Format cán decal mờ, cụm bóng tròn chrome kết hợp bóng pastel",
-            qty: "1",
-            unit: "Bộ",
-            note: "Màu sắc tùy chỉnh theo chủ đề"
-          },
-          {
-            item: "[Mẫu] Bàn đôn để bánh kem",
-            spec: "Trụ tròn đường kính 40cm, 50cm, 60cm",
-            material: "Thạch cao bọc nhựa mica chịu lực",
-            qty: "3",
-            unit: "Trụ",
-            note: "Có khay để cupcake và giá để khung ảnh"
-          }
-        ],
-        orders: [
-          {
-            code: "BK-1005",
-            customer: "Khách hàng Mẫu Trần Thị Mai Hoa",
-            orderTimestamp: "2026-06-05T08:30:00",
-            eventDate: "10/06/2026",
-            total: 6800000,
-            rating: 4.7,
-            status: "completed"
-          }
-        ]
-      }
-    };
+        </label>
+        <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 cursor-pointer hover:bg-rose-50/40 hover:border-rose-200 transition-all has-[:checked]:border-rose-500 has-[:checked]:bg-rose-50/50">
+          <input type="radio" name="event-visibility-option" value="false" class="mt-0.5 text-rose-600 focus:ring-0">
+          <div>
+            <span class="font-semibold text-slate-800 block">Đang khóa (Tạm ẩn)</span>
+            <span class="text-slate-500 text-[11px] block mt-0.5">Gói sự kiện sẽ bị khóa và ẩn khỏi danh mục đặt hàng của khách.</span>
+          </div>
+        </label>
+      </div>
+    </div>
+    <div class="p-4 bg-slate-50/75 border-t border-slate-100 flex items-center justify-end gap-2.5 shrink-0">
+      <button type="button" onclick="closeVisibilityModal()" class="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-100 active:scale-95 transition-all cursor-pointer">
+        Hủy bỏ
+      </button>
+      <button type="button" onclick="saveVisibilitySettings()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-xs active:scale-95 transition-all cursor-pointer">
+        Xác nhận lưu
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}
 
-    let currentEvent = null;
+{% block scripts %}
+<script>
+  // Dữ liệu trống sẵn sàng nhận từ server
+  let currentEvent = null;
 
-    function getQueryParam(param) {
-      const urlParams = new URLSearchParams(window.location.search);
-      return urlParams.get(param);
+  function getQueryParam(param) {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get(param);
+  }
+
+  function setMainGalleryImage(src) {
+    const mainImg = document.getElementById('main-gallery-view');
+    const emptyText = document.getElementById('main-gallery-empty');
+    if (src) {
+      mainImg.src = src;
+      mainImg.classList.remove('hidden');
+      if (emptyText) emptyText.classList.add('hidden');
+    } else {
+      mainImg.classList.add('hidden');
+      if (emptyText) emptyText.classList.remove('hidden');
     }
+  }
 
-    function setMainGalleryImage(src) {
-      const mainImg = document.getElementById('main-gallery-view');
-      if (mainImg) {
-        mainImg.src = src;
-      }
+  function updateBadgeAndButton(isVisible) {
+    const badge = document.getElementById('detail-visibility-badge');
+    const btnText = document.getElementById('btn-toggle-status-text');
+    if (isVisible) {
+      badge.className = "px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200";
+      badge.innerText = "Đang mở hiển thị";
+      btnText.innerText = "Khóa gói này";
+    } else {
+      badge.className = "px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-600 border border-rose-200";
+      badge.innerText = "Đang khóa";
+      btnText.innerText = "Mở khóa gói";
     }
+  }
 
-    // Cập nhật giao diện badge và nút toggle
-    function updateBadgeAndButton(isVisible) {
-      const badge = document.getElementById('detail-visibility-badge');
-      const btnText = document.getElementById('btn-toggle-status-text');
-
-      if (isVisible) {
-        badge.className = "px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200";
-        badge.innerText = "Đang mở hiển thị";
-        btnText.innerText = "Khóa gói này";
-      } else {
-        badge.className = "px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-600 border border-rose-200";
-        badge.innerText = "Đang khóa";
-        btnText.innerText = "Mở khóa gói";
-      }
-    }
-
-    // Modal cấu hình hiển thị
-    function openVisibilityModal() {
-      if (!currentEvent) return;
-
-      document.getElementById('modal-event-name').innerText = currentEvent.name;
-      const radioOptions = document.getElementsByName('event-visibility-option');
-      for (const radio of radioOptions) {
-        if (radio.value === String(currentEvent.isVisible)) {
-          radio.checked = true;
-        }
-      }
-
-      document.getElementById('visibility-modal').classList.remove('hidden');
-    }
-
-    function closeVisibilityModal() {
-      document.getElementById('visibility-modal').classList.add('hidden');
-    }
-
-    function saveVisibilitySettings() {
-      if (!currentEvent) return;
-
-      const radioOptions = document.getElementsByName('event-visibility-option');
-      let selectedValue = null;
-      for (const radio of radioOptions) {
-        if (radio.checked) {
-          selectedValue = radio.value === 'true';
-          break;
-        }
-      }
-
-      if (selectedValue !== null) {
-        currentEvent.isVisible = selectedValue;
-        updateBadgeAndButton(currentEvent.isVisible);
-        closeVisibilityModal();
+  function openVisibilityModal() {
+    if (!currentEvent) return;
+    document.getElementById('modal-event-name').innerText = currentEvent.name || '';
+    const radioOptions = document.getElementsByName('event-visibility-option');
+    for (const radio of radioOptions) {
+      if (radio.value === String(currentEvent.isVisible)) {
+        radio.checked = true;
       }
     }
+    document.getElementById('visibility-modal').classList.remove('hidden');
+  }
 
-    // Nút hủy niêm yết
-    function confirmDeleteEvent() {
-      if (!currentEvent) return;
-      if (confirm(`Bạn có chắc chắn muốn hủy niêm yết vĩnh viễn gói "${currentEvent.name}" khỏi hệ thống không?`)) {
-        alert("Đã hủy niêm yết gói sự kiện.");
-        window.location.href = "/admin/available-event";
+  function closeVisibilityModal() {
+    document.getElementById('visibility-modal').classList.add('hidden');
+  }
+
+  function saveVisibilitySettings() {
+    if (!currentEvent) return;
+    const radioOptions = document.getElementsByName('event-visibility-option');
+    let selectedValue = null;
+    for (const radio of radioOptions) {
+      if (radio.checked) {
+        selectedValue = radio.value === 'true';
+        break;
       }
     }
+    if (selectedValue !== null) {
+      currentEvent.isVisible = selectedValue;
+      updateBadgeAndButton(currentEvent.isVisible);
+      closeVisibilityModal();
+    }
+  }
 
-    // Render & Lọc Bảng Lịch sử đơn đặt 
-    function renderOrdersTable() {
-      if (!currentEvent || !currentEvent.orders) return;
+  function confirmDeleteEvent() {
+    if (!currentEvent) return;
+    if (confirm(`Bạn có chắc chắn muốn hủy niêm yết gói "${currentEvent.name}" khỏi hệ thống không?`)) {
+      window.location.href = "/admin/available-event";
+    }
+  }
 
-      const timeRange = document.getElementById('filter-order-time-range').value;
-      const searchKeyword = document.getElementById('order-search-input').value.trim().toLowerCase();
-
-      // Giả lập mốc thời gian hiện tại: 10/10/2026 16:00
-      const now = new Date("2026-10-10T16:00:00");
-
-      const filteredOrders = currentEvent.orders.filter(order => {
-        // Tìm kiếm
-        const matchSearch = order.code.toLowerCase().includes(searchKeyword) || 
-                            order.customer.toLowerCase().includes(searchKeyword);
-        if (!matchSearch) return false;
-
-        // Lọc mốc thời gian
-        const orderDate = new Date(order.orderTimestamp);
-        const diffMs = now - orderDate;
-
-        if (timeRange === '24h') {
-          return diffMs <= 24 * 60 * 60 * 1000 && diffMs >= 0;
-        } else if (timeRange === '1week') {
-          return diffMs <= 7 * 24 * 60 * 60 * 1000 && diffMs >= 0;
-        } else if (timeRange === 'month') {
-          return orderDate.getMonth() === now.getMonth() && orderDate.getFullYear() === now.getFullYear();
-        } else if (timeRange === 'year') {
-          return orderDate.getFullYear() === now.getFullYear();
-        }
-        return true;
-      });
-
-      const tbody = document.getElementById('orders-table-body');
-      document.getElementById('order-count-info').innerText = `Hiển thị ${filteredOrders.length} trong tổng số ${currentEvent.orders.length} đơn đặt`;
-
-      if (filteredOrders.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400">Không có đơn đặt nào trong khoảng thời gian đã chọn.</td></tr>`;
-        return;
-      }
-
-      tbody.innerHTML = filteredOrders.map(o => {
-        const d = new Date(o.orderTimestamp);
-        const formattedOrderDate = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-
-        let statusBadge = '';
-        if (o.status === 'completed') {
-          statusBadge = '<span class="inline-flex px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200">Hoàn thành</span>';
-        } else if (o.status === 'preparing') {
-          statusBadge = '<span class="inline-flex px-2 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-600 border border-blue-200">Đang chuẩn bị</span>';
-        } else {
-          statusBadge = '<span class="inline-flex px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-600 border border-amber-200">Đang xử lý</span>';
-        }
-
-        return `
-          <tr class="hover:bg-slate-50/60 transition-colors">
-            <td class="py-2.5 px-3 font-semibold text-blue-600 font-mono">${o.code}</td>
-            <td class="py-2.5 px-3 font-medium text-slate-800">${o.customer}</td>
-            <td class="py-2.5 px-3 text-slate-500">${formattedOrderDate}</td>
-            <td class="py-2.5 px-3 text-slate-700">${o.eventDate}</td>
-            <td class="py-2.5 px-3 text-right font-bold text-slate-800">${o.total.toLocaleString('vi-VN')} ₫</td>
-            
-            <!-- Cột Đánh giá:-->
-            <td class="py-2.5 px-3 text-center">
-              <span class="font-bold text-slate-800">${Number(o.rating).toFixed(1)}</span>
-            </td>
-
-            <!-- Cột Phí hệ thống: Để trống -->
-            <td class="py-2.5 px-3 text-center text-slate-400">
-              <span>-</span>
-            </td>
-
-            <!-- Cột Trạng thái đơn -->
-            <td class="py-2.5 px-3 text-center">${statusBadge}</td>
-          </tr>
-        `;
-      }).join('');
+  function renderOrdersTable() {
+    if (!currentEvent || !currentEvent.orders) {
+      document.getElementById('orders-table-body').innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400">Chưa có dữ liệu đơn hàng.</td></tr>`;
+      document.getElementById('order-count-info').innerText = `Hiển thị 0 đơn đặt`;
+      return;
     }
 
-    // Tải dữ liệu toàn trang
-    function loadEventDetail() {
-      const eventId = getQueryParam('id') || "EVT-1001";
-      const data = eventDetailDatabase[eventId] || eventDetailDatabase["EVT-1001"];
-      currentEvent = data;
+    const timeRange = document.getElementById('filter-order-time-range')?.value || 'all';
+    const searchKeyword = (document.getElementById('order-search-input')?.value || '').trim().toLowerCase();
 
-      // Breadcrumb & Tiêu đề
-      document.getElementById('crumb-event-id').innerText = data.id;
-      document.getElementById('detail-code').innerText = data.id;
-      document.getElementById('detail-category').innerText = data.category;
-      document.getElementById('detail-name').innerText = data.name;
+    const filteredOrders = currentEvent.orders.filter(order => {
+      const matchSearch = (order.code || '').toLowerCase().includes(searchKeyword) || (order.customer || '').toLowerCase().includes(searchKeyword);
+      return matchSearch;
+    });
 
-      // Badge & Nút action
-      updateBadgeAndButton(data.isVisible);
+    const tbody = document.getElementById('orders-table-body');
+    document.getElementById('order-count-info').innerText = `Hiển thị ${filteredOrders.length} trong tổng số ${currentEvent.orders.length} đơn đặt`;
 
-      // Khối thông số tổng quan
-      document.getElementById('detail-price').innerText = data.price.toLocaleString('vi-VN') + " ₫";
-      document.getElementById('detail-reg-date').innerText = data.registrationDate;
-      document.getElementById('detail-approval-date').innerText = data.approvalDate;
-      document.getElementById('detail-partner').innerText = data.partner;
-      document.getElementById('detail-bookings').innerText = data.bookingCount + " lượt";
-      document.getElementById('detail-rating').innerText = Number(data.rating).toFixed(1) + " / 5.0";
-
-      // Render nội dung mô tả chi tiết bài viết
-      document.getElementById('detail-description-container').innerHTML = data.detailedDescription || '<p class="text-slate-400 italic">Đơn vị chưa cung cấp mô tả chi tiết cho gói sự kiện này.</p>';
-
-      // Cột phải bổ sung
-      document.getElementById('detail-lead-time').innerText = data.leadTime;
-      document.getElementById('detail-setup-time').innerText = data.setupTime;
-      document.getElementById('detail-capacity').innerText = data.capacity;
-      document.getElementById('detail-scope').innerText = data.scope;
-      document.getElementById('detail-partner-name').innerText = data.partner;
-      document.getElementById('detail-partner-code').innerText = data.partnerCode;
-      document.getElementById('detail-partner-phone').innerText = data.partnerPhone;
-      document.getElementById('detail-verifier').innerText = data.verifier;
-
-      // Gallery hình ảnh
-      document.getElementById('gallery-count').innerText = data.gallery.length + " hình ảnh";
-      if (data.gallery.length > 0) {
-        setMainGalleryImage(data.gallery[0]);
-        const thumbsContainer = document.getElementById('gallery-thumbnails');
-        thumbsContainer.innerHTML = data.gallery.map((imgUrl, idx) => `
-          <button type="button" onclick="setMainGalleryImage('${imgUrl}')"
-            class="h-16 rounded-xl overflow-hidden border border-slate-200 hover:border-blue-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all bg-slate-50">
-            <img src="${imgUrl}" alt="Ảnh ${idx + 1}" class="w-full h-full object-cover">
-          </button>
-        `).join('');
-      }
-
-      // Bảng vật tư tách riêng số lượng và đơn vị
-      const materialsTbody = document.getElementById('materials-table-body');
-      if (data.materials && data.materials.length > 0) {
-        materialsTbody.innerHTML = data.materials.map(m => `
-          <tr class="hover:bg-slate-50/60 transition-colors">
-            <td class="py-3 px-3.5 font-bold text-slate-800">${m.item}</td>
-            <td class="py-3 px-3.5 text-slate-600">${m.spec}</td>
-            <td class="py-3 px-3.5 text-slate-600">${m.material}</td>
-            <td class="py-3 px-3.5 text-center font-bold text-slate-800">${m.qty}</td>
-            <td class="py-3 px-3.5 text-center font-medium text-slate-600">${m.unit}</td>
-            <td class="py-3 px-3.5 text-slate-500 italic">${m.note}</td>
-          </tr>
-        `).join('');
-      } else {
-        materialsTbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-slate-400">Chưa có thông tin vật tư chi tiết.</td></tr>`;
-      }
-
-      // Render bảng lịch sử đơn đặt
-      renderOrdersTable();
-
-      // Sự kiện lọc đơn hàng
-      document.getElementById('filter-order-time-range').addEventListener('change', renderOrdersTable);
-      document.getElementById('order-search-input').addEventListener('input', renderOrdersTable);
+    if (filteredOrders.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" class="text-center py-6 text-slate-400">Không có đơn đặt nào phù hợp.</td></tr>`;
+      return;
     }
 
-    document.addEventListener('DOMContentLoaded', loadEventDetail);
-  </script>
+    tbody.innerHTML = filteredOrders.map(o => `
+      <tr class="hover:bg-slate-50/60 transition-colors">
+        <td class="py-2.5 px-3 font-semibold text-blue-600 font-mono">${o.code}</td>
+        <td class="py-2.5 px-3 font-medium text-slate-800">${o.customer}</td>
+        <td class="py-2.5 px-3 text-slate-500">${o.orderDate || '-'}</td>
+        <td class="py-2.5 px-3 text-slate-700">${o.eventDate || '-'}</td>
+        <td class="py-2.5 px-3 text-right font-bold text-slate-800">${Number(o.total || 0).toLocaleString('vi-VN')} ₫</td>
+        <td class="py-2.5 px-3 text-center">
+          <span class="font-bold text-slate-800">${Number(o.rating || 5.0).toFixed(1)}</span>
+        </td>
+        <td class="py-2.5 px-3 text-center text-slate-400"><span>-</span></td>
+        <td class="py-2.5 px-3 text-center">
+          <span class="inline-flex px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-100 text-slate-700">${o.status || 'Chờ'}</span>
+        </td>
+      </tr>
+    `).join('');
+  }
 
-</body>
-</html>
+  function loadEventDetail(data) {
+    if (!data) return;
+    currentEvent = data;
+
+    document.getElementById('crumb-event-id').innerText = data.id || 'Chi tiết';
+    document.getElementById('detail-code').innerText = data.id || '---';
+    document.getElementById('detail-category').innerText = data.category || '---';
+    document.getElementById('detail-name').innerText = data.name || '---';
+
+    updateBadgeAndButton(Boolean(data.isVisible));
+
+    document.getElementById('detail-price').innerText = Number(data.price || 0).toLocaleString('vi-VN') + " ₫";
+    document.getElementById('detail-reg-date').innerText = data.registrationDate || '--/--/----';
+    document.getElementById('detail-approval-date').innerText = data.approvalDate || '--/--/----';
+    document.getElementById('detail-partner').innerText = data.partner || '---';
+    document.getElementById('detail-bookings').innerText = (data.bookingCount || 0) + " lượt";
+    document.getElementById('detail-rating').innerText = Number(data.rating || 5.0).toFixed(1) + " / 5.0";
+
+    document.getElementById('detail-description-container').innerHTML = data.detailedDescription || '<p class="text-slate-400 italic">Chưa có thông tin mô tả chi tiết.</p>';
+
+    document.getElementById('detail-lead-time').innerText = data.leadTime || '---';
+    document.getElementById('detail-setup-time').innerText = data.setupTime || '---';
+    document.getElementById('detail-capacity').innerText = data.capacity || '---';
+    document.getElementById('detail-scope').innerText = data.scope || '---';
+    document.getElementById('detail-partner-name').innerText = data.partner || '---';
+    document.getElementById('detail-partner-code').innerText = data.partnerCode || '---';
+    document.getElementById('detail-partner-phone').innerText = data.partnerPhone || '---';
+    document.getElementById('detail-verifier').innerText = data.verifier || '---';
+
+    const gallery = data.gallery || [];
+    document.getElementById('gallery-count').innerText = `${gallery.length} hình ảnh`;
+    if (gallery.length > 0) {
+      setMainGalleryImage(gallery[0]);
+      document.getElementById('gallery-thumbnails').innerHTML = gallery.map((imgUrl, idx) => `
+        <button type="button" onclick="setMainGalleryImage('${imgUrl}')" class="h-16 rounded-xl overflow-hidden border border-slate-200 hover:border-blue-500 focus:border-blue-500 transition-all bg-slate-50 cursor-pointer">
+          <img src="${imgUrl}" alt="Ảnh ${idx + 1}" class="w-full h-full object-cover">
+        </button>
+      `).join('');
+    } else {
+      setMainGalleryImage('');
+      document.getElementById('gallery-thumbnails').innerHTML = '';
+    }
+
+    const materialsTbody = document.getElementById('materials-table-body');
+    const materials = data.materials || [];
+    materialsTbody.innerHTML = materials.length === 0
+      ? `<tr><td colspan="6" class="text-center py-6 text-slate-400">Chưa có thông tin vật tư chi tiết.</td></tr>`
+      : materials.map(m => `
+        <tr class="hover:bg-slate-50/60 transition-colors">
+          <td class="py-3 px-3.5 font-bold text-slate-800">${m.item}</td>
+          <td class="py-3 px-3.5 text-slate-600">${m.spec}</td>
+          <td class="py-3 px-3.5 text-slate-600">${m.material}</td>
+          <td class="py-3 px-3.5 text-center font-bold text-slate-800">${m.qty}</td>
+          <td class="py-3 px-3.5 text-center font-medium text-slate-600">${m.unit}</td>
+          <td class="py-3 px-3.5 text-slate-500 italic">${m.note || '-'}</td>
+        </tr>
+      `).join('');
+
+    renderOrdersTable();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Gọi hàm loadEventDetail() khi có dữ liệu từ fetch hoặc biến JSON render từ server
+    renderOrdersTable();
+    document.getElementById('filter-order-time-range')?.addEventListener('change', renderOrdersTable);
+    document.getElementById('order-search-input')?.addEventListener('input', renderOrdersTable);
+  });
+</script>
+{% endblock %}

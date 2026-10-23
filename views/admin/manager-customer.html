@@ -1,624 +1,454 @@
-<!DOCTYPE html>
-<html lang="vi" class="h-full bg-[#f8fafc]">
+{% extends "admin/base-admin.html" %}
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>EventDecor - Quản lý Khách hàng</title>
+{% block title %}Quản lý Tài khoản Khách hàng - EventDecor Admin{% endblock %}
 
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
+{% block content %}
+<!-- BREADCRUMB -->
+<nav class="flex items-center text-xs font-medium text-slate-400 mb-5 select-none" aria-label="Breadcrumb">
+  <ol class="inline-flex items-center space-x-1.5 md:space-x-2">
+    <li class="inline-flex items-center">
+      <a href="/admin/dashboard" class="hover:text-blue-600 transition-colors">Trang chủ</a>
+    </li>
+    <li><span class="text-slate-300 mx-1">&rsaquo;</span></li>
+    <li class="inline-flex items-center">
+      <span class="text-slate-400">Quản lý Tài khoản</span>
+    </li>
+    <li><span class="text-slate-300 mx-1">&rsaquo;</span></li>
+    <li aria-current="page">
+      <span class="text-slate-600 font-semibold">Tài khoản Khách hàng</span>
+    </li>
+  </ol>
+</nav>
 
-  <!-- Fonts & Material Symbols -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
+<!-- TIÊU ĐỀ TRANG -->
+<div class="mb-7">
+  <h1 class="text-2xl font-bold text-[#0f172a] tracking-tight">
+    Quản lý Tài khoản Khách hàng
+  </h1>
+  <p class="text-[13.5px] text-slate-400 font-normal mt-1">
+    Theo dõi danh sách khách hàng, lịch sử đặt dịch vụ, đánh giá
+  </p>
+</div>
 
-  <style>
-    *, ::before, ::after { box-sizing: border-box; }
-    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
-    .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
-    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-    .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
-    .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
-  </style>
-</head>
-
-<body class="h-full m-0 p-0 bg-[#f8fafc] overflow-hidden flex">
-
-  <!-- SIDEBAR CONTAINER -->
-  <div id="sidebar-container" class="shrink-0"></div>
-
-  <!-- CỘT NỘI DUNG CHÍNH -->
-  <div class="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-
-    <!-- HEADER CONTAINER -->
-    <div id="header-container" class="w-full shrink-0"></div>
-
-    <!-- MAIN SCROLLABLE CONTENT -->
-    <main class="flex-1 overflow-y-auto p-6 bg-[#f8fafc]">
-
-      <!-- BREADCRUMB -->
-      <nav class="flex items-center text-xs font-medium text-slate-400 mb-5 select-none" aria-label="Breadcrumb">
-        <ol class="inline-flex items-center space-x-1.5 md:space-x-2">
-          <li class="inline-flex items-center">
-            <a href="dashboard.html" class="hover:text-blue-600 transition-colors">Trang chủ</a>
-          </li>
-          <li><span class="text-slate-300 mx-1">&rsaquo;</span></li>
-          <li class="inline-flex items-center">
-            <span class="text-slate-400">Quản lý Tài khoản</span>
-          </li>
-          <li><span class="text-slate-300 mx-1">&rsaquo;</span></li>
-          <li aria-current="page">
-            <span class="text-slate-600 font-semibold">Tài khoản Khách hàng</span>
-          </li>
-        </ol>
-      </nav>
-
-      <!-- TIÊU ĐỀ TRANG -->
-      <div class="mb-7">
-        <h1 class="text-2xl font-bold text-[#0f172a] tracking-tight">
-          Quản lý Tài khoản Khách hàng
-        </h1>
-        <p class="text-[13.5px] text-slate-400 font-normal mt-1">
-          Theo dõi danh sách khách hàng, lịch sử đặt dịch vụ, đánh giá
-        </p>
-      </div>
-
-      <!-- 4 Ô CHỈ SỐ THỐNG KÊ NHANH -->
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
-        <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs flex flex-col">
-          <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Tổng khách hàng </span>
-          <span id="stat-total" class="text-2xl font-black text-slate-800 mt-1">0</span>
-        </div>
-        <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs flex flex-col">
-          <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Tài khoản đang hoạt động</span>
-          <span id="stat-active" class="text-2xl font-black text-emerald-600 mt-1">0</span>
-        </div>
-        <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs flex flex-col">
-          <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Tài khoản bị khóa</span>
-          <span id="stat-locked" class="text-2xl font-black text-rose-600 mt-1">0</span>
-        </div>
-        <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs flex flex-col">
-          <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Tổng chi tiêu của khách hàng</span>
-          <span id="stat-revenue" class="text-2xl font-black text-blue-600 mt-1">0 ₫</span>
-        </div>
-      </div>
-
-      <!-- BẢNG DANH SÁCH KHÁCH HÀNG CHÍNH -->
-      <section class="bg-white border border-slate-200/80 rounded-2xl shadow-2xs overflow-hidden mb-8">
-        
-        <!-- BỘ LỌC VÀ TÌM KIẾM (ĐÃ BỎ BỘ LỌC TRẠNG THÁI) -->
-        <div class="p-5 border-b border-slate-100 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h2 class="text-base font-bold text-[#1e293b] tracking-tight">Danh sách tài khoản khách hàng</h2>
-            <p class="text-[11px] text-slate-400 mt-0.5">Bấm vào tên hoặc icon xem để mở hồ sơ chi tiết và lịch sử</p>
-          </div>
-
-          <div class="flex items-center gap-3 flex-wrap">
-            <div class="relative w-full sm:w-80">
-              <input type="text" id="customer-search-input" placeholder="Tìm tên, SĐT, email, mã KH..."
-                class="w-full bg-white border border-slate-200/90 text-slate-700 text-xs rounded-xl px-3.5 py-2.5 focus:border-blue-500 focus:outline-none transition-all placeholder:text-slate-400 shadow-2xs">
-            </div>
-
-            <button type="button" id="btn-refresh" title="Làm mới tìm kiếm"
-              class="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200/90 bg-white text-slate-500 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/50 active:scale-95 transition-all shadow-2xs shrink-0">
-              <span class="material-symbols-outlined text-[18px]">refresh</span>
-            </button>
-          </div>
-        </div>
-
-        <!-- BẢNG DỮ LIỆU -->
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="bg-slate-50/75 border-b border-slate-100 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-                <th class="py-3.5 px-4 w-12 text-center">
-                  <input type="checkbox" id="check-all" class="rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer">
-                </th>
-                <th class="py-3.5 px-4 w-28">Mã KH</th>
-                <th class="py-3.5 px-4 min-w-[180px]">Họ và tên</th>
-                <th class="py-3.5 px-4 min-w-[170px]">Số điện thoại / Email</th>
-                <th class="py-3.5 px-4 min-w-[120px]">Ngày đăng ký</th>
-                <th class="py-3.5 px-4 w-28 text-center">Lượt đặt</th>
-                <th class="py-3.5 px-4 min-w-[140px] text-right">Tổng chi tiêu</th>
-                <th class="py-3.5 px-4 w-32 text-center">Trạng thái</th>
-                <th class="py-3.5 px-4 w-32 text-center">Hành động</th>
-              </tr>
-            </thead>
-            <tbody id="customers-table-body" class="divide-y divide-slate-100 text-xs">
-              <!-- Render động -->
-            </tbody>
-          </table>
-        </div>
-
-        <!-- PHÂN TRANG -->
-        <div class="px-5 py-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-slate-500">
-          <span id="pagination-info">Hiển thị danh sách khách hàng</span>
-          <div class="flex items-center gap-1.5 self-end sm:self-auto">
-            <button class="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-50 disabled:opacity-50" disabled>Trước</button>
-            <button class="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium">1</button>
-            <button class="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50">Sau</button>
-          </div>
-        </div>
-
-      </section>
-
-    </main>
+<!-- 4 Ô CHỈ SỐ THỐNG KÊ NHANH -->
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
+  <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs flex flex-col">
+    <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Tổng khách hàng</span>
+    <span id="stat-total" class="text-2xl font-black text-slate-800 mt-1">0</span>
   </div>
+  <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs flex flex-col">
+    <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Tài khoản đang hoạt động</span>
+    <span id="stat-active" class="text-2xl font-black text-emerald-600 mt-1">0</span>
+  </div>
+  <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs flex flex-col">
+    <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Tài khoản bị khóa</span>
+    <span id="stat-locked" class="text-2xl font-black text-rose-600 mt-1">0</span>
+  </div>
+  <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs flex flex-col">
+    <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Tổng chi tiêu của khách hàng</span>
+    <span id="stat-revenue" class="text-2xl font-black text-blue-600 mt-1">0 ₫</span>
+  </div>
+</div>
 
-  <!-- ==================== MODAL THÔNG TIN CHI TIẾT KHÁCH HÀNG ==================== -->
-  <div id="customer-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
-    <div class="bg-white border border-slate-200/90 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-
-      <div class="p-5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/50">
-        <div class="flex items-center gap-2.5">
-          <span class="material-symbols-outlined text-blue-600 text-[22px]">account_box</span>
-          <h3 class="text-base font-bold text-slate-800">Hồ sơ chi tiết & Lịch sử hoạt động</h3>
-        </div>
-        <button type="button" onclick="closeCustomerModal()" class="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 transition-colors">
-          <span class="material-symbols-outlined text-[20px]">close</span>
-        </button>
+<!-- BẢNG DANH SÁCH KHÁCH HÀNG CHÍNH -->
+<section class="bg-white border border-slate-200/80 rounded-2xl shadow-2xs overflow-hidden mb-8">
+  <!-- BỘ LỌC VÀ TÌM KIẾM -->
+  <div class="p-5 border-b border-slate-100 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div>
+      <h2 class="text-base font-bold text-[#1e293b] tracking-tight">Danh sách tài khoản khách hàng</h2>
+      <p class="text-[11px] text-slate-400 mt-0.5">Bấm vào tên hoặc icon xem để mở hồ sơ chi tiết và lịch sử</p>
+    </div>
+    <div class="flex items-center gap-3 flex-wrap">
+      <div class="relative w-full sm:w-80">
+        <input type="text" id="customer-search-input" placeholder="Tìm tên, SĐT, email, mã KH..." class="w-full bg-white border border-slate-200/90 text-slate-700 text-xs rounded-xl px-3.5 py-2.5 focus:border-blue-500 focus:outline-none transition-all placeholder:text-slate-400 shadow-2xs">
       </div>
-
-      <!-- PHẦN NỘI DUNG CUỘN CỦA MODAL -->
-      <div class="flex-1 overflow-y-auto p-6 space-y-6 custom-scroll">
-        
-        <!-- 1.THÔNG TIN CƠ BẢN -->
-        <div id="modal-basic-info" class="bg-slate-50/75 border border-slate-200/80 rounded-2xl p-5">
-        </div>
-
-        <!-- 2. LỊCH SỬ ĐẶT, ĐÁNH GIÁ, KHIẾU NẠI-->
-        <div class="border border-slate-200/80 rounded-2xl overflow-hidden bg-white shadow-2xs">
-          
-          <!-- THANH CHUYỂN TAB -->
-          <div class="flex items-center border-b border-slate-200 bg-slate-50/60 px-4 gap-2">
-            <button type="button" onclick="switchDetailTab('bookings')" id="tab-btn-bookings"
-              class="px-4 py-3 text-xs font-bold border-b-2 border-blue-600 text-blue-600 flex items-center gap-2 transition-colors">
-              <span class="material-symbols-outlined text-[18px]">receipt_long</span>
-              <span>Lịch sử đặt sự kiện (<span id="tab-count-bookings">0</span>)</span>
-            </button>
-
-            <button type="button" onclick="switchDetailTab('reviews')" id="tab-btn-reviews"
-              class="px-4 py-3 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center gap-2 transition-colors">
-              <span class="material-symbols-outlined text-[18px]">rate_review</span>
-              <span>Đánh giá & Phản hồi (<span id="tab-count-reviews">0</span>)</span>
-            </button>
-
-            <button type="button" onclick="switchDetailTab('complaints')" id="tab-btn-complaints"
-              class="px-4 py-3 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center gap-2 transition-colors">
-              <span class="material-symbols-outlined text-[18px]">report_problem</span>
-              <span>Khiếu nại & Hỗ trợ (<span id="tab-count-complaints">0</span>)</span>
-            </button>
-          </div>
-
-          <!-- TAB 1: BẢNG LỊCH SỬ ĐẶT SỰ KIỆN -->
-          <div id="tab-content-bookings" class="p-0 overflow-x-auto">
-            <table class="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr class="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase border-b border-slate-200/70">
-                  <th class="py-3 px-4 w-28">Mã đơn</th>
-                  <th class="py-3 px-4 min-w-[200px]">Sự kiện / Dịch vụ</th>
-                  <th class="py-3 px-4 min-w-[160px]">Đối tác thực hiện</th>
-                  <th class="py-3 px-4 w-32">Ngày tổ chức</th>
-                  <th class="py-3 px-4 text-right">Tổng tiền</th>
-                  <th class="py-3 px-4 text-center w-28">Trạng thái đơn</th>
-                </tr>
-              </thead>
-              <tbody id="bookings-table-body" class="divide-y divide-slate-100 text-slate-700">
-                <!-- Render động -->
-              </tbody>
-            </table>
-          </div>
-
-          <!-- TAB 2: BẢNG ĐÁNH GIÁ & NHẬN XÉT -->
-          <div id="tab-content-reviews" class="p-0 overflow-x-auto hidden">
-            <table class="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr class="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase border-b border-slate-200/70">
-                  <th class="py-3 px-4 w-28">Ngày gửi</th>
-                  <th class="py-3 px-4 min-w-[180px]">Sự kiện</th>
-                  <th class="py-3 px-4 w-24 text-center">Đánh giá</th>
-                  <th class="py-3 px-4 min-w-[280px]">Nội dung nhận xét</th>
-                </tr>
-              </thead>
-              <tbody id="reviews-table-body" class="divide-y divide-slate-100 text-slate-700">
-                <!-- Render động -->
-              </tbody>
-            </table>
-          </div>
-
-          <!-- TAB 3: BẢNG KHIẾU NẠI & HỖ TRỢ -->
-          <div id="tab-content-complaints" class="p-0 overflow-x-auto hidden">
-            <table class="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr class="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase border-b border-slate-200/70">
-                  <th class="py-3 px-4 w-24">Mã KN</th>
-                  <th class="py-3 px-4 w-28">Ngày tạo</th>
-                  <th class="py-3 px-4 min-w-[200px]">Tiêu đề & Nội dung vấn đề</th>
-                  <th class="py-3 px-4 w-32 text-center">Tình trạng</th>
-                  <th class="py-3 px-4 min-w-[220px]">Phương án phản hồi</th>
-                </tr>
-              </thead>
-              <tbody id="complaints-table-body" class="divide-y divide-slate-100 text-slate-700">
-                <!-- Render động -->
-              </tbody>
-            </table>
-          </div>
-
-        </div>
-
-      </div>
-
-      <!-- PHẦN ĐUÔI MODAL -->
-      <div class="p-4 bg-slate-50/75 border-t border-slate-100 flex items-center justify-between shrink-0">
-        <span class="text-[11px] text-slate-400">Dữ liệu được cập nhật theo thời gian thực từ cơ sở dữ liệu</span>
-        <button type="button" onclick="closeCustomerModal()" class="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 font-semibold text-xs rounded-xl hover:bg-slate-100 active:scale-95 transition-all">
-          Đóng cửa sổ
-        </button>
-      </div>
-
+      <button type="button" id="btn-refresh" title="Làm mới tìm kiếm" class="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200/90 bg-white text-slate-500 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/50 active:scale-95 transition-all shadow-2xs shrink-0 cursor-pointer">
+        <span class="material-symbols-outlined text-[18px]">refresh</span>
+      </button>
     </div>
   </div>
 
-  <script src="layout-loader.js"></script>
+  <!-- BẢNG DỮ LIỆU -->
+  <div class="overflow-x-auto">
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-slate-50/75 border-b border-slate-100 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+          <th class="py-3.5 px-4 w-12 text-center">
+            <input type="checkbox" id="check-all" class="rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer">
+          </th>
+          <th class="py-3.5 px-4 w-28">Mã KH</th>
+          <th class="py-3.5 px-4 min-w-[180px]">Họ và tên</th>
+          <th class="py-3.5 px-4 min-w-[170px]">Số điện thoại / Email</th>
+          <th class="py-3.5 px-4 min-w-[120px]">Ngày đăng ký</th>
+          <th class="py-3.5 px-4 w-28 text-center">Lượt đặt</th>
+          <th class="py-3.5 px-4 min-w-[140px] text-right">Tổng chi tiêu</th>
+          <th class="py-3.5 px-4 w-32 text-center">Trạng thái</th>
+          <th class="py-3.5 px-4 w-32 text-center">Hành động</th>
+        </tr>
+      </thead>
+      <tbody id="customers-table-body" class="divide-y divide-slate-100 text-xs"></tbody>
+    </table>
+  </div>
 
-  <!-- ==================== SCRIPT DỮ LIỆU & LOGIC ==================== -->
-  <script>
-    // Dữ liệu khách hàng mẫu 
-    const customerList = [
-      {
-        id: "KH-1001",
-        name: "Khách hàng Mẫu Nguyễn Văn An",
-        email: "vanan.nguyen@example.com",
-        phone: "0908 111 222",
-        address: "Số 142 Đường Mẫu A, Phường B, TP. Thủ Đức, TP. Hồ Chí Minh",
-        joinDate: "12/03/2026",
-        bookingsCount: 3,
-        totalSpent: 42500000,
-        status: "active",
-        bookings: [
-          { code: "BK-1001", eventName: "[Mẫu] Gói Trang Trí Tiệc Cưới Phong Cách Tối Giản", partner: "Công ty TNHH Trang Trí Mẫu Alpha", date: "24/04/2026", total: 25000000, status: "completed" },
-          { code: "BK-1002", eventName: "[Mẫu] Hệ Thống Âm Thanh Sân Khấu Tiệc Ngoài Trời", partner: "Công ty Cổ phần Âm Thanh Ánh Sáng Mẫu Gamma", date: "15/06/2026", total: 10500000, status: "completed" },
-          { code: "BK-1003", eventName: "[Mẫu] Sân Khấu Bong Bóng & LED Sinh Nhật VIP", partner: "Hộ Kinh Doanh Sự Kiện Mẫu Beta", date: "08/09/2026", total: 7000000, status: "processing" }
-        ],
-        reviews: [
-          { date: "26/04/2026", eventName: "[Mẫu] Gói Trang Trí Tiệc Cưới Phong Cách Tối Giản", rating: 5.0, comment: "Hoa tươi rất thơm, trang trí cổng đón khách cực kỳ chỉn chu và đúng mẫu hẹn trước." },
-          { date: "16/06/2026", eventName: "[Mẫu] Hệ Thống Âm Thanh Sân Khấu Tiệc Ngoài Trời", rating: 4.0, comment: "Âm thanh tốt, kỹ thuật viên nhiệt tình, set up sớm hơn giờ dự kiến 30 phút." }
-        ],
-        complaints: [
-          { code: "KN-041", date: "16/06/2026", issue: "Đèn laser bị chớp tắt trong 10 phút đầu tiệc", status: "resolved", solution: "Kỹ thuật đã xử lý đổi nguồn ngay và hỗ trợ voucher cho dịch vụ tiếp theo." }
-        ]
-      },
-      {
-        id: "KH-1002",
-        name: "Khách hàng Mẫu Trần Thị Mai Hoa",
-        email: "maihoa.tran@example.com",
-        phone: "0912 333 444",
-        address: "Số 78 Đường Mẫu C, Phường D, Quận 1, TP. Hồ Chí Minh",
-        joinDate: "28/05/2026",
-        bookingsCount: 1,
-        totalSpent: 12000000,
-        status: "active",
-        bookings: [
-          { code: "BK-1004", eventName: "[Mẫu] Sân Khấu Bong Bóng & LED Sinh Nhật VIP", partner: "Hộ Kinh Doanh Sự Kiện Mẫu Beta", date: "10/06/2026", total: 12000000, status: "completed" }
-        ],
-        reviews: [
-          { date: "12/06/2026", eventName: "[Mẫu] Sân Khấu Bong Bóng & LED Sinh Nhật VIP", rating: 5.0, comment: "Backdrop chụp ảnh lên màu rất đẹp, gia đình ai cũng khen ngợi." }
-        ],
-        complaints: []
-      },
-      {
-        id: "KH-1003",
-        name: "Khách hàng Mẫu Lê Hoàng Phúc",
-        email: "phuc.lehoang@example.com",
-        phone: "0987 555 666",
-        address: "Số 215 Đường Mẫu E, Phường F, TP. Thủ Đức, TP. Hồ Chí Minh",
-        joinDate: "10/06/2026",
-        bookingsCount: 0,
-        totalSpent: 0,
-        status: "locked",
-        bookings: [],
-        reviews: [],
-        complaints: [
-          { code: "KN-012", date: "12/06/2026", issue: "Spam tạo đơn hàng ảo và hủy nhiều lần", status: "locked_account", solution: "Hệ thống tạm khóa tài khoản để điều tra hành vi bất thường." }
-        ]
-      },
-      {
-        id: "KH-1004",
-        name: "Khách hàng Mẫu Phạm Thùy Dung",
-        email: "thuydung.event@example.com",
-        phone: "0933 777 888",
-        address: "Số 54 Đường Mẫu G, Phường H, Quận 3, TP. Hồ Chí Minh",
-        joinDate: "02/08/2026",
-        bookingsCount: 2,
-        totalSpent: 86900000,
-        status: "active",
-        bookings: [
-          { code: "BK-1005", eventName: "[Mẫu] Trọn Gói Khai Trương Văn Phòng Doanh Nghiệp", partner: "Công ty TNHH Sự Kiện Doanh Nghiệp Mẫu Delta", date: "15/08/2026", total: 45000000, status: "completed" },
-          { code: "BK-1006", eventName: "[Mẫu] Backdrop Hội Nghị Khách Hàng & Ra Mắt Sản Phẩm", partner: "Công ty TNHH Sự Kiện Doanh Nghiệp Mẫu Delta", date: "02/10/2026", total: 41900000, status: "completed" }
-        ],
-        reviews: [
-          { date: "16/08/2026", eventName: "[Mẫu] Trọn Gói Khai Trương Văn Phòng Doanh Nghiệp", rating: 5.0, comment: "Dịch vụ chỉn chu, bàn lễ và thảm đỏ thiết kế rất đúng tiến độ cam kết." }
-        ],
-        complaints: []
-      }
-    ];
+  <!-- PHÂN TRANG -->
+  <div class="px-5 py-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-slate-500">
+    <span id="pagination-info">Hiển thị danh sách khách hàng</span>
+    <div class="flex items-center gap-1.5 self-end sm:self-auto">
+      <button class="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-50 disabled:opacity-50 cursor-pointer" disabled>Trước</button>
+      <button class="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium cursor-pointer">1</button>
+      <button class="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 cursor-pointer">Sau</button>
+    </div>
+  </div>
+</section>
 
-    let currentData = [...customerList];
+<!-- ==================== MODAL THÔNG TIN CHI TIẾT KHÁCH HÀNG ==================== -->
+<div id="customer-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+  <div class="bg-white border border-slate-200/90 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden">
+    <div class="p-5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/50">
+      <div class="flex items-center gap-2.5">
+        <span class="material-symbols-outlined text-blue-600 text-[22px]">account_box</span>
+        <h3 class="text-base font-bold text-slate-800">Hồ sơ chi tiết & Lịch sử hoạt động</h3>
+      </div>
+      <button type="button" onclick="closeCustomerModal()" class="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 transition-colors cursor-pointer">
+        <span class="material-symbols-outlined text-[20px]">close</span>
+      </button>
+    </div>
 
-    // Cập nhật thống kê đầu trang
-    function updateStats() {
-      const total = customerList.length;
-      const active = customerList.filter(c => c.status === 'active').length;
-      const locked = customerList.filter(c => c.status === 'locked').length;
-      const revenue = customerList.reduce((sum, c) => sum + c.totalSpent, 0);
+    <!-- PHẦN NỘI DUNG CUỘN CỦA MODAL -->
+    <div class="flex-1 overflow-y-auto p-6 space-y-6 custom-scroll">
+      <!-- 1. THÔNG TIN CƠ BẢN -->
+      <div id="modal-basic-info" class="bg-slate-50/75 border border-slate-200/80 rounded-2xl p-5"></div>
 
-      document.getElementById('stat-total').innerText = total;
-      document.getElementById('stat-active').innerText = active;
-      document.getElementById('stat-locked').innerText = locked;
-      document.getElementById('stat-revenue').innerText = revenue.toLocaleString('vi-VN') + ' ₫';
+      <!-- 2. LỊCH SỬ ĐẶT, ĐÁNH GIÁ, KHIẾU NẠI -->
+      <div class="border border-slate-200/80 rounded-2xl overflow-hidden bg-white shadow-2xs">
+        <!-- THANH CHUYỂN TAB -->
+        <div class="flex items-center border-b border-slate-200 bg-slate-50/60 px-4 gap-2">
+          <button type="button" onclick="switchDetailTab('bookings')" id="tab-btn-bookings" class="px-4 py-3 text-xs font-bold border-b-2 border-blue-600 text-blue-600 flex items-center gap-2 transition-colors cursor-pointer">
+            <span class="material-symbols-outlined text-[18px]">receipt_long</span>
+            <span>Lịch sử đặt sự kiện (<span id="tab-count-bookings">0</span>)</span>
+          </button>
+          <button type="button" onclick="switchDetailTab('reviews')" id="tab-btn-reviews" class="px-4 py-3 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center gap-2 transition-colors cursor-pointer">
+            <span class="material-symbols-outlined text-[18px]">rate_review</span>
+            <span>Đánh giá & Phản hồi (<span id="tab-count-reviews">0</span>)</span>
+          </button>
+          <button type="button" onclick="switchDetailTab('complaints')" id="tab-btn-complaints" class="px-4 py-3 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center gap-2 transition-colors cursor-pointer">
+            <span class="material-symbols-outlined text-[18px]">report_problem</span>
+            <span>Khiếu nại & Hỗ trợ (<span id="tab-count-complaints">0</span>)</span>
+          </button>
+        </div>
+
+        <!-- TAB 1: BẢNG LỊCH SỬ ĐẶT SỰ KIỆN -->
+        <div id="tab-content-bookings" class="p-0 overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase border-b border-slate-200/70">
+                <th class="py-3 px-4 w-28">Mã đơn</th>
+                <th class="py-3 px-4 min-w-[200px]">Sự kiện / Dịch vụ</th>
+                <th class="py-3 px-4 min-w-[160px]">Đối tác thực hiện</th>
+                <th class="py-3 px-4 w-32">Ngày tổ chức</th>
+                <th class="py-3 px-4 text-right">Tổng tiền</th>
+                <th class="py-3 px-4 text-center w-28">Trạng thái đơn</th>
+              </tr>
+            </thead>
+            <tbody id="bookings-table-body" class="divide-y divide-slate-100 text-slate-700"></tbody>
+          </table>
+        </div>
+
+        <!-- TAB 2: BẢNG ĐÁNH GIÁ & NHẬN XÉT -->
+        <div id="tab-content-reviews" class="p-0 overflow-x-auto hidden">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase border-b border-slate-200/70">
+                <th class="py-3 px-4 w-28">Ngày gửi</th>
+                <th class="py-3 px-4 min-w-[180px]">Sự kiện</th>
+                <th class="py-3 px-4 w-24 text-center">Đánh giá</th>
+                <th class="py-3 px-4 min-w-[280px]">Nội dung nhận xét</th>
+              </tr>
+            </thead>
+            <tbody id="reviews-table-body" class="divide-y divide-slate-100 text-slate-700"></tbody>
+          </table>
+        </div>
+
+        <!-- TAB 3: BẢNG KHIẾU NẠI & HỖ TRỢ -->
+        <div id="tab-content-complaints" class="p-0 overflow-x-auto hidden">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase border-b border-slate-200/70">
+                <th class="py-3 px-4 w-24">Mã KN</th>
+                <th class="py-3 px-4 w-28">Ngày tạo</th>
+                <th class="py-3 px-4 min-w-[200px]">Tiêu đề & Nội dung vấn đề</th>
+                <th class="py-3 px-4 w-32 text-center">Tình trạng</th>
+                <th class="py-3 px-4 min-w-[220px]">Phương án phản hồi</th>
+              </tr>
+            </thead>
+            <tbody id="complaints-table-body" class="divide-y divide-slate-100 text-slate-700"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHẦN ĐUÔI MODAL -->
+    <div class="p-4 bg-slate-50/75 border-t border-slate-100 flex items-center justify-between shrink-0">
+      <span class="text-[11px] text-slate-400">Dữ liệu được cập nhật theo thời gian thực từ cơ sở dữ liệu</span>
+      <button type="button" onclick="closeCustomerModal()" class="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 font-semibold text-xs rounded-xl hover:bg-slate-100 active:scale-95 transition-all cursor-pointer">
+        Đóng cửa sổ
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Dữ liệu khách hàng trống sẵn sàng nhận từ server
+  let customerList = [];
+  let currentData = [];
+
+  function updateStats() {
+    const total = customerList.length;
+    const active = customerList.filter(c => c.status === 'active').length;
+    const locked = customerList.filter(c => c.status === 'locked').length;
+    const revenue = customerList.reduce((sum, c) => sum + (Number(c.totalSpent) || 0), 0);
+
+    document.getElementById('stat-total').innerText = total;
+    document.getElementById('stat-active').innerText = active;
+    document.getElementById('stat-locked').innerText = locked;
+    document.getElementById('stat-revenue').innerText = revenue.toLocaleString('vi-VN') + ' ₫';
+  }
+
+  function renderMainTable(data) {
+    const tbody = document.getElementById('customers-table-body');
+    if (!tbody) return;
+
+    if (!data || data.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="9" class="text-center py-10 text-slate-400">
+            Không tìm thấy khách hàng nào khớp với tìm kiếm.
+          </td>
+        </tr>
+      `;
+      return;
     }
 
-    // Render danh sách khách
-    function renderMainTable(data) {
-      const tbody = document.getElementById('customers-table-body');
-      if (!tbody) return;
+    tbody.innerHTML = data.map(item => `
+      <tr class="hover:bg-slate-50/70 transition-colors">
+        <td class="py-3 px-4 text-center">
+          <input type="checkbox" value="${item.id}" class="row-checkbox rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer">
+        </td>
+        <td class="py-3 px-4 font-semibold text-blue-600 font-mono">
+          ${item.id}
+        </td>
+        <td class="py-3 px-4">
+          <span class="font-semibold text-slate-800 hover:text-blue-600 cursor-pointer" onclick="openCustomerDetail('${item.id}')">${item.name}</span>
+        </td>
+        <td class="py-3 px-4">
+          <div class="flex flex-col">
+            <span class="text-slate-700 font-medium">${item.phone || '-'}</span>
+            <span class="text-[11px] text-slate-400">${item.email || '-'}</span>
+          </div>
+        </td>
+        <td class="py-3 px-4 text-slate-600">${item.joinDate || '-'}</td>
+        <td class="py-3 px-4 text-center font-semibold text-slate-700">${item.bookingsCount || 0}</td>
+        <td class="py-3 px-4 text-right font-bold text-slate-800">${Number(item.totalSpent || 0).toLocaleString('vi-VN')} ₫</td>
+        <td class="py-3 px-4 text-center">
+          ${item.status === 'active' 
+            ? `<span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">Hoạt động</span>` 
+            : `<span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200">Bị khóa</span>`}
+        </td>
+        <td class="py-3 px-4 text-center">
+          <div class="flex items-center justify-center gap-1.5">
+            <button type="button" onclick="openCustomerDetail('${item.id}')" title="Xem chi tiết & Lịch sử" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-500 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 transition-all shadow-2xs cursor-pointer">
+              <span class="material-symbols-outlined text-[18px]">visibility</span>
+            </button>
+            <button type="button" onclick="toggleStatus('${item.id}')" title="${item.status === 'active' ? 'Khóa tài khoản' : 'Mở khóa'}" class="w-8 h-8 rounded-lg flex items-center justify-center ${item.status === 'active' ? 'text-slate-500 hover:text-rose-600 hover:bg-rose-50' : 'text-slate-500 hover:text-emerald-600 hover:bg-emerald-50'} border border-slate-200 transition-all shadow-2xs cursor-pointer">
+              <span class="material-symbols-outlined text-[18px]">${item.status === 'active' ? 'lock' : 'lock_open'}</span>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
 
-      if (data.length === 0) {
-        tbody.innerHTML = `
-          <tr>
-            <td colspan="9" class="text-center py-10 text-slate-400">
-              Không tìm thấy khách hàng nào khớp với tìm kiếm.
-            </td>
-          </tr>
-        `;
-        return;
-      }
+  function openCustomerDetail(id) {
+    const customer = customerList.find(c => c.id === id);
+    if (!customer) return;
 
-      tbody.innerHTML = data.map(item => `
-        <tr class="hover:bg-slate-50/70 transition-colors">
+    const basicInfoContainer = document.getElementById('modal-basic-info');
+    basicInfoContainer.innerHTML = `
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-blue-100 text-blue-700 font-mono">${customer.id}</span>
+            <h4 class="text-base font-bold text-slate-800">${customer.name}</h4>
+            ${customer.status === 'active' 
+              ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">Đang hoạt động</span>' 
+              : '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200">Bị khóa</span>'}
+          </div>
+          <p class="text-xs text-slate-400 mt-1">Ngày tham gia hệ thống: <b class="text-slate-600">${customer.joinDate || '-'}</b></p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="toggleStatus('${customer.id}')" class="px-3.5 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-colors text-slate-700 flex items-center gap-1.5 shadow-2xs cursor-pointer">
+            <span class="material-symbols-outlined text-[16px]">${customer.status === 'active' ? 'lock' : 'lock_open'}</span>
+            <span>${customer.status === 'active' ? 'Khóa tài khoản này' : 'Mở khóa tài khoản'}</span>
+          </button>
+        </div>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 text-xs">
+        <div>
+          <span class="text-slate-400 block mb-0.5">Số điện thoại liên hệ</span>
+          <span class="font-semibold text-slate-700">${customer.phone || '-'}</span>
+        </div>
+        <div>
+          <span class="text-slate-400 block mb-0.5">Địa chỉ Email</span>
+          <span class="font-semibold text-slate-700">${customer.email || '-'}</span>
+        </div>
+        <div>
+          <span class="text-slate-400 block mb-0.5">Tổng số sự kiện đã đặt</span>
+          <span class="font-bold text-slate-800">${customer.bookingsCount || 0} sự kiện</span>
+        </div>
+        <div>
+          <span class="text-slate-400 block mb-0.5">Tổng giá trị chi tiêu</span>
+          <span class="font-bold text-blue-600 text-sm">${Number(customer.totalSpent || 0).toLocaleString('vi-VN')} ₫</span>
+        </div>
+        <div class="sm:col-span-2 lg:col-span-4 pt-1">
+          <span class="text-slate-400 block mb-0.5">Địa chỉ mặc định</span>
+          <span class="font-medium text-slate-700">${customer.address || 'Chưa cập nhật'}</span>
+        </div>
+      </div>
+    `;
+
+    const bookings = customer.bookings || [];
+    const reviews = customer.reviews || [];
+    const complaints = customer.complaints || [];
+
+    document.getElementById('tab-count-bookings').innerText = bookings.length;
+    document.getElementById('tab-count-reviews').innerText = reviews.length;
+    document.getElementById('tab-count-complaints').innerText = complaints.length;
+
+    // Tab 1: Bookings
+    const bookingsTbody = document.getElementById('bookings-table-body');
+    bookingsTbody.innerHTML = bookings.length === 0 
+      ? `<tr><td colspan="6" class="text-center py-8 text-slate-400">Khách hàng chưa phát sinh đơn đặt sự kiện nào.</td></tr>`
+      : bookings.map(b => `
+        <tr class="hover:bg-slate-50/50">
+          <td class="py-3 px-4 font-semibold text-blue-600 font-mono">${b.code}</td>
+          <td class="py-3 px-4 font-medium text-slate-800">${b.eventName}</td>
+          <td class="py-3 px-4 text-slate-600">${b.partner}</td>
+          <td class="py-3 px-4 text-slate-500">${b.date}</td>
+          <td class="py-3 px-4 text-right font-bold text-slate-800">${Number(b.total || 0).toLocaleString('vi-VN')} ₫</td>
           <td class="py-3 px-4 text-center">
-            <input type="checkbox" value="${item.id}" class="row-checkbox rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer">
-          </td>
-          <!-- Cột Mã KH riêng biệt -->
-          <td class="py-3 px-4 font-semibold text-blue-600 font-mono">
-            ${item.id}
-          </td>
-          <!-- Cột Tên KH riêng biệt -->
-          <td class="py-3 px-4">
-            <span class="font-semibold text-slate-800 hover:text-blue-600 cursor-pointer" onclick="openCustomerDetail('${item.id}')">${item.name}</span>
-          </td>
-          <td class="py-3 px-4">
-            <div class="flex flex-col">
-              <span class="text-slate-700 font-medium">${item.phone}</span>
-              <span class="text-[11px] text-slate-400">${item.email}</span>
-            </div>
-          </td>
-          <td class="py-3 px-4 text-slate-600">${item.joinDate}</td>
-          <td class="py-3 px-4 text-center font-semibold text-slate-700">${item.bookingsCount}</td>
-          <td class="py-3 px-4 text-right font-bold text-slate-800">${item.totalSpent.toLocaleString('vi-VN')} ₫</td>
-          <td class="py-3 px-4 text-center">
-            ${item.status === 'active' 
-              ? `<span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">Hoạt động</span>`
-              : `<span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200">Bị khóa</span>`}
-          </td>
-          <td class="py-3 px-4 text-center">
-            <div class="flex items-center justify-center gap-1.5">
-              <button type="button" onclick="openCustomerDetail('${item.id}')" title="Xem chi tiết & Lịch sử"
-                class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-500 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 transition-all shadow-2xs">
-                <span class="material-symbols-outlined text-[18px]">visibility</span>
-              </button>
-              <button type="button" onclick="toggleStatus('${item.id}')" title="${item.status === 'active' ? 'Khóa tài khoản' : 'Mở khóa'}"
-                class="w-8 h-8 rounded-lg flex items-center justify-center ${item.status === 'active' ? 'text-slate-500 hover:text-rose-600 hover:bg-rose-50' : 'text-slate-500 hover:text-emerald-600 hover:bg-emerald-50'} border border-slate-200 transition-all shadow-2xs">
-                <span class="material-symbols-outlined text-[18px]">${item.status === 'active' ? 'lock' : 'lock_open'}</span>
-              </button>
-            </div>
+            ${b.status === 'completed' 
+              ? '<span class="inline-flex px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200">Hoàn thành</span>' 
+              : '<span class="inline-flex px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-600 border border-amber-200">Đang chuẩn bị</span>'}
           </td>
         </tr>
       `).join('');
-    }
 
-    // hàm mở modal nạp chi tiết khách hàng
-    function openCustomerDetail(id) {
-      const customer = customerList.find(c => c.id === id);
-      if (!customer) return;
+    // Tab 2: Reviews
+    const reviewsTbody = document.getElementById('reviews-table-body');
+    reviewsTbody.innerHTML = reviews.length === 0 
+      ? `<tr><td colspan="4" class="text-center py-8 text-slate-400">Khách hàng chưa để lại nhận xét hoặc đánh giá nào.</td></tr>`
+      : reviews.map(r => `
+        <tr class="hover:bg-slate-50/50">
+          <td class="py-3 px-4 text-slate-500">${r.date}</td>
+          <td class="py-3 px-4 font-medium text-slate-800">${r.eventName}</td>
+          <td class="py-3 px-4 text-center font-bold text-slate-800">${Number(r.rating || 5.0).toFixed(1)}</td>
+          <td class="py-3 px-4 text-slate-600 italic font-normal">"${r.comment || ''}"</td>
+        </tr>
+      `).join('');
 
-      // 1. Nạp Khối thông tin cơ bản
-      const basicInfoContainer = document.getElementById('modal-basic-info');
-      basicInfoContainer.innerHTML = `
-        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-4 border-b border-slate-200/80">
-          <div>
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-blue-100 text-blue-700 font-mono">${customer.id}</span>
-              <h4 class="text-base font-bold text-slate-800">${customer.name}</h4>
-              ${customer.status === 'active'
-                ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200">Đang hoạt động</span>'
-                : '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200">Bị khóa</span>'}
-            </div>
-            <p class="text-xs text-slate-400 mt-1">Ngày tham gia hệ thống: <b class="text-slate-600">${customer.joinDate}</b></p>
-          </div>
-          
-          <div class="flex items-center gap-2">
-            <button type="button" onclick="toggleStatus('${customer.id}')"
-              class="px-3.5 py-2 text-xs font-semibold rounded-xl border border-slate-200 bg-white hover:bg-slate-50 transition-colors text-slate-700 flex items-center gap-1.5 shadow-2xs">
-              <span class="material-symbols-outlined text-[16px]">${customer.status === 'active' ? 'lock' : 'lock_open'}</span>
-              <span>${customer.status === 'active' ? 'Khóa tài khoản này' : 'Mở khóa tài khoản'}</span>
-            </button>
-          </div>
-        </div>
+    // Tab 3: Complaints
+    const complaintsTbody = document.getElementById('complaints-table-body');
+    complaintsTbody.innerHTML = complaints.length === 0 
+      ? `<tr><td colspan="5" class="text-center py-8 text-emerald-600 font-medium">Khách hàng không có khiếu nại nào trên hệ thống.</td></tr>`
+      : complaints.map(c => `
+        <tr class="hover:bg-slate-50/50">
+          <td class="py-3 px-4 font-semibold text-rose-600 font-mono">${c.code}</td>
+          <td class="py-3 px-4 text-slate-500">${c.date}</td>
+          <td class="py-3 px-4 font-medium text-slate-800">${c.issue}</td>
+          <td class="py-3 px-4 text-center">
+            ${c.status === 'resolved' 
+              ? '<span class="inline-flex px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200">Đã giải quyết</span>' 
+              : '<span class="inline-flex px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-50 text-rose-600 border border-rose-200">Tạm khóa xử lý</span>'}
+          </td>
+          <td class="py-3 px-4 text-slate-600">${c.solution || '-'}</td>
+        </tr>
+      `).join('');
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 text-xs">
-          <div>
-            <span class="text-slate-400 block mb-0.5">Số điện thoại liên hệ</span>
-            <span class="font-semibold text-slate-700">${customer.phone}</span>
-          </div>
-          <div>
-            <span class="text-slate-400 block mb-0.5">Địa chỉ Email</span>
-            <span class="font-semibold text-slate-700">${customer.email}</span>
-          </div>
-          <div>
-            <span class="text-slate-400 block mb-0.5">Tổng số sự kiện đã đặt</span>
-            <span class="font-bold text-slate-800">${customer.bookingsCount} sự kiện</span>
-          </div>
-          <div>
-            <span class="text-slate-400 block mb-0.5">Tổng giá trị chi tiêu</span>
-            <span class="font-bold text-blue-600 text-sm">${customer.totalSpent.toLocaleString('vi-VN')} ₫</span>
-          </div>
-          <div class="sm:col-span-2 lg:col-span-4 pt-1">
-            <span class="text-slate-400 block mb-0.5">Địa chỉ mặc định</span>
-            <span class="font-medium text-slate-700">${customer.address}</span>
-          </div>
-        </div>
-      `;
+    switchDetailTab('bookings');
+    document.getElementById('customer-modal').classList.remove('hidden');
+  }
 
-      // Cập nhật số lượng các tab
-      document.getElementById('tab-count-bookings').innerText = customer.bookings.length;
-      document.getElementById('tab-count-reviews').innerText = customer.reviews.length;
-      document.getElementById('tab-count-complaints').innerText = customer.complaints.length;
+  function closeCustomerModal() {
+    document.getElementById('customer-modal').classList.add('hidden');
+  }
 
-      // 2. Render Tab 1: Lịch sử đặt
-      const bookingsTbody = document.getElementById('bookings-table-body');
-      if (customer.bookings.length === 0) {
-        bookingsTbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-slate-400">Khách hàng chưa phát sinh đơn đặt sự kiện nào.</td></tr>`;
+  function switchDetailTab(tabName) {
+    const tabs = ['bookings', 'reviews', 'complaints'];
+    tabs.forEach(t => {
+      const btn = document.getElementById(`tab-btn-${t}`);
+      const content = document.getElementById(`tab-content-${t}`);
+      if (t === tabName) {
+        btn.className = "px-4 py-3 text-xs font-bold border-b-2 border-blue-600 text-blue-600 flex items-center gap-2 transition-colors cursor-pointer";
+        content.classList.remove('hidden');
       } else {
-        bookingsTbody.innerHTML = customer.bookings.map(b => `
-          <tr class="hover:bg-slate-50/50">
-            <td class="py-3 px-4 font-semibold text-blue-600 font-mono">${b.code}</td>
-            <td class="py-3 px-4 font-medium text-slate-800">${b.eventName}</td>
-            <td class="py-3 px-4 text-slate-600">${b.partner}</td>
-            <td class="py-3 px-4 text-slate-500">${b.date}</td>
-            <td class="py-3 px-4 text-right font-bold text-slate-800">${b.total.toLocaleString('vi-VN')} ₫</td>
-            <td class="py-3 px-4 text-center">
-              ${b.status === 'completed' 
-                ? '<span class="inline-flex px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200">Hoàn thành</span>' 
-                : '<span class="inline-flex px-2 py-0.5 rounded text-[10px] font-semibold bg-amber-50 text-amber-600 border border-amber-200">Đang chuẩn bị</span>'}
-            </td>
-          </tr>
-        `).join('');
-      }
-
-      // 3. Render Tab 2: Lịch sử đánh giá
-      const reviewsTbody = document.getElementById('reviews-table-body');
-      if (customer.reviews.length === 0) {
-        reviewsTbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-slate-400">Khách hàng chưa để lại nhận xét hoặc đánh giá nào.</td></tr>`;
-      } else {
-        reviewsTbody.innerHTML = customer.reviews.map(r => `
-          <tr class="hover:bg-slate-50/50">
-            <td class="py-3 px-4 text-slate-500">${r.date}</td>
-            <td class="py-3 px-4 font-medium text-slate-800">${r.eventName}</td>
-            <td class="py-3 px-4 text-center font-bold text-slate-800">
-              ${Number(r.rating).toFixed(1)}
-            </td>
-            <td class="py-3 px-4 text-slate-600 italic font-normal">"${r.comment}"</td>
-          </tr>
-        `).join('');
-      }
-
-      // 4. Render Tab 3: Lịch sử khiếu nại
-      const complaintsTbody = document.getElementById('complaints-table-body');
-      if (customer.complaints.length === 0) {
-        complaintsTbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-emerald-600 font-medium">Khách hàng không có khiếu nại nào trên hệ thống.</td></tr>`;
-      } else {
-        complaintsTbody.innerHTML = customer.complaints.map(c => `
-          <tr class="hover:bg-slate-50/50">
-            <td class="py-3 px-4 font-semibold text-rose-600 font-mono">${c.code}</td>
-            <td class="py-3 px-4 text-slate-500">${c.date}</td>
-            <td class="py-3 px-4 font-medium text-slate-800">${c.issue}</td>
-            <td class="py-3 px-4 text-center">
-              ${c.status === 'resolved' 
-                ? '<span class="inline-flex px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200">Đã giải quyết</span>' 
-                : '<span class="inline-flex px-2 py-0.5 rounded text-[10px] font-semibold bg-rose-50 text-rose-600 border border-rose-200">Tạm khóa xử lý</span>'}
-            </td>
-            <td class="py-3 px-4 text-slate-600">${c.solution}</td>
-          </tr>
-        `).join('');
-      }
-
-      // Đưa về tab đầu tiên và mở Modal
-      switchDetailTab('bookings');
-      document.getElementById('customer-modal').classList.remove('hidden');
-    }
-
-    // Đóng Modal
-    function closeCustomerModal() {
-      document.getElementById('customer-modal').classList.add('hidden');
-    }
-
-    // Chuyển đổi qua lại giữa các tab trong Modal
-    function switchDetailTab(tabName) {
-      const tabs = ['bookings', 'reviews', 'complaints'];
-      tabs.forEach(t => {
-        const btn = document.getElementById(`tab-btn-${t}`);
-        const content = document.getElementById(`tab-content-${t}`);
-        if (t === tabName) {
-          btn.className = "px-4 py-3 text-xs font-bold border-b-2 border-blue-600 text-blue-600 flex items-center gap-2 transition-colors";
-          content.classList.remove('hidden');
-        } else {
-          btn.className = "px-4 py-3 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center gap-2 transition-colors";
-          content.classList.add('hidden');
-        }
-      });
-    }
-
-    // Tìm kiếm khách hàng ở bảng ngoài
-    function filterData() {
-      const keyword = document.getElementById('customer-search-input').value.trim().toLowerCase();
-
-      currentData = customerList.filter(item => {
-        return item.name.toLowerCase().includes(keyword) || 
-               item.email.toLowerCase().includes(keyword) || 
-               item.phone.includes(keyword) || 
-               item.id.toLowerCase().includes(keyword);
-      });
-
-      renderMainTable(currentData);
-      document.getElementById('pagination-info').innerText = `Hiển thị ${currentData.length} trong tổng số ${customerList.length} khách hàng`;
-    }
-
-    // Đổi trạng thái Khóa / Mở khóa
-    function toggleStatus(id) {
-      const customer = customerList.find(c => c.id === id);
-      if (!customer) return;
-
-      const confirmMsg = customer.status === 'active' 
-        ? `Bạn có chắc muốn khóa tài khoản "${customer.name}"?` 
-        : `Mở khóa cho tài khoản "${customer.name}"?`;
-
-      if (confirm(confirmMsg)) {
-        customer.status = customer.status === 'active' ? 'locked' : 'active';
-        filterData();
-        updateStats();
-
-        // Nếu đang mở modal thì cập nhật lại thông tin trong modal
-        const modal = document.getElementById('customer-modal');
-        if (!modal.classList.contains('hidden')) {
-          openCustomerDetail(id);
-        }
-      }
-    }
-
-    // Khởi tạo sự kiện khi load trang
-    document.addEventListener('DOMContentLoaded', () => {
-      updateStats();
-      renderMainTable(customerList);
-
-      document.getElementById('customer-search-input').addEventListener('input', filterData);
-      document.getElementById('btn-refresh').addEventListener('click', () => {
-        document.getElementById('customer-search-input').value = '';
-        filterData();
-      });
-
-      const checkAll = document.getElementById('check-all');
-      if (checkAll) {
-        checkAll.addEventListener('change', (e) => {
-          document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = e.target.checked);
-        });
+        btn.className = "px-4 py-3 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center gap-2 transition-colors cursor-pointer";
+        content.classList.add('hidden');
       }
     });
-  </script>
+  }
 
-</body>
-</html>
+  function filterData() {
+    const keyword = (document.getElementById('customer-search-input')?.value || '').trim().toLowerCase();
+    currentData = customerList.filter(item => {
+      const name = (item.name || '').toLowerCase();
+      const email = (item.email || '').toLowerCase();
+      const phone = (item.phone || '').toLowerCase();
+      const id = (item.id || '').toLowerCase();
+      return name.includes(keyword) || email.includes(keyword) || phone.includes(keyword) || id.includes(keyword);
+    });
+
+    renderMainTable(currentData);
+    document.getElementById('pagination-info').innerText = `Hiển thị ${currentData.length} trong tổng số ${customerList.length} khách hàng`;
+  }
+
+  function toggleStatus(id) {
+    const customer = customerList.find(c => c.id === id);
+    if (!customer) return;
+
+    const confirmMsg = customer.status === 'active' 
+      ? `Bạn có chắc muốn khóa tài khoản "${customer.name}"?` 
+      : `Mở khóa cho tài khoản "${customer.name}"?`;
+
+    if (confirm(confirmMsg)) {
+      customer.status = customer.status === 'active' ? 'locked' : 'active';
+      filterData();
+      updateStats();
+
+      const modal = document.getElementById('customer-modal');
+      if (modal && !modal.classList.contains('hidden')) {
+        openCustomerDetail(id);
+      }
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    updateStats();
+    renderMainTable(customerList);
+
+    document.getElementById('customer-search-input')?.addEventListener('input', filterData);
+    document.getElementById('btn-refresh')?.addEventListener('click', () => {
+      document.getElementById('customer-search-input').value = '';
+      filterData();
+    });
+
+    const checkAll = document.getElementById('check-all');
+    if (checkAll) {
+      checkAll.addEventListener('change', (e) => {
+        document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = e.target.checked);
+      });
+    }
+  });
+</script>
+{% endblock %}
