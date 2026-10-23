@@ -1,4 +1,3 @@
-
 require("dotenv").config();
 const express = require("express");
 const nunjucks = require("nunjucks");
@@ -7,6 +6,9 @@ const fs = require("fs");
 const session = require("express-session");
 const mysql = require("mysql2/promise");
 const bcrypt = require("bcryptjs");
+
+const passport = require("passport");
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -21,7 +23,7 @@ app.use("/css", express.static(path.join(__dirname, "css")));
 app.use("/img", express.static(path.join(__dirname, "img")));
 app.use("/js", express.static(path.join(__dirname, "js")));
 app.use(express.static(path.join(__dirname, "public"), { index: false }));
-app.use("/admin", express.static(path.join(__dirname, "admin")));
+
 
 // =========================================================================
 // 2. CẤU HÌNH SESSION & MIDDLEWARE
@@ -47,17 +49,13 @@ app.use((req, res, next) => {
 // 3. CẤU HÌNH NUNJUCKS
 // =========================================================================
 const viewsPath = path.join(__dirname, "views");
-nunjucks.configure([
-  viewsPath,
-  path.join(viewsPath, "admin"),
-  path.join(__dirname, "admin")
-], {
+
+nunjucks.configure(viewsPath, {
   autoescape: true,
   express: app,
   watch: true,
-  noCache: true
+  noCache: true,
 });
-
 app.set("view engine", "html");
 app.set("views", viewsPath);
 
@@ -101,12 +99,76 @@ function requireAdmin(req, res, next) {
 }
 
 // =========================================================================
+// GOOGLE OAUTH 2.0
+// =========================================================================
+app.use(passport.initialize());
+app.use(passport.session());
+
+
+passport.serializeUser((user, done) => done(null, user));
+passport.deserializeUser((user, done) => done(null, user));
+// 2. Cấu hình chiến lược xác thực với Google
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  passport.use(
+    new GoogleStrategy(
+      {
+        clientID: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        callbackURL: "http://localhost:3000/auth/google/callback",
+      },
+      async (accessToken, refreshToken, profile, done) => {
+        try {
+          const email = profile.emails[0].value.toLowerCase();
+          const username = profile.displayName || "Khách hàng Google";
+
+          const [rows] = await pool.query("SELECT * FROM users WHERE email = ? LIMIT 1", [email]);
+
+          let user;
+          if (rows.length === 0) {
+            const [result] = await pool.query(
+              "INSERT INTO users (username, email, password, role, email_verified) VALUES (?, ?, 'oauth_google', 'customer', 1)",
+              [username, email]
+            );
+            user = { id: result.insertId, username, email, role: "customer" };
+          } else {
+            user = { id: rows[0].id, username: rows[0].username, email: rows[0].email, role: rows[0].role };
+          }
+
+          return done(null, user);
+        } catch (err) {
+          return done(err, null);
+        }
+      }
+    )
+  );
+} else {
+  console.warn(">>> [Cảnh báo] Chưa cấu hình GOOGLE_CLIENT_ID và GOOGLE_CLIENT_SECRET trong .env");
+}
+//ROUTE ĐĂNG NHẬP GG
+// 1. Khi bấm nút "Đăng nhập với Google" -> Chuyển sang Google
+app.get(
+  "/auth/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+
+// 2. Google xử lý xong rồi đẩy về lại đây
+app.get(
+  "/auth/google/callback",
+  passport.authenticate("google", { failureRedirect: "/login" }),
+  (req, res) => {
+    req.session.user = req.user;
+    res.redirect("/");
+  }
+);
+
+// =========================================================================
 // 5. ROUTE ADMIN
 // =========================================================================
 app.get("/admin", (req, res) => {
   res.redirect("/admin/dashboard");
 });
 
+// 1. Route cố định: Dashboard
 app.get("/admin/dashboard", requireAdmin, (req, res) => {
   res.render("admin/dashboard.html", {
     currentPage: "dashboard.html",
@@ -114,26 +176,32 @@ app.get("/admin/dashboard", requireAdmin, (req, res) => {
   });
 });
 
+app.get("/admin/test-sidebar", (req, res) => {
+  try {
+    res.render("admin/test-sidebar.html", {
+      currentPage: "test-sidebar.html",
+      adminUser: req.session?.user || { username: "QTV Admin", role: "admin" }
+    });
+  } catch (err) {
+    console.error(">>> Render lỗi:", err);
+    res.status(500).send("<pre>" + err.message + "\n" + err.stack + "</pre>");
+  }
+});
+// 3. Route động cho các trang admin khác (Đặt Ở CUỐI CÙNG và render đúng thư mục admin/)
 app.get("/admin/:page", requireAdmin, (req, res) => {
-  const page = req.params.page.replace(/\.html\$/, "");
-  // Chặn traversal đường dẫn
-  if (!/^[a-zA-Z0-9_-]+\$/.test(page)) {
+  const page = req.params.page.replace(/\.html$/, "");
+  if (!/^[a-zA-Z0-9_-]+$/.test(page)) {
     return res.status(400).send("Đường dẫn không hợp lệ!");
   }
-
-  const fileName = `${page}.html`;
-  const filePath = path.join(__dirname, "admin", fileName);
-
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).send("Trang quản trị không tồn tại!");
-  }
-
+  
+  // Nối thêm "admin/" để nạp đúng file trong thư mục views/admin/
+  const fileName = `admin/${page}.html`;
+  
   res.render(fileName, {
-    currentPage: fileName,
+    currentPage: `${page}.html`,
     adminUser: req.session?.user || { username: "QTV", role: "admin" },
   });
 });
-
 // =========================================================================
 // 6. ROUTES CLIENT
 // =========================================================================
@@ -148,25 +216,43 @@ app.get("/", async (req, res) => {
   }
 });
 
+///ROUTE DANH SÁCH DỊCH VỤ SỰ KIỆN (/event)
 app.get("/event", async (req, res) => {
   try {
     const sql = `
-      SELECT s.id, s.name, s.category, s.category_name AS categoryName, 
-             s.base_price AS basePrice, s.image, s.rating, s.completed_count AS completedCount, 
-             s.has_express AS hasExpress, s.is_new AS isNew, s.description, s.created_at AS createdAt, 
-             p.name AS partnerName 
+      SELECT 
+        s.id, 
+        s.name, 
+        s.category, 
+        s.category_name AS categoryName, 
+        CAST(s.base_price AS SIGNED) AS basePrice, 
+        COALESCE(s.image, '') AS image, 
+        CAST(COALESCE(s.rating, 5.0) AS DECIMAL(2,1)) AS rating, 
+        COALESCE(s.completed_count, 0) AS completedCount, 
+        IF(s.has_express = 1, true, false) AS hasExpress, 
+        IF(s.is_new = 1, true, false) AS isNew, 
+        s.short_description AS shortDescription,
+        s.description, 
+        s.created_at AS createdAt, 
+        p.name AS partnerName,
+        p.badge_gradient AS badgeGradient
       FROM services s 
       JOIN partners p ON s.partner_id = p.id 
+      WHERE s.is_visible = 1
       ORDER BY s.created_at DESC
     `;
     const [services] = await pool.query(sql);
-    res.render("event.html", { servicesJson: JSON.stringify(services) });
+    res.render("event.html", { 
+      servicesJson: JSON.stringify(services) 
+    });
   } catch (error) {
     console.error(">>> [MySQL] Lỗi đọc danh sách dịch vụ:", error.message);
     res.render("event.html", { servicesJson: "[]" });
   }
 });
 
+
+// ROUTE CHI TIẾT DỊCH VỤ (/event/detail)
 app.get("/event/detail", async (req, res) => {
   const serviceId = req.query.id;
   if (!serviceId) {
@@ -174,7 +260,7 @@ app.get("/event/detail", async (req, res) => {
   }
 
   try {
-    // 1. Truy vấn thông tin dịch vụ chính + tên đối tác
+    // 1. Truy vấn thông tin dịch vụ chính + đối tác
     const serviceSql = `
       SELECT 
         s.id, 
@@ -187,23 +273,28 @@ app.get("/event/detail", async (req, res) => {
         COALESCE(s.completed_count, 0) AS completedCount, 
         IF(s.has_express = 1, true, false) AS hasExpress, 
         CAST(COALESCE(s.express_fee, 500000) AS SIGNED) AS expressFee, 
+        s.short_description AS shortDescription,
         s.description, 
-        p.name AS partnerName 
+        p.id AS partnerId,
+        p.name AS partnerName,
+        p.phone AS partnerPhone,
+        p.email AS partnerEmail,
+        p.rating AS partnerRating,
+        p.experience AS partnerExperience
       FROM services s 
       JOIN partners p ON s.partner_id = p.id 
-      WHERE s.id = ?
+      WHERE s.id = ? AND s.is_visible = 1
     `;
     const [services] = await pool.query(serviceSql, [serviceId]);
 
-    // Không tìm thấy dịch vụ trong CSDL -> chuyển về trang danh sách
     if (services.length === 0) {
-      console.warn(`>>> [MySQL] Không tìm thấy dịch vụ có id = ${serviceId}`);
+      console.warn(`>>> [MySQL] Không tìm thấy dịch vụ hoặc dịch vụ bị ẩn: ${serviceId}`);
       return res.redirect("/event");
     }
 
     const serviceData = services[0];
 
-    // 2. Truy vấn bộ sưu tập ảnh (bọc try-catch để nếu chưa tạo bảng service_gallery vẫn không lỗi)
+   // Gallery ảnh
     try {
       const [galleryRows] = await pool.query(
         "SELECT image_url AS url, caption FROM service_gallery WHERE service_id = ?",
@@ -216,28 +307,37 @@ app.get("/event/detail", async (req, res) => {
       serviceData.gallery = [{ url: serviceData.image, caption: serviceData.name }];
     }
 
-    // 3. Truy vấn các option cấu hình bổ sung (bọc try-catch an toàn)
+    // Các tùy chọn Options
     try {
       const [optionsRows] = await pool.query(
-        "SELECT option_key AS id, name, CAST(price AS SIGNED) AS price FROM service_options WHERE service_id = ?",
+        `SELECT 
+          id, 
+          group_name AS groupName, 
+          option_name AS name, 
+          CAST(price_adjustment AS SIGNED) AS price, 
+          IF(is_default = 1, true, false) AS isDefault 
+        FROM service_options 
+        WHERE service_id = ?
+        ORDER BY group_name ASC, id ASC`,
         [serviceId]
       );
       serviceData.extraOptions = optionsRows;
     } catch (optErr) {
+      console.error(">>> [MySQL] Lỗi đọc service_options:", optErr.message);
       serviceData.extraOptions = [];
     }
 
-    // 4. Render template và nạp chuỗi JSON vào view
+    // Render template detail-event.html
     res.render("detail-event.html", { 
       serviceDetailJson: JSON.stringify(serviceData) 
     });
-
   } catch (error) {
-    console.error(">>> [MySQL Lỗi chi tiết dịch vụ]:", error.message);
+    console.error(">>> [MySQL] Lỗi chi tiết dịch vụ:", error.message);
     res.redirect("/event");
   }
 });
 
+// ROUTE CHI TIẾT DỊCH VỤ (/event/detail)
 app.get("/partner", async (req, res) => {
   try {
     const [partners] = await pool.query(`
@@ -252,7 +352,7 @@ app.get("/partner", async (req, res) => {
   }
 });
 
-// lấy thông tin đối tác từ csdl
+// ROUTE CHI TIẾT ĐỐI TÁC (/partner/:id)
 app.get("/partner/:id", async (req, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id) || id < 1) {
@@ -269,7 +369,6 @@ app.get("/partner/:id", async (req, res) => {
     if (partnerRows.length === 0) {
       return res.status(404).redirect("/partner");
     }
-
     const partner = partnerRows[0];
 
     // 2. Lấy danh sách dịch vụ của đối tác
@@ -340,7 +439,7 @@ app.get("/my-orders", async (req, res) => {
 
     const [orders] = await pool.query(querySql, params);
 
-    // Truyền dữ liệu dạng JSON vào view qua biến ordersJson
+    // Render template my-orders.html với dữ liệu JSON
     res.render("my-orders.html", {
       ordersJson: JSON.stringify(orders)
     });
@@ -350,6 +449,7 @@ app.get("/my-orders", async (req, res) => {
   }
 });
 
+// ROUTE CHI TIẾT ĐƠN HÀNG (/order/detail)
 app.get("/order/detail", async (req, res) => {
   const queryParam = req.query.id;
   if (!queryParam) {
@@ -382,7 +482,6 @@ app.get("/order/detail", async (req, res) => {
     if (orderRows.length === 0) {
       return res.redirect("/my-orders");
     }
-
     const order = orderRows[0];
 
     // 2. Lấy thông tin dịch vụ từ order_items và services
@@ -483,25 +582,25 @@ app.get("/reset-password", (req, res) => res.render("reset-password.html"));
 app.get("/register", (req, res) => res.render("register.html"));
 app.get("/login", (req, res) => res.render("login.html"));
 
-app.post("/register", async (req, res) => {
+
+app.post("/api/register", async (req, res) => {
   const { fullName, email, password, confirmPassword } = req.body;
 
   if (!fullName || !email || !password) {
-    return res.send("<script>alert('Vui lòng nhập đầy đủ họ tên, email và mật khẩu!'); window.history.back();</script>");
+    return res.status(400).json({ message: "Vui lòng nhập đầy đủ họ tên, email và mật khẩu." });
   }
-
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+\$/;
   const normalizedEmail = email.trim().toLowerCase();
   if (!emailRegex.test(normalizedEmail)) {
-    return res.send("<script>alert('Địa chỉ email không đúng định dạng!'); window.history.back();</script>");
+    return res.status(400).json({ message: "Địa chỉ email không đúng định dạng." });
   }
 
   if (password.length < 6) {
-    return res.send("<script>alert('Mật khẩu phải từ 6 ký tự trở lên!'); window.history.back();</script>");
+    return res.status(400).json({ message: "Mật khẩu phải có độ dài từ 6 ký tự trở lên." });
   }
 
   if (confirmPassword && password !== confirmPassword) {
-    return res.send("<script>alert('Mật khẩu xác nhận không khớp!'); window.history.back();</script>");
+    return res.status(400).json({ message: "Mật khẩu xác nhận không khớp." });
   }
 
   try {
@@ -511,31 +610,28 @@ app.post("/register", async (req, res) => {
     );
 
     if (existing.length > 0) {
-      return res.send("<script>alert('Email này đã được sử dụng!'); window.history.back();</script>");
+      return res.status(409).json({ message: "Email này đã được đăng ký tài khoản." });
     }
-
     const passwordHash = await bcrypt.hash(password, 10);
-
-    const [result] = await pool.query(
+    await pool.query(
       `INSERT INTO users (username, email, password, role, status, email_verified) 
        VALUES (?, ?, ?, 'customer', 'active', TRUE)`,
       [fullName.trim(), normalizedEmail, passwordHash]
     );
 
-    // Tự động đăng nhập và lưu session sau khi đăng ký thành công
-    req.session.user = {
-      id: result.insertId,
-      username: fullName.trim(),
-      email: normalizedEmail,
-      role: "customer"
-    };
+    return res.status(201).json({
+      success: true,
+      message: "Đăng ký tài khoản thành công! Đang chuyển hướng..."
+    });
 
-    return res.send("<script>alert('Đăng ký tài khoản thành công!'); window.location.href = '/';</script>");
   } catch (error) {
-    console.error(">>> [MySQL] Lỗi đăng ký:", error.message);
-    return res.status(500).send("Lỗi xử lý đăng ký hệ thống.");
+    console.error(">>> [MySQL Lỗi đăng ký]:", error);
+    return res.status(500).json({
+      message: "Lỗi hệ thống khi lưu tài khoản: " + (error.sqlMessage || error.message)
+    });
   }
 });
+
 
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
