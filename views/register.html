@@ -1,53 +1,184 @@
 {% extends "base.html" %}
-{% block title %}Đăng ký{% endblock title %}
+
+{% block title %}Đăng ký tài khoản - EventDecor{% endblock title %}
 
 {% block content %}
-<div class="container mb-4 mt-4 d-flex flex-column justify-content-center">
-  <div class="row register-contact">
-    <div class="col-lg-5 info-contact text-white d-flex flex-column justify-content-center gap-4 p-4">
-      <div class="d-flex flex-column justify-content-semibold h-100">
-        <div>
-          <h3>Đăng ký tài khoản cá nhân!</h3>
-          <p>Vì mục đích tuân thủ các quy định của ngành, chúng tôi cần thông tin chi tiết của bạn.</p>
-        </div>
-        <span class="mt-auto">
-          Bạn đã có tài khoản?
-          <a style="color: rgb(170, 220, 61)" href="/login">Nhấn vào đây để đăng nhập</a>
-        </span>
-      </div>
-    </div>
+<style>
+  .light-frosted-card {
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(174, 196, 212, 0.45) !important;
+    box-shadow: 0 10px 30px -5px rgba(174, 196, 212, 0.25), 0 4px 14px -2px rgba(121, 13, 22, 0.05);
+  }
+  .frosted-pill {
+    background: rgba(249, 240, 224, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(174, 196, 212, 0.5) !important;
+  }
+</style>
 
-    <div class="col-lg-7 p-3">
-      <div class="register-form">
-        <form action="/register" method="POST">
-          <div class="form-group mb-3">
-            <label for="name" class="form-label">Tên của bạn</label>
-            <input type="text" class="form-control" id="name" name="name" placeholder="Nhập tên tại đây" required />
+<!-- KHUNG CHỨA CĂN GIỮA TUYỆT ĐỐI -->
+<div class="min-h-[calc(100vh-140px)] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-10 relative z-10">
+  <div class="max-w-4xl w-full light-frosted-card rounded-3xl overflow-hidden shadow-2xl">
+    <div class="grid grid-cols-1 lg:grid-cols-12">
+      
+      <!-- CỘT TRÁI (5 CỘT): BANNER GIỚI THIỆU MÀU GRADIENT THƯƠNG HIỆU -->
+      <div class="lg:col-span-5 bg-gradient-to-br from-[#cc3a63] to-[#790d16] text-white p-8 sm:p-10 flex flex-col justify-between relative overflow-hidden">
+        <!-- Đốm sáng mờ trang trí -->
+        <div class="absolute -right-16 -top-16 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
+
+        <div class="space-y-6 relative z-10">
+          <div class="w-12 h-12 rounded-2xl bg-white/15 border border-white/20 flex items-center justify-center font-bold text-xl">
+            <svg width="24" height="24" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm.5-5v1h1a.5.5 0 0 1 0 1h-1v1a.5.5 0 0 1-1 0v-1h-1a.5.5 0 0 1 0-1h1v-1a.5.5 0 0 1 1 0Zm-2-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM8 7a2 2 0 1 0 0-4 2 2 0 0 0 0 4Z"/>
+              <path d="M8.256 14a4.474 4.474 0 0 1-.229-1.004H3c.001-.246.154-.986.832-1.664C4.484 10.68 5.711 10 8 10c.26 0 .507.009.74.025.226-.341.496-.65.804-.918C9.077 9.038 8.564 9 8 9c-5 0-6 3-6 4s1 1 1 1h5.256Z"/>
+            </svg>
           </div>
-          <div class="form-group mb-3">
-            <label for="email" class="form-label">Nhập email</label>
-            <input type="email" class="form-control" id="email" name="email" placeholder="Nhập email tại đây" required />
+
+          <div class="space-y-2">
+            <h2 class="text-2xl sm:text-3xl font-black tracking-tight leading-snug">
+              Bắt đầu cùng EventDecor!
+            </h2>
+            <p class="text-xs sm:text-sm text-white/85 leading-relaxed font-normal">
+              Đăng ký tài khoản để khám phá hàng trăm gói trang trí sự kiện độc đáo và kết nối trực tiếp với các đơn vị tổ chức uy tín.
+            </p>
           </div>
-          <div class="form-group mb-3">
-            <label for="pwd" class="form-label">Tạo mật khẩu:</label>
-            <input type="password" class="form-control" id="pwd" name="password" required />
+
+          <div class="space-y-2.5 pt-2 text-xs text-white/80">
+            <div class="flex items-center gap-2">
+              <span class="text-amber-300 font-bold">&#10003;</span>
+              <span>Đặt gói tiệc & theo dõi tiến độ thi công dễ dàng</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-amber-300 font-bold">&#10003;</span>
+              <span>Hợp đồng điện tử bảo chứng chất lượng dịch vụ</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-amber-300 font-bold">&#10003;</span>
+              <span>Hỗ trợ tư vấn giải pháp trang trí trọn gói 24/7</span>
+            </div>
           </div>
-          <div class="form-group mb-3">
-            <label for="confirm-pwd" class="form-label">Xác nhận mật khẩu:</label>
-            <input type="password" class="form-control" id="confirm-pwd" name="confirm_password" required />
+        </div>
+
+        <div class="pt-6 mt-6 border-t border-white/15 text-xs relative z-10">
+          <span class="text-white/70">Bạn đã có tài khoản?</span>
+          <a href="/login" class="block font-bold text-amber-200 hover:text-white transition-colors mt-1">
+            Đăng nhập ngay &rarr;
+          </a>
+        </div>
+      </div>
+
+      <!-- CỘT PHẢI (7 CỘT): FORM ĐĂNG KÝ -->
+      <div class="lg:col-span-7 p-6 sm:p-10 flex flex-col justify-center space-y-5 bg-white/70">
+        <div class="space-y-1">
+          <h3 class="text-2xl font-black text-slate-900 tracking-tight">
+            Tạo tài khoản mới
+          </h3>
+          <p class="text-xs text-slate-500">
+            Vui lòng cung cấp thông tin bên dưới để thiết lập hồ sơ cá nhân.
+          </p>
+        </div>
+
+        <form action="/register" method="POST" class="space-y-3.5 text-xs">
+          <!-- Họ và tên -->
+          <div class="space-y-1">
+            <label for="name" class="block font-bold text-slate-700">Tên của bạn *</label>
+            <div class="relative flex items-center">
+              <span class="absolute left-3.5 text-slate-400">
+                <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M3 14s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1H3Zm5-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"/>
+                </svg>
+              </span>
+              <input type="text" id="name" name="name" placeholder="Nguyễn Văn A" required autocomplete="name"
+                class="w-full bg-white/90 border border-[#aec4d4]/60 focus:border-[#790d16] rounded-xl pl-10 pr-4 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none transition-all shadow-xs" />
+            </div>
           </div>
-          <div class="form-check mb-3">
-            <input class="form-check-input" type="checkbox" id="terms" required />
-            <label class="form-check-label" for="terms">Tôi đồng ý với các điều khoản và điều kiện.</label>
+
+          <!-- Địa chỉ Email -->
+          <div class="space-y-1">
+            <label for="email" class="block font-bold text-slate-700">Địa chỉ Email *</label>
+            <div class="relative flex items-center">
+              <span class="absolute left-3.5 text-slate-400">
+                <svg width="15" height="15" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V4Zm2-1a1 1 0 0 0-1 1v.217l7 4.2 7-4.2V4a1 1 0 0 0-1-1H2Zm13 2.383-4.708 2.825L15 11.105V5.383Zm-.034 6.876-5.64-3.471L8 9.583l-1.326-.795-5.64 3.47A1 1 0 0 0 2 13h12a1 1 0 0 0 .966-.741ZM1 11.105l4.708-2.897L1 5.383v5.722Z"/>
+                </svg>
+              </span>
+              <input type="email" id="email" name="email" placeholder="name@example.com" required autocomplete="email"
+                class="w-full bg-white/90 border border-[#aec4d4]/60 focus:border-[#790d16] rounded-xl pl-10 pr-4 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none transition-all shadow-xs" />
+            </div>
           </div>
-          <div class="d-flex flex-column justify-content-center m-2 gap-3">
-            <button type="submit" class="btn btn-danger">Đăng ký tài khoản</button>
-            <a href="/auth/google" class="btn btn-light" style="border: 1px solid #ccc">Đăng ký với Google</a>
+
+          <!-- Hàng 2 cột: Mật khẩu & Xác nhận mật khẩu -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="space-y-1">
+              <label for="pwd" class="block font-bold text-slate-700">Tạo mật khẩu *</label>
+              <div class="relative flex items-center">
+                <span class="absolute left-3 text-slate-400">
+                  <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
+                  </svg>
+                </span>
+                <input type="password" id="pwd" name="password" placeholder="••••••••" required autocomplete="new-password"
+                  class="w-full bg-white/90 border border-[#aec4d4]/60 focus:border-[#790d16] rounded-xl pl-9 pr-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none transition-all shadow-xs" />
+              </div>
+            </div>
+
+            <div class="space-y-1">
+              <label for="confirm-pwd" class="block font-bold text-slate-700">Xác nhận mật khẩu *</label>
+              <div class="relative flex items-center">
+                <span class="absolute left-3 text-slate-400">
+                  <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2zM5 8h6a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/>
+                  </svg>
+                </span>
+                <input type="password" id="confirm-pwd" name="confirm_password" placeholder="••••••••" required autocomplete="new-password"
+                  class="w-full bg-white/90 border border-[#aec4d4]/60 focus:border-[#790d16] rounded-xl pl-9 pr-3 py-2.5 text-slate-800 placeholder-slate-400 focus:outline-none transition-all shadow-xs" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Điều khoản & Điều kiện -->
+          <div class="flex items-start gap-2 pt-1">
+            <input type="checkbox" id="terms" required
+              class="mt-0.5 rounded border-[#aec4d4] text-[#790d16] focus:ring-[#790d16]/30 cursor-pointer" />
+            <label for="terms" class="text-[11px] text-slate-600 leading-snug cursor-pointer select-none">
+              Tôi đồng ý với các <a href="/terms" class="font-semibold text-[#790d16] hover:underline">Điều khoản dịch vụ</a> và <a href="/privacy" class="font-semibold text-[#790d16] hover:underline">Chính sách bảo mật</a> của EventDecor.
+            </label>
+          </div>
+
+          <!-- Nút Đăng ký -->
+          <div class="pt-2">
+            <button type="submit"
+              class="w-full py-3 rounded-xl bg-gradient-to-r from-[#cc3a63] to-[#790d16] hover:brightness-110 text-white font-bold text-xs transition-all active:scale-95 shadow-md shadow-[#790d16]/20 cursor-pointer">
+              Đăng ký tài khoản
+            </button>
+          </div>
+
+          <!-- Đường kẻ phân cách -->
+          <div class="relative flex items-center justify-center my-3">
+            <div class="border-t border-[#aec4d4]/40 w-full"></div>
+            <span class="bg-[#fff7eb] px-3 text-[11px] text-slate-400 absolute">Hoặc đăng ký bằng</span>
+          </div>
+
+          <!-- Đăng ký qua Google -->
+          <div>
+            <a href="/auth/google"
+              class="w-full py-2.5 rounded-xl border border-[#aec4d4]/60 bg-white/80 hover:bg-white text-slate-700 font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-2xs">
+              <svg width="18" height="18" viewBox="0 0 48 48">
+                <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+              </svg>
+              <span>Đăng ký với Google</span>
+            </a>
           </div>
         </form>
       </div>
+
     </div>
   </div>
 </div>
 {% endblock content %}
-
