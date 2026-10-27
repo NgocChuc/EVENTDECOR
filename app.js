@@ -62,7 +62,7 @@ app.set("views", viewsPath);
 // =========================================================================
 // 4. CƠ SỞ DỮ LIỆU MYSQL
 // =========================================================================
-const pool = mysql.createPool({
+let pool = mysql.createPool({
   host: process.env.DB_HOST || "localhost",
   user: process.env.DB_USER || "root",
   password: process.env.DB_PASSWORD || "",
@@ -77,6 +77,22 @@ async function checkDatabaseConnection() {
     await pool.query("SELECT 1");
     console.log(">>> [MySQL] Kết nối CSDL thành công:", process.env.DB_NAME || "node_auth_demo");
   } catch (error) {
+    try {
+      pool = mysql.createPool({
+      host: process.env.DB_HOST || "localhost",
+      port: Number(process.env.DB_PORT || 3306),
+      user: process.env.DB_USER || "root",
+      password: process.env.DB_PASSWORD || "hello",
+      database: process.env.DB_NAME || "auth_demo",
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0,
+    });
+    await pool.query("SELECT 1");
+    console.log(">>> [MySQL] Kết nối CSDL thành công:", process.env.DB_NAME || "node_auth_demo");
+    } catch (e) {
+      console.warn(">>> [MySQL] Chưa kết nối được MySQL. Web dùng dữ liệu fallback.");
+    }
     console.warn(">>> [MySQL] Chưa kết nối được MySQL. Web dùng dữ liệu fallback.");
   }
 }
@@ -95,7 +111,7 @@ function requireAdmin(req, res, next) {
     return next();
   }
   // Tùy chọn: nếu đang dev có thể tạm bỏ qua hoặc mock user
-  return next(); 
+  return next();
 }
 
 // =========================================================================
@@ -126,7 +142,7 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
           let user;
           if (rows.length === 0) {
             const [result] = await pool.query(
-              "INSERT INTO users (username, email, password, role, email_verified) VALUES (?, ?, 'oauth_google', 'customer', 1)",
+              "INSERT INTO users (username, email, password, role, status, email_verified) VALUES (?, ?, 'oauth_google', 'customer', 'active', TRUE)",
               [username, email]
             );
             user = { id: result.insertId, username, email, role: "customer" };
@@ -193,10 +209,10 @@ app.get("/admin/:page", requireAdmin, (req, res) => {
   if (!/^[a-zA-Z0-9_-]+$/.test(page)) {
     return res.status(400).send("Đường dẫn không hợp lệ!");
   }
-  
+
   // Nối thêm "admin/" để nạp đúng file trong thư mục views/admin/
   const fileName = `admin/${page}.html`;
-  
+
   res.render(fileName, {
     currentPage: `${page}.html`,
     adminUser: req.session?.user || { username: "QTV", role: "admin" },
@@ -220,30 +236,30 @@ app.get("/", async (req, res) => {
 app.get("/event", async (req, res) => {
   try {
     const sql = `
-      SELECT 
-        s.id, 
-        s.name, 
-        s.category, 
-        s.category_name AS categoryName, 
-        CAST(s.base_price AS SIGNED) AS basePrice, 
-        COALESCE(s.image, '') AS image, 
-        CAST(COALESCE(s.rating, 5.0) AS DECIMAL(2,1)) AS rating, 
-        COALESCE(s.completed_count, 0) AS completedCount, 
-        IF(s.has_express = 1, true, false) AS hasExpress, 
-        IF(s.is_new = 1, true, false) AS isNew, 
+      SELECT
+        s.id,
+        s.name,
+        s.category,
+        s.category_name AS categoryName,
+        CAST(s.base_price AS SIGNED) AS basePrice,
+        COALESCE(s.image, '') AS image,
+        CAST(COALESCE(s.rating, 5.0) AS DECIMAL(2,1)) AS rating,
+        COALESCE(s.completed_count, 0) AS completedCount,
+        IF(s.has_express = 1, true, false) AS hasExpress,
+        IF(s.is_new = 1, true, false) AS isNew,
         s.short_description AS shortDescription,
-        s.description, 
-        s.created_at AS createdAt, 
+        s.description,
+        s.created_at AS createdAt,
         p.name AS partnerName,
         p.badge_gradient AS badgeGradient
-      FROM services s 
-      JOIN partners p ON s.partner_id = p.id 
+      FROM services s
+      JOIN partners p ON s.partner_id = p.id
       WHERE s.is_visible = 1
       ORDER BY s.created_at DESC
     `;
     const [services] = await pool.query(sql);
-    res.render("event.html", { 
-      servicesJson: JSON.stringify(services) 
+    res.render("event.html", {
+      servicesJson: JSON.stringify(services)
     });
   } catch (error) {
     console.error(">>> [MySQL] Lỗi đọc danh sách dịch vụ:", error.message);
@@ -262,27 +278,27 @@ app.get("/event/detail", async (req, res) => {
   try {
     // 1. Truy vấn thông tin dịch vụ chính + đối tác
     const serviceSql = `
-      SELECT 
-        s.id, 
-        s.name, 
-        s.category, 
-        s.category_name AS categoryName, 
-        CAST(s.base_price AS SIGNED) AS basePrice, 
-        COALESCE(s.image, '') AS image, 
-        CAST(COALESCE(s.rating, 5.0) AS DECIMAL(2,1)) AS rating, 
-        COALESCE(s.completed_count, 0) AS completedCount, 
-        IF(s.has_express = 1, true, false) AS hasExpress, 
-        CAST(COALESCE(s.express_fee, 500000) AS SIGNED) AS expressFee, 
+      SELECT
+        s.id,
+        s.name,
+        s.category,
+        s.category_name AS categoryName,
+        CAST(s.base_price AS SIGNED) AS basePrice,
+        COALESCE(s.image, '') AS image,
+        CAST(COALESCE(s.rating, 5.0) AS DECIMAL(2,1)) AS rating,
+        COALESCE(s.completed_count, 0) AS completedCount,
+        IF(s.has_express = 1, true, false) AS hasExpress,
+        CAST(COALESCE(s.express_fee, 500000) AS SIGNED) AS expressFee,
         s.short_description AS shortDescription,
-        s.description, 
+        s.description,
         p.id AS partnerId,
         p.name AS partnerName,
         p.phone AS partnerPhone,
         p.email AS partnerEmail,
         p.rating AS partnerRating,
         p.experience AS partnerExperience
-      FROM services s 
-      JOIN partners p ON s.partner_id = p.id 
+      FROM services s
+      JOIN partners p ON s.partner_id = p.id
       WHERE s.id = ? AND s.is_visible = 1
     `;
     const [services] = await pool.query(serviceSql, [serviceId]);
@@ -300,8 +316,8 @@ app.get("/event/detail", async (req, res) => {
         "SELECT image_url AS url, caption FROM service_gallery WHERE service_id = ?",
         [serviceId]
       );
-      serviceData.gallery = galleryRows.length > 0 
-        ? galleryRows 
+      serviceData.gallery = galleryRows.length > 0
+        ? galleryRows
         : [{ url: serviceData.image, caption: serviceData.name }];
     } catch (galleryErr) {
       serviceData.gallery = [{ url: serviceData.image, caption: serviceData.name }];
@@ -310,13 +326,13 @@ app.get("/event/detail", async (req, res) => {
     // Các tùy chọn Options
     try {
       const [optionsRows] = await pool.query(
-        `SELECT 
-          id, 
-          group_name AS groupName, 
-          option_name AS name, 
-          CAST(price_adjustment AS SIGNED) AS price, 
-          IF(is_default = 1, true, false) AS isDefault 
-        FROM service_options 
+        `SELECT
+          id,
+          group_name AS groupName,
+          option_name AS name,
+          CAST(price_adjustment AS SIGNED) AS price,
+          IF(is_default = 1, true, false) AS isDefault
+        FROM service_options
         WHERE service_id = ?
         ORDER BY group_name ASC, id ASC`,
         [serviceId]
@@ -328,8 +344,8 @@ app.get("/event/detail", async (req, res) => {
     }
 
     // Render template detail-event.html
-    res.render("detail-event.html", { 
-      serviceDetailJson: JSON.stringify(serviceData) 
+    res.render("detail-event.html", {
+      serviceDetailJson: JSON.stringify(serviceData)
     });
   } catch (error) {
     console.error(">>> [MySQL] Lỗi chi tiết dịch vụ:", error.message);
@@ -341,8 +357,8 @@ app.get("/event/detail", async (req, res) => {
 app.get("/partner", async (req, res) => {
   try {
     const [partners] = await pool.query(`
-      SELECT id, name, image, description, email 
-      FROM partners 
+      SELECT id, name, image, description, email
+      FROM partners
       ORDER BY id ASC
     `);
     res.render("partner.html", { part: partners });
@@ -373,9 +389,9 @@ app.get("/partner/:id", async (req, res) => {
 
     // 2. Lấy danh sách dịch vụ của đối tác
     const [services] = await pool.query(
-      `SELECT id, name, category_name AS categoryName, base_price AS basePrice, 
+      `SELECT id, name, category_name AS categoryName, base_price AS basePrice,
               image, rating, completed_count AS completedCount, description
-       FROM services 
+       FROM services
        WHERE partner_id = ?
        ORDER BY created_at DESC`,
       [id]
@@ -414,7 +430,7 @@ app.get("/my-orders", async (req, res) => {
     // Nếu có đăng nhập thì lọc theo user.id, nếu đang test chưa login thì lấy tất cả đơn
     const userId = req.session?.user?.id;
     let querySql = `
-      SELECT 
+      SELECT
         o.id,
         o.order_code AS orderCode,
         o.order_status AS status,
@@ -429,7 +445,7 @@ app.get("/my-orders", async (req, res) => {
       LEFT JOIN order_items oi ON o.id = oi.order_id
       LEFT JOIN services s ON oi.service_id = s.id
     `;
-    
+
     const params = [];
     if (userId) {
       querySql += ` WHERE o.user_id = ? `;
@@ -459,7 +475,7 @@ app.get("/order/detail", async (req, res) => {
   try {
     // 1. Lấy thông tin đơn hàng từ MySQL
     const [orderRows] = await pool.query(`
-      SELECT 
+      SELECT
         o.id,
         o.order_code AS orderCode,
         DATE_FORMAT(o.created_at, '%d/%m/%Y %H:%i') AS createdAt,
@@ -486,7 +502,7 @@ app.get("/order/detail", async (req, res) => {
 
     // 2. Lấy thông tin dịch vụ từ order_items và services
     const [itemRows] = await pool.query(`
-      SELECT 
+      SELECT
         oi.service_name AS serviceName,
         oi.partner_name AS partnerName,
         COALESCE(oi.scale, 'Quy mô tiêu chuẩn') AS scale,
@@ -565,7 +581,7 @@ app.get("/order/detail", async (req, res) => {
   }
 });
 
- 
+
 app.get("/cart.html", (req, res) => res.redirect("/cart"));
 app.get("/payment", requireAuth, (req, res) => res.render("payment.html"));
 app.get("/payment.html", (req, res) => res.redirect("/payment"));
@@ -614,7 +630,7 @@ app.post("/api/register", async (req, res) => {
     }
     const passwordHash = await bcrypt.hash(password, 10);
     await pool.query(
-      `INSERT INTO users (username, email, password, role, status, email_verified) 
+      `INSERT INTO users (username, email, password, role, status, email_verified)
        VALUES (?, ?, ?, 'customer', 'active', TRUE)`,
       [fullName.trim(), normalizedEmail, passwordHash]
     );

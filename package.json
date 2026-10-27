@@ -27,7 +27,9 @@
     "express-session": "^1.19.0",
     "mysql2": "^3.24.6",
     "nodemailer": "^10.1.2",
-    "nunjucks": "^3.2.4"
+    "nunjucks": "^3.2.4",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0"
   },
   "main": "app.js",
   "overrides": {
