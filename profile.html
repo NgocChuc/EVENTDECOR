@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full scroll-smooth bg-[#fff7eb]">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hồ sơ cá nhân - EventDecor</title>
+  <meta name="description" content="Quản lý thông tin tài khoản, đơn hàng và bảo mật trên EventDecor.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .frosted-glass-card {
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(174, 196, 212, 0.45);
+      box-shadow: 0 10px 30px -5px rgba(174, 196, 212, 0.25), 0 4px 12px -2px rgba(121, 13, 22, 0.04);
+    }
+    @keyframes toastFade {
+      0% { opacity: 0; transform: translateY(16px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    .toast-anim { animation: toastFade 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+  </style>
+</head>
+<body class="min-h-full flex flex-col text-slate-800 bg-[#fff7eb] relative overflow-x-hidden pb-20 selection:bg-[#790d16]/20 selection:text-[#790d16]">
+
+  {% include "header.html" %}
+
+  <!-- Background decorative glows -->
+  <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <div class="absolute -top-32 left-1/4 w-[600px] h-[450px] bg-[#aec4d4]/30 rounded-full blur-[140px]"></div>
+    <div class="absolute top-[35%] -right-40 w-[500px] h-[500px] bg-[#790d16]/8 rounded-full blur-[160px]"></div>
+    <div class="absolute top-[70%] -left-40 w-[500px] h-[500px] bg-[#a2ab73]/12 rounded-full blur-[150px]"></div>
+    <div class="absolute inset-0 bg-[radial-gradient(rgba(174,196,212,0.22)_1px,transparent_1px)] [background-size:24px_24px] opacity-60"></div>
+  </div>
+
+  <div class="relative z-10 flex-1 flex flex-col">
+    <main class="flex-1 max-w-5xl w-full mx-auto px-4 sm:px-6 py-8 space-y-7">
+
+      <!-- Breadcrumb -->
+      <nav class="flex items-center gap-2 text-xs font-medium text-slate-400 select-none">
+        <a href="/" class="hover:text-[#790d16] transition-colors">Trang chủ</a>
+        <span><i class="fa-solid fa-chevron-right text-[10px]"></i></span>
+        <span class="text-slate-700 font-bold">Hồ sơ cá nhân</span>
+      </nav>
+
+      <!-- User Hero Header Card -->
+      <div class="frosted-glass-card rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row items-center md:items-start justify-between gap-6">
+        <div class="flex flex-col sm:flex-row items-center gap-5 text-center sm:text-left">
+          <div class="relative">
+            <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-br from-[#790d16] to-[#cc3a63] text-white flex items-center justify-center text-3xl sm:text-4xl font-black uppercase shadow-lg shadow-[#790d16]/25 border-4 border-white">
+              {{ (user.username)[0] if user.username else 'U' }}
+            </div>
+            <span class="absolute bottom-1 right-1 w-5 h-5 bg-emerald-500 border-2 border-white rounded-full" title="Đang hoạt động"></span>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 justify-center sm:justify-start flex-wrap">
+              <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight" id="display-username">
+                {{ user.username }}
+              </h1>
+              <span class="px-3 py-1 rounded-full text-xs font-bold border {% if user.role == 'admin' %}bg-purple-50 text-purple-700 border-purple-200{% else %}bg-blue-50 text-blue-700 border-blue-200{% endif %}">
+                {% if user.role == 'admin' %}Quản trị viên{% else %}Khách hàng thân thiết{% endif %}
+              </span>
+            </div>
+            <p class="text-sm text-slate-500 mt-1 flex items-center justify-center sm:justify-start gap-2">
+              <i class="fa-regular fa-envelope text-slate-400"></i>
+              <span>{{ user.email }}</span>
+            </p>
+            <div class="mt-3 flex items-center justify-center sm:justify-start gap-4 text-xs text-slate-600 flex-wrap">
+              <span class="inline-flex items-center gap-1.5"><i class="fa-solid fa-phone text-[#790d16]"></i> <span id="display-phone">{{ user.phone or 'Chưa cập nhật SĐT' }}</span></span>
+              <span class="inline-flex items-center gap-1.5"><i class="fa-solid fa-location-dot text-[#790d16]"></i> <span id="display-address" class="max-w-[250px] truncate">{{ user.address or 'TP. Hồ Chí Minh' }}</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex sm:flex-col items-center sm:items-end gap-2.5 w-full md:w-auto shrink-0">
+          <a href="/my-orders" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-2xl bg-[#790d16] text-white text-xs font-bold hover:bg-[#5e0b11] shadow-sm active:scale-95 transition-all">
+            <i class="fa-solid fa-box-open"></i>
+            Xem đơn hàng của tôi
+          </a>
+          <a href="/logout" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2 rounded-2xl bg-white/70 hover:bg-rose-50 text-rose-600 border border-rose-200 text-xs font-bold active:scale-95 transition-all">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            Đăng xuất
+          </a>
+        </div>
+      </div>
+
+      <!-- Quick Statistics Grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div class="frosted-glass-card rounded-2xl p-4 text-center">
+          <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Tổng đơn</p>
+          <p class="text-2xl font-black text-slate-800 mt-1">{{ stats.totalOrders or 0 }}</p>
+        </div>
+        <div class="frosted-glass-card rounded-2xl p-4 text-center">
+          <p class="text-[11px] font-bold text-amber-600 uppercase tracking-wider">Chờ duyệt / cọc</p>
+          <p class="text-2xl font-black text-amber-600 mt-1">{{ stats.pendingOrders or 0 }}</p>
+        </div>
+        <div class="frosted-glass-card rounded-2xl p-4 text-center">
+          <p class="text-[11px] font-bold text-violet-600 uppercase tracking-wider">Đang thi công</p>
+          <p class="text-2xl font-black text-violet-600 mt-1">{{ stats.processingOrders or 0 }}</p>
+        </div>
+        <div class="frosted-glass-card rounded-2xl p-4 text-center">
+          <p class="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">Hoàn thành</p>
+          <p class="text-2xl font-black text-emerald-600 mt-1">{{ stats.completedOrders or 0 }}</p>
+        </div>
+        <div class="frosted-glass-card rounded-2xl p-4 text-center col-span-2 sm:col-span-1">
+          <p class="text-[11px] font-bold text-red-600 uppercase tracking-wider">Đã hủy</p>
+          <p class="text-2xl font-black text-red-600 mt-1">{{ stats.cancelledOrders or 0 }}</p>
+        </div>
+      </div>
+
+      <!-- Forms Section -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Form 1: Cập nhật thông tin cá nhân (7 cols) -->
+        <div class="lg:col-span-7 frosted-glass-card rounded-3xl p-6 sm:p-7 space-y-5">
+          <div class="border-b border-[#aec4d4]/30 pb-4">
+            <h2 class="text-lg font-black text-slate-900 flex items-center gap-2.5">
+              <span class="w-8 h-8 rounded-xl bg-[#790d16]/10 text-[#790d16] flex items-center justify-center text-sm">
+                <i class="fa-solid fa-user-pen"></i>
+              </span>
+              Thông tin tài khoản
+            </h2>
+            <p class="text-xs text-slate-500 mt-1">Cập nhật thông tin liên lạc để đơn vị trang trí phục vụ chuẩn xác</p>
+          </div>
+
+          <form id="profile-form" onsubmit="handleUpdateProfile(event)" class="space-y-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1.5">Họ và tên <span class="text-red-500">*</span></label>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 text-xs">
+                  <i class="fa-regular fa-user"></i>
+                </span>
+                <input type="text" id="input-username" name="username" required value="{{ user.username }}"
+                  class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[#aec4d4]/60 bg-white/80 text-sm font-semibold text-slate-800 focus:outline-none focus:border-[#790d16] transition-colors">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1.5">Địa chỉ Email <span class="text-slate-400 font-normal">(Cố định theo tài khoản)</span></label>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 text-xs">
+                  <i class="fa-regular fa-envelope"></i>
+                </span>
+                <input type="email" value="{{ user.email }}" disabled
+                  class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[#aec4d4]/40 bg-slate-100/70 text-sm font-semibold text-slate-500 cursor-not-allowed">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1.5">Số điện thoại liên hệ</label>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 text-xs">
+                  <i class="fa-solid fa-phone"></i>
+                </span>
+                <input type="text" id="input-phone" name="phone" value="{{ user.phone or '0900000002' }}" placeholder="090xxxxxxx"
+                  class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[#aec4d4]/60 bg-white/80 text-sm font-semibold text-slate-800 focus:outline-none focus:border-[#790d16] transition-colors">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1.5">Địa chỉ bàn giao sự kiện / Nơi ở</label>
+              <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center text-slate-400 text-xs">
+                  <i class="fa-solid fa-location-dot"></i>
+                </span>
+                <input type="text" id="input-address" name="address" value="{{ user.address or 'TP. Hồ Chí Minh' }}" placeholder="Nhập số nhà, tên đường, quận/huyện..."
+                  class="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[#aec4d4]/60 bg-white/80 text-sm font-semibold text-slate-800 focus:outline-none focus:border-[#790d16] transition-colors">
+              </div>
+            </div>
+
+            <div class="pt-2 flex justify-end">
+              <button type="submit" id="btn-save-profile"
+                class="px-5 py-2.5 rounded-xl bg-[#790d16] hover:bg-[#5e0b11] text-white text-xs font-bold active:scale-95 shadow-sm transition-all inline-flex items-center gap-2">
+                <i class="fa-regular fa-floppy-disk"></i>
+                Lưu thông tin
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Form 2: Đổi mật khẩu (5 cols) -->
+        <div class="lg:col-span-5 frosted-glass-card rounded-3xl p-6 sm:p-7 space-y-5">
+          <div class="border-b border-[#aec4d4]/30 pb-4">
+            <h2 class="text-lg font-black text-slate-900 flex items-center gap-2.5">
+              <span class="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-700 flex items-center justify-center text-sm">
+                <i class="fa-solid fa-shield-halved"></i>
+              </span>
+              Đổi mật khẩu
+            </h2>
+            <p class="text-xs text-slate-500 mt-1">Bảo vệ tài khoản bằng mật khẩu mạnh trên 6 ký tự</p>
+          </div>
+
+          <form id="password-form" onsubmit="handleChangePassword(event)" class="space-y-4">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1.5">Mật khẩu hiện tại <span class="text-red-500">*</span></label>
+              <input type="password" id="input-cur-pwd" name="currentPassword" required placeholder="••••••••"
+                class="w-full px-4 py-2.5 rounded-xl border border-[#aec4d4]/60 bg-white/80 text-sm font-semibold text-slate-800 focus:outline-none focus:border-[#790d16] transition-colors">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1.5">Mật khẩu mới <span class="text-red-500">*</span></label>
+              <input type="password" id="input-new-pwd" name="newPassword" required minlength="6" placeholder="Tối thiểu 6 ký tự"
+                class="w-full px-4 py-2.5 rounded-xl border border-[#aec4d4]/60 bg-white/80 text-sm font-semibold text-slate-800 focus:outline-none focus:border-[#790d16] transition-colors">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1.5">Xác nhận mật khẩu mới <span class="text-red-500">*</span></label>
+              <input type="password" id="input-cfm-pwd" name="confirmPassword" required minlength="6" placeholder="Nhập lại mật khẩu mới"
+                class="w-full px-4 py-2.5 rounded-xl border border-[#aec4d4]/60 bg-white/80 text-sm font-semibold text-slate-800 focus:outline-none focus:border-[#790d16] transition-colors">
+            </div>
+
+            <div class="pt-2 flex justify-end">
+              <button type="submit" id="btn-save-pwd"
+                class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold active:scale-95 shadow-sm transition-all inline-flex items-center gap-2">
+                <i class="fa-solid fa-key"></i>
+                Cập nhật mật khẩu
+              </button>
+            </div>
+          </form>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+
+  <!-- Toast thông báo -->
+  <div id="profile-toast" class="fixed bottom-6 right-6 z-50 hidden">
+    <div id="profile-toast-box" class="toast-anim flex items-center gap-3 bg-white border border-slate-200 rounded-2xl shadow-2xl px-5 py-3.5 min-w-[300px]">
+      <div id="toast-icon-wrap" class="w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
+        <i id="toast-icon" class="fa-solid fa-check text-emerald-600 text-sm"></i>
+      </div>
+      <div>
+        <p id="toast-title" class="font-bold text-slate-800 text-xs">Thành công</p>
+        <p id="toast-message" class="text-[11px] text-slate-500 mt-0.5">Thao tác đã được thực hiện.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function showNotification(title, message, isSuccess = true) {
+      const toast = document.getElementById('profile-toast');
+      const iconWrap = document.getElementById('toast-icon-wrap');
+      const icon = document.getElementById('toast-icon');
+      const titleEl = document.getElementById('toast-title');
+      const msgEl = document.getElementById('toast-message');
+
+      titleEl.innerText = title;
+      msgEl.innerText = message;
+
+      if (isSuccess) {
+        iconWrap.className = 'w-8 h-8 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0';
+        icon.className = 'fa-solid fa-check text-emerald-600 text-sm';
+      } else {
+        iconWrap.className = 'w-8 h-8 rounded-xl bg-red-100 flex items-center justify-center shrink-0';
+        icon.className = 'fa-solid fa-circle-exclamation text-red-600 text-sm';
+      }
+
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 3500);
+    }
+
+    async function handleUpdateProfile(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-save-profile');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Đang lưu...';
+      btn.disabled = true;
+
+      const username = document.getElementById('input-username').value;
+      const phone = document.getElementById('input-phone').value;
+      const address = document.getElementById('input-address').value;
+
+      try {
+        const res = await fetch('/api/user/profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, phone, address })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          showNotification('Cập nhật thành công', data.message || 'Thông tin cá nhân đã được lưu vào hệ thống.');
+          document.getElementById('display-username').innerText = username;
+          document.getElementById('display-phone').innerText = phone || 'Chưa cập nhật SĐT';
+          document.getElementById('display-address').innerText = address || 'TP. Hồ Chí Minh';
+        } else {
+          showNotification('Cập nhật thất bại', data.message || 'Có lỗi xảy ra, vui lòng thử lại.', false);
+        }
+      } catch (err) {
+        showNotification('Lỗi kết nối', 'Không thể gửi yêu cầu lên máy chủ.', false);
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    async function handleChangePassword(e) {
+      e.preventDefault();
+      const curPwd = document.getElementById('input-cur-pwd').value;
+      const newPwd = document.getElementById('input-new-pwd').value;
+      const cfmPwd = document.getElementById('input-cfm-pwd').value;
+
+      if (newPwd !== cfmPwd) {
+        showNotification('Mật khẩu không khớp', 'Mật khẩu xác nhận phải trùng với mật khẩu mới.', false);
+        return;
+      }
+
+      const btn = document.getElementById('btn-save-pwd');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin"></i> Đang đổi...';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/user/change-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            currentPassword: curPwd,
+            newPassword: newPwd,
+            confirmPassword: cfmPwd
+          })
+        });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          showNotification('Đổi mật khẩu thành công', data.message || 'Mật khẩu của bạn đã được cập nhật.');
+          document.getElementById('password-form').reset();
+        } else {
+          showNotification('Lỗi đổi mật khẩu', data.message || 'Mật khẩu hiện tại không chính xác.', false);
+        }
+      } catch (err) {
+        showNotification('Lỗi kết nối', 'Không thể kết nối đến máy chủ.', false);
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>

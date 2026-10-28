@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Đơn hàng của tôi - EventDecor</title>
-  <meta name="description" content="Xem và quản lý các đơn hàng dịch vụ sự kiện của bạn trên EventDecor.">
+  <meta name="description" content="Xem và quản lý các đơn hàng dịch vụ sự kiện của bạn trên EventDecor theo đúng quy trình nghiệp vụ.">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,21 +13,21 @@
   <style>
     body { font-family: 'Plus Jakarta Sans', sans-serif; }
     .light-frosted-card {
-      background: rgba(255,255,255,0.72);
+      background: rgba(255, 255, 255, 0.78);
       backdrop-filter: blur(24px);
       -webkit-backdrop-filter: blur(24px);
-      border: 1px solid rgba(174,196,212,0.45) !important;
-      box-shadow: 0 10px 30px -5px rgba(174,196,212,0.25), 0 4px 14px -2px rgba(121,13,22,0.05);
-      transition: background-color 0.25s ease, box-shadow 0.25s ease;
+      border: 1px solid rgba(174, 196, 212, 0.45) !important;
+      box-shadow: 0 10px 30px -5px rgba(174, 196, 212, 0.25), 0 4px 14px -2px rgba(121, 13, 22, 0.05);
+      transition: background-color 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease;
     }
     .light-frosted-card:hover {
-      background: rgba(255,255,255,0.94);
-      border-color: rgba(174,196,212,0.45) !important;
-      box-shadow: 0 16px 36px -4px rgba(174,196,212,0.35);
+      background: rgba(255, 255, 255, 0.95);
+      border-color: rgba(174, 196, 212, 0.6) !important;
+      box-shadow: 0 16px 36px -4px rgba(174, 196, 212, 0.35);
     }
     .tab-active {
-      background: #790d16;
-      color: #fff;
+      background: #790d16 !important;
+      color: #fff !important;
       border-color: #790d16 !important;
     }
     .order-card-enter {
@@ -41,7 +41,7 @@
       from { opacity: 0; transform: translateY(16px); }
       to   { opacity: 1; transform: translateY(0); }
     }
-    .toast-animate { animation: toastIn 0.3s ease forwards; }
+    .toast-animate { animation: toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
   </style>
 </head>
 <body class="min-h-full flex flex-col text-slate-800 bg-[#fff7eb] relative overflow-x-hidden pb-24 selection:bg-[#790d16]/20 selection:text-[#790d16]">
@@ -65,117 +65,198 @@
         <span class="text-slate-700 font-bold">Đơn hàng của tôi</span>
       </nav>
 
+      <!-- Tiêu đề trang & Nút đặt thêm -->
       <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
           <h1 class="text-2xl sm:text-3xl font-black text-slate-900 flex items-center gap-3 tracking-tight">
-            <span class="w-10 h-10 rounded-2xl bg-[#790d16] flex items-center justify-center shrink-0">
+            <span class="w-10 h-10 rounded-2xl bg-[#790d16] flex items-center justify-center shrink-0 shadow-md shadow-[#790d16]/20">
               <i class="fa-solid fa-box-open text-white text-base"></i>
             </span>
             Đơn hàng của tôi
           </h1>
-          <p class="text-sm text-slate-500 mt-1.5 ml-1">Theo dõi và quản lý tất cả dịch vụ bạn đã đặt</p>
+          <p class="text-sm text-slate-500 mt-1.5 ml-1">Quản lý tiến trình và thực hiện hủy đơn theo quy trình vận hành</p>
         </div>
-        <a href="/event" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#790d16] text-white text-sm font-semibold hover:bg-[#5e0b11] active:scale-95 transition-all shrink-0">
+        <a href="/event" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#790d16] text-white text-sm font-semibold hover:bg-[#5e0b11] active:scale-95 transition-all shrink-0 shadow-sm">
           <i class="fa-solid fa-plus text-xs"></i>
           Đặt thêm dịch vụ
         </a>
       </div>
 
+      <!-- Tabs lọc theo trạng thái đơn hàng -->
       <div class="flex gap-2 flex-wrap">
-        <button data-tab="all" onclick="setTab('all')" class="tab-btn tab-active px-4 py-2 rounded-xl border border-[#aec4d4]/50 text-sm font-semibold transition-all">Tất cả</button>
-        <button data-tab="pending" onclick="setTab('pending')" class="tab-btn px-4 py-2 rounded-xl border border-[#aec4d4]/50 bg-white/60 text-slate-600 text-sm font-semibold hover:bg-white/80 transition-all">Chờ xác nhận</button>
-        <button data-tab="processing" onclick="setTab('processing')" class="tab-btn px-4 py-2 rounded-xl border border-[#aec4d4]/50 bg-white/60 text-slate-600 text-sm font-semibold hover:bg-white/80 transition-all">Đang thực hiện</button>
-        <button data-tab="done" onclick="setTab('done')" class="tab-btn px-4 py-2 rounded-xl border border-[#aec4d4]/50 bg-white/60 text-slate-600 text-sm font-semibold hover:bg-white/80 transition-all">Hoàn thành</button>
-        <button data-tab="cancelled" onclick="setTab('cancelled')" class="tab-btn px-4 py-2 rounded-xl border border-[#aec4d4]/50 bg-white/60 text-slate-600 text-sm font-semibold hover:bg-white/80 transition-all">Đã hủy</button>
+        <button data-tab="all" onclick="setTab('all')" class="tab-btn tab-active px-4 py-2 rounded-xl border border-[#aec4d4]/50 text-sm font-semibold transition-all">Tất cả (<span id="count-all">0</span>)</button>
+        <button data-tab="pending" onclick="setTab('pending')" class="tab-btn px-4 py-2 rounded-xl border border-[#aec4d4]/50 bg-white/60 text-slate-600 text-sm font-semibold hover:bg-white/80 transition-all">Chờ duyệt / cọc (<span id="count-pending">0</span>)</button>
+        <button data-tab="processing" onclick="setTab('processing')" class="tab-btn px-4 py-2 rounded-xl border border-[#aec4d4]/50 bg-white/60 text-slate-600 text-sm font-semibold hover:bg-white/80 transition-all">Đang thi công (<span id="count-processing">0</span>)</button>
+        <button data-tab="done" onclick="setTab('done')" class="tab-btn px-4 py-2 rounded-xl border border-[#aec4d4]/50 bg-white/60 text-slate-600 text-sm font-semibold hover:bg-white/80 transition-all">Hoàn thành (<span id="count-done">0</span>)</button>
+        <button data-tab="cancelled" onclick="setTab('cancelled')" class="tab-btn px-4 py-2 rounded-xl border border-[#aec4d4]/50 bg-white/60 text-slate-600 text-sm font-semibold hover:bg-white/80 transition-all">Đã hủy (<span id="count-cancelled">0</span>)</button>
       </div>
 
+      <!-- Danh sách đơn hàng từ CSDL -->
       <div id="orders-list" class="space-y-4"></div>
 
-      <div id="empty-state" class="hidden py-20 flex-col items-center justify-center text-center">
+      <!-- Trạng thái trống khi không có đơn -->
+      <div id="empty-state" class="hidden py-16 flex-col items-center justify-center text-center">
         <div class="w-16 h-16 rounded-full bg-[#aec4d4]/20 flex items-center justify-center mb-4">
           <i class="fa-regular fa-folder-open text-3xl text-[#aec4d4]"></i>
         </div>
-        <p class="font-bold text-slate-600 text-lg">Không có đơn hàng nào</p>
-        <p class="text-slate-400 text-sm mt-1">Hãy khám phá và đặt dịch vụ sự kiện phù hợp với bạn</p>
+        <p class="font-bold text-slate-700 text-lg">Không có đơn hàng nào trong mục này</p>
+        <p class="text-slate-400 text-sm mt-1">Hãy khám phá và đặt dịch vụ trang trí sự kiện ưng ý</p>
         <a href="/event" class="mt-5 px-5 py-2.5 bg-[#790d16] text-white rounded-xl font-semibold text-sm hover:bg-[#5e0b11] transition-all">Khám phá dịch vụ</a>
       </div>
 
     </main>
   </div>
 
-  <!-- MODAL XÁC NHẬN HỦY -->
-  <div id="cancel-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-7 space-y-5">
+  <!-- MODAL XÁC NHẬN HỦY ĐƠN THEO QUY TRÌNH -->
+  <div id="cancel-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg p-6 sm:p-7 space-y-5 border border-slate-100">
       <div class="flex items-start gap-4">
-        <div class="w-12 h-12 rounded-2xl bg-red-100 flex items-center justify-center shrink-0">
-          <i class="fa-solid fa-triangle-exclamation text-red-600 text-xl"></i>
+        <div class="w-12 h-12 rounded-2xl bg-rose-100 text-[#790d16] flex items-center justify-center shrink-0">
+          <i class="fa-solid fa-triangle-exclamation text-xl"></i>
         </div>
-        <div>
-          <h3 class="text-lg font-black text-slate-900">Xác nhận hủy đơn</h3>
-          <p class="text-sm text-slate-500 mt-0.5">Mã đơn: <span id="cancel-modal-id" class="font-mono font-bold text-[#790d16]"></span></p>
+        <div class="flex-1">
+          <h3 class="text-lg font-black text-slate-900">Yêu cầu hủy đơn hàng</h3>
+          <p class="text-xs text-slate-500 mt-0.5">Mã đơn: <span id="cancel-modal-id" class="font-mono font-bold text-[#790d16]"></span></p>
         </div>
-      </div>
-      <div class="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-sm text-amber-800">
-        <i class="fa-solid fa-circle-info mr-1.5"></i>
-        Sau khi hủy, đơn hàng <strong>không thể khôi phục</strong>. Vui lòng chỉ hủy khi thực sự cần thiết.
-      </div>
-      <div>
-        <label class="text-sm font-bold text-slate-700 block mb-2">Lý do hủy <span class="font-normal text-slate-400">(không bắt buộc)</span></label>
-        <textarea id="cancel-reason" rows="3" placeholder="Ví dụ: Tôi muốn thay đổi ngày tổ chức sự kiện..."
-          class="w-full border border-[#aec4d4]/60 rounded-2xl px-4 py-3 text-sm text-slate-700 focus:outline-none focus:border-[#790d16]/40 resize-none transition-colors bg-white/80"></textarea>
-      </div>
-      <div class="flex gap-3">
-        <button onclick="closeCancelModal()"
-          class="flex-1 py-3 border border-[#aec4d4]/60 rounded-2xl text-slate-700 font-bold text-sm hover:bg-slate-50 active:scale-95 transition-all">
-          Không, giữ lại
+        <button onclick="closeCancelModal()" class="text-slate-400 hover:text-slate-600 p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
         </button>
-        <button onclick="confirmCancel()"
-          class="flex-1 py-3 bg-red-600 text-white font-bold rounded-2xl text-sm hover:bg-red-700 active:scale-95 transition-all">
-          Xác nhận hủy
+      </div>
+
+      <!-- Quy định quy trình hủy -->
+      <div class="p-3.5 bg-amber-50 border border-amber-200/80 rounded-2xl text-xs text-amber-900 space-y-1">
+        <p class="font-bold flex items-center gap-1.5"><i class="fa-solid fa-circle-info text-amber-600"></i> Quy định hủy theo quy trình EventDecor:</p>
+        <p class="text-amber-800">Chỉ áp dụng hủy trực tiếp cho đơn ở giai đoạn <strong>Chờ đối tác duyệt</strong> hoặc <strong>Chờ thanh toán cọc</strong>. Nếu đã thanh toán, hệ thống sẽ tự động khởi tạo lệnh hoàn tiền về tài khoản ngân hàng của quý khách.</p>
+      </div>
+
+      <!-- Chọn lý do hủy nhanh -->
+      <div>
+        <label class="text-xs font-bold text-slate-700 block mb-2">Chọn lý do hủy đơn <span class="text-red-500">*</span></label>
+        <div class="space-y-2 text-xs">
+          <label class="flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
+            <input type="radio" name="cancel_preset" value="Thay đổi thời gian hoặc địa điểm tổ chức sự kiện" checked onchange="handlePresetChange(this.value)">
+            <span class="text-slate-700 font-medium">Thay đổi thời gian hoặc địa điểm tổ chức sự kiện</span>
+          </label>
+          <label class="flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
+            <input type="radio" name="cancel_preset" value="Tìm thấy gói dịch vụ hoặc đối tác khác phù hợp hơn" onchange="handlePresetChange(this.value)">
+            <span class="text-slate-700 font-medium">Tìm thấy gói dịch vụ hoặc đối tác khác phù hợp hơn</span>
+          </label>
+          <label class="flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
+            <input type="radio" name="cancel_preset" value="Chi phí hoặc thỏa thuận phát sinh vượt ngân sách" onchange="handlePresetChange(this.value)">
+            <span class="text-slate-700 font-medium">Chi phí hoặc thỏa thuận phát sinh vượt ngân sách</span>
+          </label>
+          <label class="flex items-center gap-2.5 p-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 cursor-pointer transition-colors">
+            <input type="radio" name="cancel_preset" value="other" onchange="handlePresetChange(this.value)">
+            <span class="text-slate-700 font-medium">Lý do khác (ghi rõ bên dưới)</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Ghi chú chi tiết lý do -->
+      <div>
+        <label class="text-xs font-bold text-slate-700 block mb-1.5">Ghi chú bổ sung</label>
+        <textarea id="cancel-reason" rows="2" placeholder="Ví dụ: Gia đình hoãn lịch tiệc sang tháng sau..."
+          class="w-full border border-[#aec4d4]/60 rounded-xl px-3.5 py-2.5 text-xs text-slate-700 focus:outline-none focus:border-[#790d16] resize-none transition-colors bg-white"></textarea>
+      </div>
+
+      <div class="flex gap-3 pt-2">
+        <button onclick="closeCancelModal()"
+          class="flex-1 py-2.5 border border-[#aec4d4]/60 rounded-xl text-slate-700 font-bold text-xs hover:bg-slate-50 active:scale-95 transition-all">
+          Không, giữ lại đơn
+        </button>
+        <button id="btn-confirm-cancel" onclick="confirmCancel()"
+          class="flex-1 py-2.5 bg-red-600 text-white font-bold rounded-xl text-xs hover:bg-red-700 active:scale-95 transition-all shadow-sm">
+          Xác nhận hủy đơn
         </button>
       </div>
     </div>
   </div>
 
-  <!-- TOAST -->
+  <!-- MODAL XEM CHI TIẾT LÝ DO HỦY -->
+  <div id="detail-cancel-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 space-y-4 border border-slate-100">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <h3 class="text-base font-black text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-file-circle-xmark text-red-600"></i>
+          Thông tin hủy đơn
+        </h3>
+        <button onclick="closeDetailCancelModal()" class="text-slate-400 hover:text-slate-600 p-1">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <span class="text-slate-400 block mb-0.5">Mã đơn hàng</span>
+          <span id="detail-cancel-code" class="font-mono font-bold text-slate-800 text-sm"></span>
+        </div>
+        <div>
+          <span class="text-slate-400 block mb-0.5">Thời gian ghi nhận hủy</span>
+          <span id="detail-cancel-time" class="font-semibold text-slate-800"></span>
+        </div>
+        <div>
+          <span class="text-slate-400 block mb-0.5">Lý do hủy đơn</span>
+          <div id="detail-cancel-reason" class="p-3 bg-red-50 text-red-700 rounded-xl border border-red-100 font-medium"></div>
+        </div>
+        <div>
+          <span class="text-slate-400 block mb-0.5">Chính sách hoàn tiền</span>
+          <div id="detail-cancel-refund" class="p-3 bg-blue-50 text-blue-800 rounded-xl border border-blue-100">
+            Nếu đơn đã được chuyển khoản thanh toán trước đó, hệ thống sẽ thực hiện giao dịch hoàn tiền tự động theo quy định.
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-2">
+        <button onclick="closeDetailCancelModal()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all">
+          Đóng
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST THÔNG BÁO -->
   <div id="toast" class="fixed bottom-6 right-6 z-[60] hidden">
     <div class="toast-animate flex items-center gap-3 bg-white border border-slate-100 rounded-2xl shadow-2xl px-5 py-4 min-w-[300px]">
-      <div class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center shrink-0">
-        <i class="fa-solid fa-check text-red-600"></i>
+      <div id="toast-icon-bg" class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center shrink-0">
+        <i id="toast-icon" class="fa-solid fa-check text-red-600"></i>
       </div>
       <div>
-        <p class="font-bold text-slate-800 text-sm">Đã hủy đơn hàng</p>
+        <p id="toast-title" class="font-bold text-slate-800 text-sm">Thông báo</p>
         <p id="toast-text" class="text-xs text-slate-500 mt-0.5"></p>
       </div>
     </div>
   </div>
 
   <script>
-    const ORDERS = [
-      { id:'ORD-2026-001', service:'Gói Trang Trí Tiệc Cưới Phong Cách Tối Giản', partner:'Công ty TNHH Trang Trí Alpha', price:12500000, date:'2026-10-10', event_date:'2026-11-15', status:'confirmed', icon:'fa-heart', cancel_reason:null },
-      { id:'ORD-2026-002', service:'Sân Khấu Bong Bóng & LED Sinh Nhật VIP', partner:'Hộ Kinh Doanh Sự Kiện Beta', price:4800000, date:'2026-10-12', event_date:'2026-10-20', status:'in_progress', icon:'fa-cake-candles', cancel_reason:null },
-      { id:'ORD-2026-003', service:'Dàn Âm Thanh Sân Khấu Hội Nghị 300 Khách', partner:'Công ty Cổ phần Âm Thanh Gamma', price:22000000, date:'2026-10-05', event_date:'2026-10-08', status:'delivered', icon:'fa-microphone', cancel_reason:null },
-      { id:'ORD-2026-004', service:'Trọn Gói Khai Trương Văn Phòng Doanh Nghiệp', partner:'Công ty TNHH Sự Kiện Delta', price:8900000, date:'2026-10-18', event_date:'2026-11-01', status:'created', icon:'fa-store', cancel_reason:null },
-      { id:'ORD-2026-005', service:'Gói Chụp Ảnh Sự Kiện Cao Cấp', partner:'Studio Ảnh Sự Kiện Epsilon', price:3500000, date:'2026-09-20', event_date:'2026-09-25', status:'cancelled', icon:'fa-camera', cancel_reason:'Thay đổi lịch tổ chức sự kiện' }
-    ];
+    // Dữ liệu đơn hàng thực tế nạp từ CSDL MySQL (qua nunjucks hoặc fetch API)
+    let ORDERS = {{ ordersJson | safe if ordersJson else "[]" }};
 
     const TAB_MAP = {
       all: null,
-      pending: ['created'],
-      processing: ['confirmed','in_progress'],
-      done: ['delivered'],
+      pending: ['pending_partner', 'pending_payment'],
+      processing: ['processing'],
+      done: ['done'],
       cancelled: ['cancelled']
     };
 
     const STATUS_CONFIG = {
-      created:     { label:'Chờ xác nhận', cls:'bg-amber-50 text-amber-700 border-amber-200', icon:'fa-clock' },
-      confirmed:   { label:'Đã xác nhận',  cls:'bg-blue-50 text-blue-700 border-blue-200',   icon:'fa-circle-check' },
-      in_progress: { label:'Đang thi công', cls:'bg-violet-50 text-violet-700 border-violet-200', icon:'fa-gear' },
-      delivered:   { label:'Hoàn thành',    cls:'bg-emerald-50 text-emerald-700 border-emerald-200', icon:'fa-circle-check' },
-      cancelled:   { label:'Đã hủy',        cls:'bg-red-50 text-red-600 border-red-200',     icon:'fa-ban' }
+      pending_partner: { label: 'Chờ đối tác duyệt', cls: 'bg-amber-50 text-amber-700 border-amber-200', icon: 'fa-clock' },
+      pending_payment: { label: 'Chờ thanh toán cọc', cls: 'bg-blue-50 text-blue-700 border-blue-200', icon: 'fa-qrcode' },
+      processing:      { label: 'Đang thi công',      cls: 'bg-violet-50 text-violet-700 border-violet-200', icon: 'fa-screwdriver-wrench' },
+      done:            { label: 'Đã hoàn thành',      cls: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: 'fa-circle-check' },
+      cancelled:       { label: 'Đã hủy',             cls: 'bg-rose-50 text-rose-600 border-rose-200', icon: 'fa-ban' }
     };
 
-    let pendingCancelId = null;
+    let pendingCancelCode = null;
+    let selectedPreset = 'Thay đổi thời gian hoặc địa điểm tổ chức sự kiện';
+
+    function updateCounts() {
+      document.getElementById('count-all').innerText = ORDERS.length;
+      document.getElementById('count-pending').innerText = ORDERS.filter(o => ['pending_partner','pending_payment'].includes(o.orderStatus)).length;
+      document.getElementById('count-processing').innerText = ORDERS.filter(o => o.orderStatus === 'processing').length;
+      document.getElementById('count-done').innerText = ORDERS.filter(o => o.orderStatus === 'done').length;
+      document.getElementById('count-cancelled').innerText = ORDERS.filter(o => o.orderStatus === 'cancelled').length;
+    }
 
     function setTab(tab) {
       document.querySelectorAll('.tab-btn').forEach(btn => {
@@ -183,16 +264,20 @@
         btn.classList.add('bg-white/60','text-slate-600');
       });
       const active = document.querySelector(`[data-tab="${tab}"]`);
-      active.classList.add('tab-active');
-      active.classList.remove('bg-white/60','text-slate-600');
+      if (active) {
+        active.classList.add('tab-active');
+        active.classList.remove('bg-white/60','text-slate-600');
+      }
       renderOrders(tab);
     }
 
     function renderOrders(tab = 'all') {
       const filters = TAB_MAP[tab];
-      const list = filters ? ORDERS.filter(o => filters.includes(o.status)) : ORDERS;
+      const list = filters ? ORDERS.filter(o => filters.includes(o.orderStatus)) : ORDERS;
       const container = document.getElementById('orders-list');
       const empty = document.getElementById('empty-state');
+
+      updateCounts();
 
       if (list.length === 0) {
         container.innerHTML = '';
@@ -204,55 +289,78 @@
       empty.classList.remove('flex');
 
       container.innerHTML = list.map((o, i) => {
-        const s = STATUS_CONFIG[o.status];
-        const canCancel = ['created','confirmed'].includes(o.status);
+        const s = STATUS_CONFIG[o.orderStatus] || { label: o.orderStatus, cls: 'bg-slate-100 text-slate-700 border-slate-200', icon: 'fa-circle' };
+        
+        // Theo quy trình: Giai đoạn 1 & 2 được hủy. Giai đoạn 3 (processing) & 4 (done) KHÔNG được hủy
+        const canCancel = ['pending_partner', 'pending_payment'].includes(o.orderStatus);
+        const isCancelled = o.orderStatus === 'cancelled';
+        const isLocked = ['processing', 'done'].includes(o.orderStatus);
+
         return `
-          <div class="light-frosted-card rounded-3xl p-5 sm:p-6 order-card-enter" style="animation-delay:${i*0.06}s">
+          <div class="light-frosted-card rounded-3xl p-5 sm:p-6 order-card-enter" style="animation-delay:${i*0.05}s">
             <div class="flex items-start gap-4">
               <div class="w-12 h-12 rounded-2xl bg-[#790d16]/10 flex items-center justify-center shrink-0">
-                <i class="fa-solid ${o.icon} text-[#790d16] text-lg"></i>
+                <i class="fa-solid fa-wand-magic-sparkles text-[#790d16] text-lg"></i>
               </div>
               <div class="flex-1 min-w-0">
                 <div class="flex items-start justify-between gap-3 flex-wrap">
                   <div>
-                    <p class="font-black text-slate-900 text-base leading-snug">${o.service}</p>
-                    <p class="text-sm text-slate-500 mt-0.5"><i class="fa-regular fa-building mr-1.5"></i>${o.partner}</p>
+                    <p class="font-black text-slate-900 text-base leading-snug">${o.serviceName || 'Gói trang trí sự kiện'}</p>
+                    <p class="text-xs text-slate-500 mt-0.5"><i class="fa-regular fa-building mr-1.5 text-slate-400"></i>${o.partnerName || 'Đối tác EventDecor'}</p>
                   </div>
                   <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl border text-xs font-bold ${s.cls} shrink-0">
                     <i class="fa-solid ${s.icon} text-[10px]"></i>${s.label}
                   </span>
                 </div>
 
-                <div class="mt-4 grid grid-cols-3 gap-3">
-                  <div class="bg-[#fff7eb]/80 rounded-xl px-3 py-2">
+                <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  <div class="bg-[#fff7eb]/90 rounded-xl px-3 py-2 border border-[#aec4d4]/30">
                     <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">Mã đơn</p>
-                    <p class="text-xs font-bold text-slate-700 font-mono mt-0.5">${o.id}</p>
+                    <p class="text-xs font-bold text-slate-800 font-mono mt-0.5">${o.orderCode || o.id}</p>
                   </div>
-                  <div class="bg-[#fff7eb]/80 rounded-xl px-3 py-2">
-                    <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">Ngày đặt</p>
-                    <p class="text-xs font-bold text-slate-700 mt-0.5">${o.date}</p>
+                  <div class="bg-[#fff7eb]/90 rounded-xl px-3 py-2 border border-[#aec4d4]/30">
+                    <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">Ngày tạo đơn</p>
+                    <p class="text-xs font-bold text-slate-800 mt-0.5">${o.createdAt || 'N/A'}</p>
                   </div>
-                  <div class="bg-[#fff7eb]/80 rounded-xl px-3 py-2">
-                    <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">Ngày sự kiện</p>
-                    <p class="text-xs font-bold text-slate-700 mt-0.5">${o.event_date}</p>
+                  <div class="bg-[#fff7eb]/90 rounded-xl px-3 py-2 border border-[#aec4d4]/30">
+                    <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">Thời gian tổ chức</p>
+                    <p class="text-xs font-bold text-slate-800 mt-0.5 truncate" title="${o.executionTime || ''}">${o.executionTime || 'Thỏa thuận sau'}</p>
+                  </div>
+                  <div class="bg-[#fff7eb]/90 rounded-xl px-3 py-2 border border-[#aec4d4]/30">
+                    <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">Thanh toán</p>
+                    <p class="text-xs font-bold ${o.paymentStatus === 'paid' ? 'text-emerald-700' : (o.paymentStatus === 'refunded' ? 'text-purple-700' : 'text-amber-700')} mt-0.5">
+                      ${o.paymentStatus === 'paid' ? 'Đã thanh toán' : (o.paymentStatus === 'refunded' ? 'Đã hoàn tiền' : 'Chờ cọc')}
+                    </p>
                   </div>
                 </div>
 
-                ${o.cancel_reason ? `
-                <div class="mt-3 flex items-center gap-2 text-xs text-red-600 bg-red-50 border border-red-100 rounded-xl px-3 py-2">
-                  <i class="fa-solid fa-circle-info shrink-0"></i>
-                  <span>Lý do hủy: <span class="font-semibold">${o.cancel_reason}</span></span>
+                ${isCancelled && o.cancelReason ? `
+                <div class="mt-3.5 flex items-start justify-between gap-3 text-xs text-rose-700 bg-rose-50 border border-rose-100 rounded-xl px-3.5 py-2.5">
+                  <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-circle-info shrink-0 text-rose-500"></i>
+                    <span>Lý do hủy: <strong class="font-bold">${o.cancelReason}</strong></span>
+                  </div>
+                  <button onclick="openDetailCancelModal('${o.orderCode || o.id}', '${o.cancelReason}', '${o.cancelledAt || ''}', '${o.paymentStatus || ''}')"
+                    class="text-[11px] underline font-bold text-rose-800 hover:text-rose-950 shrink-0">
+                    Xem chi tiết
+                  </button>
                 </div>` : ''}
 
-                <div class="mt-4 flex items-center justify-between gap-3 flex-wrap">
+                ${isLocked ? `
+                <div class="mt-3 flex items-center gap-2 text-[11px] text-slate-500 bg-slate-50 border border-slate-200/70 rounded-xl px-3 py-2">
+                  <i class="fa-solid fa-lock text-slate-400 text-xs"></i>
+                  <span>Đơn hàng đang ở giai đoạn thi công hoặc hoàn thành. Theo quy định, không thể hủy trực tiếp qua hệ thống.</span>
+                </div>` : ''}
+
+                <div class="mt-4 pt-3 border-t border-[#aec4d4]/30 flex items-center justify-between gap-3 flex-wrap">
                   <div>
-                    <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">Tổng giá trị</p>
-                    <p class="text-xl font-black text-[#790d16] mt-0.5">${o.price.toLocaleString('vi-VN')} ₫</p>
+                    <p class="text-[10px] text-slate-400 font-semibold uppercase tracking-wide">Tổng chi phí</p>
+                    <p class="text-lg font-black text-[#790d16] mt-0.5">${Number(o.totalAmount || 0).toLocaleString('vi-VN')} ₫</p>
                   </div>
-                  <div class="flex gap-2">
+                  <div class="flex items-center gap-2">
                     ${canCancel ? `
-                    <button onclick="openCancelModal('${o.id}')"
-                      class="px-4 py-2 rounded-xl border border-red-200 bg-red-50 text-red-600 text-sm font-bold hover:bg-red-100 active:scale-95 transition-all">
+                    <button onclick="openCancelModal('${o.orderCode || o.id}')"
+                      class="px-4 py-2 rounded-xl border border-red-200 bg-red-50 text-red-600 text-xs font-bold hover:bg-red-100 active:scale-95 transition-all shadow-xs">
                       <i class="fa-solid fa-xmark mr-1.5"></i>Yêu cầu hủy
                     </button>` : ''}
                   </div>
@@ -263,9 +371,20 @@
       }).join('');
     }
 
-    function openCancelModal(orderId) {
-      pendingCancelId = orderId;
-      document.getElementById('cancel-modal-id').innerText = orderId;
+    function handlePresetChange(val) {
+      selectedPreset = val;
+      const textarea = document.getElementById('cancel-reason');
+      if (val !== 'other') {
+        textarea.placeholder = `Ghi chú thêm cho lý do: "${val}"`;
+      } else {
+        textarea.placeholder = "Nhập chi tiết lý do hủy đơn của bạn...";
+        textarea.focus();
+      }
+    }
+
+    function openCancelModal(orderCode) {
+      pendingCancelCode = orderCode;
+      document.getElementById('cancel-modal-id').innerText = orderCode;
       document.getElementById('cancel-reason').value = '';
       const m = document.getElementById('cancel-modal');
       m.classList.remove('hidden');
@@ -276,32 +395,128 @@
       const m = document.getElementById('cancel-modal');
       m.classList.add('hidden');
       m.classList.remove('flex');
-      pendingCancelId = null;
+      pendingCancelCode = null;
     }
 
-    function confirmCancel() {
-      if (!pendingCancelId) return;
-      const reason = document.getElementById('cancel-reason').value.trim();
-      const order = ORDERS.find(o => o.id === pendingCancelId);
-      if (!order) return;
-      order.status = 'cancelled';
-      order.cancel_reason = reason || 'Khách hàng yêu cầu hủy';
-      const id = pendingCancelId;
-      closeCancelModal();
-      const activeTab = document.querySelector('.tab-btn.tab-active')?.dataset.tab || 'all';
-      renderOrders(activeTab);
-      showToast(id);
+    function openDetailCancelModal(code, reason, time, paymentStatus) {
+      document.getElementById('detail-cancel-code').innerText = code;
+      document.getElementById('detail-cancel-time').innerText = time || 'Đã ghi nhận';
+      document.getElementById('detail-cancel-reason').innerText = reason || 'Khách hàng yêu cầu hủy đơn';
+      
+      const refundEl = document.getElementById('detail-cancel-refund');
+      if (paymentStatus === 'refunded') {
+        refundEl.className = 'p-3 bg-emerald-50 text-emerald-800 rounded-xl border border-emerald-100 font-semibold';
+        refundEl.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-600 mr-1.5"></i> Tiền cọc đã được tạo lệnh hoàn trả về tài khoản giao dịch của bạn.';
+      } else {
+        refundEl.className = 'p-3 bg-blue-50 text-blue-800 rounded-xl border border-blue-100';
+        refundEl.innerText = 'Đơn hủy chưa phát sinh thanh toán cọc hoặc đã hủy trước khi thanh toán.';
+      }
+
+      const m = document.getElementById('detail-cancel-modal');
+      m.classList.remove('hidden');
+      m.classList.add('flex');
     }
 
-    function showToast(orderId) {
+    function closeDetailCancelModal() {
+      const m = document.getElementById('detail-cancel-modal');
+      m.classList.add('hidden');
+      m.classList.remove('flex');
+    }
+
+    async function confirmCancel() {
+      if (!pendingCancelCode) return;
+      const note = document.getElementById('cancel-reason').value.trim();
+      let finalReason = selectedPreset;
+      if (selectedPreset === 'other' || !selectedPreset) {
+        finalReason = note || 'Khách hàng yêu cầu hủy';
+      } else if (note) {
+        finalReason = `${selectedPreset} - Ghi chú: ${note}`;
+      }
+
+      const btn = document.getElementById('btn-confirm-cancel');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Đang xử lý...';
+      btn.disabled = true;
+
+      try {
+        const response = await fetch('/api/orders/cancel', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderCode: pendingCancelCode,
+            cancelReason: finalReason
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          // Cập nhật ngay trong mảng ORDERS cục bộ
+          const target = ORDERS.find(o => (o.orderCode === pendingCancelCode || String(o.id) === String(pendingCancelCode)));
+          if (target) {
+            target.orderStatus = 'cancelled';
+            target.cancelReason = finalReason;
+            target.cancelledAt = 'Vừa xong';
+            if (target.paymentStatus === 'paid') target.paymentStatus = 'refunded';
+          }
+
+          closeCancelModal();
+          const activeTab = document.querySelector('.tab-btn.tab-active')?.dataset.tab || 'all';
+          renderOrders(activeTab);
+          showToast('Hủy đơn thành công', data.message || `Đơn hàng ${pendingCancelCode} đã được hủy bỏ.`, true);
+        } else {
+          showToast('Không thể hủy đơn', data.message || 'Lỗi khi hủy đơn hàng.', false);
+        }
+      } catch (err) {
+        showToast('Lỗi hệ thống', 'Không thể kết nối với máy chủ để hủy đơn.', false);
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    function showToast(title, message, isSuccess = true) {
       const toast = document.getElementById('toast');
-      document.getElementById('toast-text').innerText = `Mã đơn ${orderId} đã được hủy thành công.`;
+      const iconBg = document.getElementById('toast-icon-bg');
+      const icon = document.getElementById('toast-icon');
+      
+      document.getElementById('toast-title').innerText = title;
+      document.getElementById('toast-text').innerText = message;
+
+      if (isSuccess) {
+        iconBg.className = 'w-9 h-9 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0';
+        icon.className = 'fa-solid fa-check text-emerald-600';
+      } else {
+        iconBg.className = 'w-9 h-9 rounded-xl bg-rose-100 flex items-center justify-center shrink-0';
+        icon.className = 'fa-solid fa-triangle-exclamation text-rose-600';
+      }
+
       toast.classList.remove('hidden');
-      setTimeout(() => toast.classList.add('hidden'), 3800);
+      setTimeout(() => toast.classList.add('hidden'), 4000);
     }
 
-    document.addEventListener('DOMContentLoaded', () => renderOrders('all'));
+    // Tự động tải lại từ máy chủ nếu cần đồng bộ
+    async function fetchOrdersFromServer() {
+      try {
+        const res = await fetch('/api/orders');
+        if (res.ok) {
+          const fresh = await res.json();
+          if (Array.isArray(fresh) && fresh.length > 0) {
+            ORDERS = fresh;
+            const activeTab = document.querySelector('.tab-btn.tab-active')?.dataset.tab || 'all';
+            renderOrders(activeTab);
+          }
+        }
+      } catch (e) {}
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderOrders('all');
+      fetchOrdersFromServer();
+    });
+
     document.getElementById('cancel-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeCancelModal(); });
+    document.getElementById('detail-cancel-modal').addEventListener('click', e => { if (e.target === e.currentTarget) closeDetailCancelModal(); });
   </script>
 
 </body>

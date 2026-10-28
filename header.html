@@ -38,12 +38,12 @@
 
       {% if user and user.username %}
       <div class="flex items-center gap-2.5">
-        <div class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/70 border border-[#aec4d4]/50 text-xs font-bold text-slate-800">
+        <a href="/profile" class="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/70 hover:bg-white border border-[#aec4d4]/50 text-xs font-bold text-slate-800 hover:text-[#790d16] transition-all" title="Xem hồ sơ cá nhân">
           <span class="w-6 h-6 rounded-lg bg-[#315b8c] text-white flex items-center justify-center text-[11px] font-black uppercase">
             {{ (user.username)[0] or 'U' }}
           </span>
           <span class="max-w-[120px] truncate">{{ user.username }}</span>
-        </div>
+        </a>
         <a href="/my-orders" class="px-3 py-2 rounded-xl text-slate-600 hover:text-[#790d16] font-bold text-xs hover:bg-white/60 transition-colors">
           Đơn hàng
         </a>
@@ -75,9 +75,10 @@
     </nav>
     <div class="pt-3 border-t border-[#aec4d4]/30 flex flex-col gap-2">
       {% if user and user.username %}
-      <div class="px-3.5 py-2.5 rounded-xl bg-[#f9f0e0]/80 border border-[#aec4d4]/40 text-xs font-bold text-slate-800">
-        Xin chào, <span class="text-[#790d16]">{{ user.username }}</span>
-      </div>
+      <a href="/profile" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-[#f9f0e0]/80 border border-[#aec4d4]/40 text-xs font-bold text-slate-800">
+        <span>Xin chào, <span class="text-[#790d16]">{{ user.username }}</span></span>
+        <span class="text-[11px] text-[#790d16] font-semibold underline">Hồ sơ &rarr;</span>
+      </a>
       <a href="/my-orders" class="text-center py-2 rounded-xl bg-[#f9f0e0] text-[#790d16] font-bold text-xs border border-[#790d16]/20">Đơn hàng của tôi</a>
       <a href="/logout" class="text-center py-2 rounded-xl bg-rose-50 text-rose-600 font-bold text-xs">Đăng xuất</a>
       {% else %}
