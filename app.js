@@ -1,4 +1,4 @@
-require("dotenv").config();
+﻿require("dotenv").config();
 const express = require("express");
 const nunjucks = require("nunjucks");
 const path = require("path");
@@ -423,6 +423,228 @@ app.get("/partner/:id", async (req, res) => {
   }
 });
 
+
+
+// =========================================================================
+// API & ROUTE: QUY TRÌNH HỦY ĐƠN HÀNG (EVENTDECOR ORDER CANCELLATION)
+// =========================================================================
+app.post("/api/orders/cancel", async (req, res) => {
+  const { orderCode, cancelReason } = req.body;
+  if (!orderCode) {
+    return res.status(400).json({ success: false, message: "Mã đơn hàng không hợp lệ." });
+  }
+
+  const reason = (cancelReason && cancelReason.trim()) || "Khách hàng yêu cầu hủy đơn";
+
+  try {
+    const [rows] = await pool.query(
+      "SELECT id, order_code, order_status, payment_status, total_amount FROM orders WHERE order_code = ? OR CAST(id AS CHAR) = ? LIMIT 1",
+      [orderCode, orderCode]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy mã đơn hàng cần hủy." });
+    }
+
+    const order = rows[0];
+
+    // Kiểm tra quy trình: Giai đoạn 3 (processing) & Giai đoạn 4 (done) không được hủy
+    if (["processing", "done"].includes(order.order_status)) {
+      return res.status(400).json({
+        success: false,
+        message: "Theo quy trình vận hành EventDecor, đơn hàng đã bước vào giai đoạn thi công mặt bằng hoặc đã hoàn thành. Bạn không thể hủy đơn trực tiếp. Vui lòng liên hệ hotline/đối tác."
+      });
+    }
+
+    if (order.order_status === "cancelled") {
+      return res.status(400).json({
+        success: false,
+        message: "Đơn hàng này đã được hủy bỏ trước đó."
+      });
+    }
+
+    // Cập nhật trạng thái đơn thành cancelled
+    await pool.query(
+      `UPDATE orders 
+       SET order_status = 'cancelled', 
+           cancel_reason = ?, 
+           cancelled_at = NOW(),
+           payment_status = IF(payment_status = 'paid', 'refunded', payment_status)
+       WHERE id = ?`,
+      [reason, order.id]
+    );
+
+    // Ghi lịch sử chuyển trạng thái
+    try {
+      await pool.query(
+        `INSERT INTO order_status_history (order_id, from_status, to_status, note, changed_by, created_at)
+         VALUES (?, ?, 'cancelled', ?, 'customer', NOW())`,
+        [order.id, order.order_status, reason]
+      );
+    } catch (histErr) {}
+
+    // Nếu đã thanh toán: ghi nhận hoàn tiền
+    if (order.payment_status === "paid") {
+      try {
+        const refundTxnCode = `REF-${Date.now()}`;
+        await pool.query(
+          `INSERT INTO order_transactions (order_id, transaction_code, amount, payment_type, bank_code, status, paid_at, created_at)
+           VALUES (?, ?, ?, 'refund', 'VIETCOMBANK', 'success', NOW(), NOW())`,
+          [order.id, refundTxnCode, order.total_amount]
+        );
+      } catch (transErr) {}
+    }
+
+    return res.json({
+      success: true,
+      message: "Hủy đơn hàng thành công theo quy trình EventDecor."
+    });
+
+  } catch (err) {
+    console.error(">>> [MySQL] Lỗi khi hủy đơn CSDL:", err.message);
+    return res.status(500).json({ success: false, message: "Lỗi hệ thống khi hủy đơn hàng: " + err.message });
+  }
+});
+
+// =========================================================================
+// ROUTE & API THÔNG TIN CÁ NHÂN (USER PROFILE)
+// =========================================================================
+app.get("/profile", requireAuth, async (req, res) => {
+  const sessionUser = req.session.user;
+  let currentUser = {
+    phone: "0900000002",
+    address: "TP. Hồ Chí Minh",
+    ...sessionUser
+  };
+
+  let stats = {
+    totalOrders: 0,
+    pendingOrders: 0,
+    processingOrders: 0,
+    completedOrders: 0,
+    cancelledOrders: 0
+  };
+
+  try {
+    const [userRows] = await pool.query(
+      "SELECT id, username, email, phone, address, role, status FROM users WHERE id = ? OR email = ? LIMIT 1",
+      [sessionUser.id, sessionUser.email]
+    );
+    if (userRows.length > 0) {
+      currentUser = {
+        ...currentUser,
+        ...userRows[0],
+        phone: userRows[0].phone || currentUser.phone,
+        address: userRows[0].address || currentUser.address
+      };
+    }
+
+    const [orderStats] = await pool.query(`
+      SELECT 
+        COUNT(*) as total,
+        SUM(CASE WHEN order_status IN ('pending_partner', 'pending_payment') THEN 1 ELSE 0 END) as pending,
+        SUM(CASE WHEN order_status = 'processing' THEN 1 ELSE 0 END) as processing,
+        SUM(CASE WHEN order_status = 'done' THEN 1 ELSE 0 END) as completed,
+        SUM(CASE WHEN order_status = 'cancelled' THEN 1 ELSE 0 END) as cancelled
+      FROM orders
+      WHERE user_id = ? OR ? = 1
+    `, [currentUser.id, currentUser.role === 'admin' ? 1 : 0]);
+
+    if (orderStats.length > 0) {
+      stats = {
+        totalOrders: Number(orderStats[0].total) || 0,
+        pendingOrders: Number(orderStats[0].pending) || 0,
+        processingOrders: Number(orderStats[0].processing) || 0,
+        completedOrders: Number(orderStats[0].completed) || 0,
+        cancelledOrders: Number(orderStats[0].cancelled) || 0
+      };
+    }
+  } catch (e) {
+    console.warn(">>> [MySQL] Lỗi lấy thông tin cá nhân:", e.message);
+  }
+
+  res.render("profile.html", {
+    user: currentUser,
+    stats
+  });
+});
+
+app.post("/api/user/profile", requireAuth, async (req, res) => {
+  const { username, phone, address } = req.body;
+  if (!username || !username.trim()) {
+    return res.status(400).json({ success: false, message: "Họ và tên không được để trống." });
+  }
+
+  const sessionUser = req.session.user;
+  const cleanName = username.trim();
+  const cleanPhone = (phone || "").trim();
+  const cleanAddress = (address || "").trim();
+
+  try {
+    await pool.query(
+      "UPDATE users SET username = ?, phone = ?, address = ? WHERE id = ? OR email = ?",
+      [cleanName, cleanPhone, cleanAddress, sessionUser.id, sessionUser.email]
+    );
+
+    req.session.user = {
+      ...sessionUser,
+      username: cleanName,
+      phone: cleanPhone,
+      address: cleanAddress
+    };
+
+    return res.json({
+      success: true,
+      message: "Cập nhật thông tin cá nhân thành công!",
+      user: req.session.user
+    });
+  } catch (err) {
+    console.error(">>> [MySQL] Lỗi cập nhật hồ sơ:", err.message);
+    return res.status(500).json({ success: false, message: "Lỗi cập nhật CSDL: " + err.message });
+  }
+});
+
+app.post("/api/user/change-password", requireAuth, async (req, res) => {
+  const { currentPassword, newPassword, confirmPassword } = req.body;
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ success: false, message: "Vui lòng nhập mật khẩu hiện tại và mật khẩu mới." });
+  }
+  if (newPassword.length < 6) {
+    return res.status(400).json({ success: false, message: "Mật khẩu mới phải có tối thiểu 6 ký tự." });
+  }
+  if (newPassword !== confirmPassword) {
+    return res.status(400).json({ success: false, message: "Mật khẩu xác nhận không khớp." });
+  }
+
+  const sessionUser = req.session.user;
+
+  try {
+    const [rows] = await pool.query(
+      "SELECT id, password FROM users WHERE id = ? OR email = ? LIMIT 1",
+      [sessionUser.id, sessionUser.email]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, message: "Không tìm thấy người dùng." });
+    }
+
+    const dbPassword = rows[0].password;
+    const isMatch = (dbPassword && (dbPassword.startsWith("$2a$") || dbPassword.startsWith("$2b$")))
+      ? await bcrypt.compare(currentPassword, dbPassword)
+      : (currentPassword === dbPassword);
+
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: "Mật khẩu hiện tại không đúng." });
+    }
+
+    const newHash = await bcrypt.hash(newPassword, 10);
+    await pool.query("UPDATE users SET password = ? WHERE id = ?", [newHash, rows[0].id]);
+    return res.json({ success: true, message: "Đổi mật khẩu tài khoản thành công!" });
+  } catch (err) {
+    console.error(">>> [MySQL] Lỗi đổi mật khẩu CSDL:", err.message);
+    return res.status(500).json({ success: false, message: "Lỗi hệ thống khi đổi mật khẩu." });
+  }
+});
 
 app.get("/cart", (req, res) => res.render("cart.html"));
 app.get("/my-orders", async (req, res) => {
