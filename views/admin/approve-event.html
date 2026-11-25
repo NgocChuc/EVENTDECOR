@@ -1,0 +1,517 @@
+{% extends "admin/base-admin.html" %}
+
+{% block title %}Phê duyệt Dịch vụ - EventDecor Admin{% endblock %}
+
+{% block content %}
+<!-- BREADCRUMB -->
+<nav class="flex items-center text-xs font-medium text-slate-400 mb-5 select-none" aria-label="Breadcrumb">
+  <ol class="inline-flex items-center space-x-1.5 md:space-x-2">
+    <li class="inline-flex items-center">
+      <a href="/admin/dashboard" class="hover:text-blue-600 transition-colors">Trang chủ</a>
+    </li>
+    <li><span class="text-slate-300 mx-1">&rsaquo;</span></li>
+    <li class="inline-flex items-center">
+      <span class="text-slate-400">Quản lý Dịch vụ</span>
+    </li>
+    <li><span class="text-slate-300 mx-1">&rsaquo;</span></li>
+    <li aria-current="page">
+      <span class="text-slate-600 font-semibold">Phê duyệt dịch vụ</span>
+    </li>
+  </ol>
+</nav>
+
+<!-- TIÊU ĐỀ TRANG -->
+<div class="mb-7">
+  <h1 class="text-2xl font-bold text-[#0f172a] tracking-tight">
+    Phê duyệt Gói dịch vụ mới
+  </h1>
+  <p class="text-[13.5px] text-slate-400 font-normal mt-1">
+    Kiểm tra quy cách vật tư dự tính theo quy mô khách, thẩm định hồ sơ đăng ký từ đối tác
+  </p>
+</div>
+
+<!-- 1. THỐNG KÊ TỔNG QUAN HỒ SƠ KIỂM DUYỆT -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-7">
+  <div onclick="switchApproveTab('pending')" class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs flex flex-col cursor-pointer hover:border-amber-300 transition-all">
+    <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Hồ sơ chờ duyệt</span>
+    <span id="stat-pending" class="text-2xl font-black text-amber-500 mt-1">0</span>
+  </div>
+  <div onclick="switchApproveTab('approved')" class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs flex flex-col cursor-pointer hover:border-emerald-300 transition-all">
+    <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Đã phê duyệt</span>
+    <span id="stat-approved" class="text-2xl font-black text-emerald-600 mt-1">0</span>
+  </div>
+  <div onclick="switchApproveTab('rejected')" class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs flex flex-col cursor-pointer hover:border-rose-300 transition-all">
+    <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Đã từ chối duyệt</span>
+    <span id="stat-rejected" class="text-2xl font-black text-rose-600 mt-1">0</span>
+  </div>
+</div>
+
+<!-- 2. KHỐI QUẢN LÝ: TÁCH RIÊNG 3 BẢNG VỚI TAB ĐIỀU HƯỚNG -->
+<section class="bg-white border border-slate-200/80 rounded-2xl shadow-2xs overflow-hidden mb-8">
+  <!-- THANH CHUYỂN TAB -->
+  <div class="flex items-center border-b border-slate-200 bg-slate-50/60 px-5 gap-3 flex-wrap">
+    <button type="button" onclick="switchApproveTab('pending')" id="tab-btn-pending" class="px-4 py-3.5 text-xs font-bold border-b-2 border-amber-500 text-amber-600 flex items-center gap-2 transition-colors cursor-pointer">
+      <span class="material-symbols-outlined text-[18px]">pending_actions</span>
+      <span>Hồ sơ chờ phê duyệt (<span id="tab-count-pending">0</span>)</span>
+    </button>
+    <button type="button" onclick="switchApproveTab('approved')" id="tab-btn-approved" class="px-4 py-3.5 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center gap-2 transition-colors cursor-pointer">
+      <span class="material-symbols-outlined text-[18px]">task_alt</span>
+      <span>Dịch vụ đã phê duyệt (<span id="tab-count-approved">0</span>)</span>
+    </button>
+    <button type="button" onclick="switchApproveTab('rejected')" id="tab-btn-rejected" class="px-4 py-3.5 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center gap-2 transition-colors cursor-pointer">
+      <span class="material-symbols-outlined text-[18px]">cancel</span>
+      <span>Dịch vụ bị từ chối (<span id="tab-count-rejected">0</span>)</span>
+    </button>
+  </div>
+
+  <!-- BỘ LỌC VÀ TÌM KIẾM DÙNG CHUNG -->
+  <div class="p-5 border-b border-slate-100 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div>
+      <h2 class="text-sm font-bold text-[#1e293b] tracking-tight" id="table-tab-title">Danh sách hồ sơ chờ thẩm định</h2>
+      <p class="text-[11px] text-slate-400 mt-0.5">Kiểm tra thông số kỹ thuật và vật tư dự tính trước khi mở bán</p>
+    </div>
+    <div class="flex items-center gap-3 flex-wrap">
+      <div class="relative w-full sm:w-64">
+        <input type="text" id="approve-search-input" placeholder="Tìm tên dịch vụ, mã REQ, đối tác..." class="w-full bg-white border border-slate-200/90 text-slate-700 text-xs rounded-xl px-3.5 py-2.5 focus:border-blue-500 focus:outline-none transition-all placeholder:text-slate-400 shadow-2xs">
+      </div>
+      <div class="relative">
+        <select id="filter-category" class="appearance-none bg-white border border-slate-200/90 text-slate-700 text-xs rounded-xl pl-3.5 pr-8 py-2.5 focus:border-blue-500 focus:outline-none transition-all cursor-pointer shadow-2xs">
+          <option value="">Tất cả danh mục</option>
+          <option value="wedding">Tiệc cưới & Gia tiên</option>
+          <option value="birthday">Sinh nhật & Thôi nôi</option>
+          <option value="corporate">Sự kiện doanh nghiệp</option>
+          <option value="proposal">Cầu hôn & Kỷ niệm</option>
+          <option value="seasonal">Không gian lễ hội</option>
+        </select>
+        <span class="material-symbols-outlined text-[18px] text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">arrow_drop_down</span>
+      </div>
+      <button type="button" id="btn-refresh" title="Làm mới bộ lọc" class="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200/90 bg-white text-slate-500 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/50 active:scale-95 transition-all shadow-2xs shrink-0 cursor-pointer">
+        <span class="material-symbols-outlined text-[18px]">refresh</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- BẢNG 1: DỊCH VỤ CHỜ PHÊ DUYỆT (ƯU TIÊN MẶC ĐỊNH) -->
+  <div id="table-container-pending" class="overflow-x-auto">
+    <table class="w-full text-left border-collapse text-xs">
+      <thead>
+        <tr class="bg-slate-50/75 border-b border-slate-100 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+          <th class="py-3.5 px-4 w-28">Mã yêu cầu</th>
+          <th class="py-3.5 px-4 min-w-[220px]">Gói dịch vụ đăng ký</th>
+          <th class="py-3.5 px-4 min-w-[170px]">Đơn vị gửi hồ sơ</th>
+          <th class="py-3.5 px-4 w-36">Thời gian gửi</th>
+          <th class="py-3.5 px-4 min-w-[130px] text-right">Giá đề xuất</th>
+          <th class="py-3.5 px-4 w-32 text-center">Trạng thái</th>
+          <th class="py-3.5 px-4 w-28 text-center">Chi tiết</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-pending" class="divide-y divide-slate-100"></tbody>
+    </table>
+  </div>
+
+  <!-- BẢNG 2: DỊCH VỤ ĐÃ PHÊ DUYỆT -->
+  <div id="table-container-approved" class="overflow-x-auto hidden">
+    <table class="w-full text-left border-collapse text-xs">
+      <thead>
+        <tr class="bg-slate-50/75 border-b border-slate-100 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+          <th class="py-3.5 px-4 w-28">Mã yêu cầu</th>
+          <th class="py-3.5 px-4 min-w-[220px]">Tên gói dịch vụ</th>
+          <th class="py-3.5 px-4 min-w-[170px]">Đơn vị cung ứng</th>
+          <th class="py-3.5 px-4 w-36">Thời gian gửi</th>
+          <th class="py-3.5 px-4 w-36">Thời gian duyệt</th>
+          <th class="py-3.5 px-4 min-w-[130px] text-right">Giá niêm yết</th>
+          <th class="py-3.5 px-4 w-28 text-center">Chi tiết</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-approved" class="divide-y divide-slate-100"></tbody>
+    </table>
+  </div>
+
+  <!-- BẢNG 3: DỊCH VỤ BỊ TỪ CHỐI DUYỆT -->
+  <div id="table-container-rejected" class="overflow-x-auto hidden">
+    <table class="w-full text-left border-collapse text-xs">
+      <thead>
+        <tr class="bg-slate-50/75 border-b border-slate-100 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+          <th class="py-3.5 px-4 w-28">Mã yêu cầu</th>
+          <th class="py-3.5 px-4 min-w-[200px]">Gói dịch vụ</th>
+          <th class="py-3.5 px-4 min-w-[160px]">Đơn vị gửi hồ sơ</th>
+          <th class="py-3.5 px-4 w-36">Thời gian từ chối</th>
+          <th class="py-3.5 px-4 min-w-[220px]">Lý do từ chối</th>
+          <th class="py-3.5 px-4 w-28 text-center">Chi tiết</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-rejected" class="divide-y divide-slate-100"></tbody>
+    </table>
+  </div>
+
+  <!-- PHÂN TRANG -->
+  <div class="px-5 py-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-slate-500">
+    <span id="pagination-info">Hiển thị danh sách hồ sơ kiểm duyệt</span>
+    <div class="flex items-center gap-1.5 self-end sm:self-auto">
+      <button class="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-50 disabled:opacity-50 cursor-pointer" disabled>Trước</button>
+      <button class="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium cursor-pointer">1</button>
+      <button class="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 cursor-pointer">Sau</button>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== MODAL CHI TIẾT HỒ SƠ DỊCH VỤ ==================== -->
+<div id="review-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+  <div class="bg-white border border-slate-200/90 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden">
+    <!-- ĐẦU MODAL -->
+    <div class="p-5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/50">
+      <div class="flex items-center gap-2">
+        <span class="material-symbols-outlined text-blue-600 text-[22px]">fact_check</span>
+        <h3 class="text-base font-bold text-slate-800">Chi tiết Hồ sơ Gói Dịch vụ</h3>
+      </div>
+      <button type="button" onclick="closeReviewModal()" class="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 transition-colors cursor-pointer">
+        <span class="material-symbols-outlined text-[20px]">close</span>
+      </button>
+    </div>
+
+    <!-- NỘI DUNG CUỘN CỦA MODAL -->
+    <div class="flex-1 overflow-y-auto p-6 space-y-6 custom-scroll text-xs">
+      <!-- 1. TÓM TẮT -->
+      <div class="p-4 bg-slate-50 border border-slate-200/70 rounded-2xl space-y-3">
+        <div class="flex items-center justify-between gap-2 flex-wrap">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-blue-100 text-blue-700 font-mono" id="modal-req-id">---</span>
+            <span class="px-2 py-0.5 rounded-full text-[11px] font-medium bg-white border border-slate-200 text-slate-700" id="modal-category">---</span>
+          </div>
+          <div id="modal-status-badge">---</div>
+        </div>
+        <div>
+          <h4 class="text-base font-bold text-slate-800" id="modal-service-name">---</h4>
+          <p class="text-slate-400 text-[11px] mt-0.5">
+            Đơn vị gửi duyệt: <b class="text-slate-700" id="modal-partner">---</b> · Thời gian nộp: <b class="text-slate-700" id="modal-date">---</b>
+          </p>
+        </div>
+        <div class="pt-2 border-t border-slate-200/60 flex items-center justify-between">
+          <span class="text-slate-500">Mức giá đối tác đề xuất niêm yết:</span>
+          <span class="text-base font-bold text-blue-600" id="modal-price">0 ₫</span>
+        </div>
+      </div>
+
+      <!-- 2. HÌNH ẢNH GÓC CHỤP -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <h4 class="font-bold text-slate-800 flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[18px] text-blue-600">photo_library</span>
+            <span>Hình ảnh góc chụp thực tế do đối tác cung cấp:</span>
+          </h4>
+          <span class="text-slate-400 text-[11px]" id="modal-gallery-count">0 ảnh đính kèm</span>
+        </div>
+        <div class="w-full h-72 rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 relative group">
+          <img id="modal-main-gallery-view" src="" alt="Ảnh chi tiết đối tác cung cấp" class="w-full h-full object-cover">
+        </div>
+        <div class="grid grid-cols-4 sm:grid-cols-6 gap-2.5" id="modal-gallery-thumbnails"></div>
+      </div>
+
+      <!-- 3. ĐIỀU KIỆN TRIỂN KHAI -->
+      <div class="space-y-2">
+        <h4 class="font-bold text-slate-800 flex items-center gap-1.5">
+          <span class="material-symbols-outlined text-[18px] text-blue-600">schedule</span>
+          <span>Thông tin triển khai & Điều kiện thực hiện:</span>
+        </h4>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 bg-white p-4 rounded-xl border border-slate-200">
+          <div>
+            <span class="text-slate-400 block mb-0.5">Thời gian chuẩn bị tối thiểu</span>
+            <span class="font-semibold text-slate-700" id="modal-lead-time">---</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block mb-0.5">Thời gian thi công thực tế</span>
+            <span class="font-semibold text-slate-700" id="modal-setup-time">---</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block mb-0.5">Quy mô khách đề xuất</span>
+            <span class="font-semibold text-slate-700" id="modal-capacity">---</span>
+          </div>
+          <div>
+            <span class="text-slate-400 block mb-0.5">Khu vực / Địa điểm áp dụng</span>
+            <span class="font-semibold text-slate-700" id="modal-scope">---</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. MÔ TẢ TỔNG QUÁT -->
+      <div>
+        <h4 class="font-bold text-slate-800 mb-1.5">Mô tả tổng quát dịch vụ:</h4>
+        <p class="text-slate-600 leading-relaxed bg-white p-3.5 rounded-xl border border-slate-200" id="modal-desc">---</p>
+      </div>
+
+      <!-- 5. BẢNG KÊ VẬT TƯ -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <h4 class="font-bold text-slate-800 flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[18px] text-blue-600">inventory</span>
+            <span>Bảng kê trang thiết bị & vật tư dự tính:</span>
+          </h4>
+        </div>
+        <div class="overflow-x-auto border border-slate-200 rounded-xl">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr class="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase border-b border-slate-200">
+                <th class="py-2.5 px-3.5 min-w-[180px]">Hạng mục</th>
+                <th class="py-2.5 px-3.5 min-w-[160px]">Quy cách / Chất liệu</th>
+                <th class="py-2.5 px-3.5 w-32 text-center">Số lượng dự tính</th>
+                <th class="py-2.5 px-3.5 min-w-[180px]">Ghi chú ước tính</th>
+              </tr>
+            </thead>
+            <tbody id="modal-materials-body" class="divide-y divide-slate-100 text-slate-700"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 6. GHI CHÚ PHÊ DUYỆT / TỪ CHỐI -->
+      <div id="modal-decision-box" class="p-4 bg-amber-50/60 border border-amber-200/80 rounded-2xl space-y-3">
+        <span class="font-bold text-slate-800 block">Ý kiến & Lý do xử lý hồ sơ (Gửi thông báo tới đối tác):</span>
+        <textarea id="modal-admin-note" rows="2" placeholder="Nhập ghi chú phản hồi hoặc lý do từ chối..." class="w-full bg-white border border-slate-200 text-slate-700 text-xs rounded-xl p-3 focus:outline-none focus:border-blue-500 transition-all placeholder:text-slate-400"></textarea>
+      </div>
+    </div>
+
+    <!-- ĐUÔI MODAL -->
+    <div class="p-4 bg-slate-50/75 border-t border-slate-100 flex items-center justify-between gap-3 shrink-0">
+      <button type="button" onclick="closeReviewModal()" class="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-100 active:scale-95 transition-all cursor-pointer">
+        Đóng
+      </button>
+      <div class="flex items-center gap-2" id="modal-action-buttons">
+        <button type="button" onclick="rejectCurrentRequest()" class="px-4 py-2 bg-rose-50 border border-rose-200 text-rose-600 font-semibold rounded-xl hover:bg-rose-100 active:scale-95 transition-all cursor-pointer">
+          Từ chối duyệt
+        </button>
+        <button type="button" onclick="approveCurrentRequest()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-xs active:scale-95 transition-all cursor-pointer">
+          Phê duyệt niêm yết
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Dữ liệu trống - Sẵn sàng nhận từ database / API
+  let approvalRequests = [];
+  let currentTab = 'pending';
+  let selectedReq = null;
+
+  function updateMetrics() {
+    const pendingCount = approvalRequests.filter(r => r.status === 'pending').length;
+    const approvedCount = approvalRequests.filter(r => r.status === 'approved').length;
+    const rejectedCount = approvalRequests.filter(r => r.status === 'rejected').length;
+
+    document.getElementById('stat-pending').innerText = pendingCount;
+    document.getElementById('stat-approved').innerText = approvedCount;
+    document.getElementById('stat-rejected').innerText = rejectedCount;
+
+    document.getElementById('tab-count-pending').innerText = pendingCount;
+    document.getElementById('tab-count-approved').innerText = approvedCount;
+    document.getElementById('tab-count-rejected').innerText = rejectedCount;
+  }
+
+  function switchApproveTab(tabKey) {
+    currentTab = tabKey;
+    const tabs = ['pending', 'approved', 'rejected'];
+
+    tabs.forEach(t => {
+      const btn = document.getElementById(`tab-btn-${t}`);
+      const container = document.getElementById(`table-container-${t}`);
+      if (t === tabKey) {
+        container.classList.remove('hidden');
+        if (t === 'pending') {
+          btn.className = "px-4 py-3.5 text-xs font-bold border-b-2 border-amber-500 text-amber-600 flex items-center gap-2 transition-colors cursor-pointer";
+          document.getElementById('table-tab-title').innerText = "Danh sách hồ sơ chờ thẩm định (Ưu tiên)";
+        } else if (t === 'approved') {
+          btn.className = "px-4 py-3.5 text-xs font-bold border-b-2 border-emerald-600 text-emerald-600 flex items-center gap-2 transition-colors cursor-pointer";
+          document.getElementById('table-tab-title').innerText = "Danh sách dịch vụ đã phê duyệt niêm yết";
+        } else {
+          btn.className = "px-4 py-3.5 text-xs font-bold border-b-2 border-rose-600 text-rose-600 flex items-center gap-2 transition-colors cursor-pointer";
+          document.getElementById('table-tab-title').innerText = "Danh sách dịch vụ bị từ chối kiểm duyệt";
+        }
+      } else {
+        container.classList.add('hidden');
+        btn.className = "px-4 py-3.5 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center gap-2 transition-colors cursor-pointer";
+      }
+    });
+
+    renderCurrentTables();
+  }
+
+  function renderCurrentTables() {
+    const keyword = (document.getElementById('approve-search-input')?.value || '').trim().toLowerCase();
+    const category = document.getElementById('filter-category')?.value || '';
+
+    const filtered = approvalRequests.filter(item => {
+      const name = (item.serviceName || '').toLowerCase();
+      const code = (item.reqId || '').toLowerCase();
+      const partner = (item.partner || '').toLowerCase();
+      const matchKeyword = name.includes(keyword) || code.includes(keyword) || partner.includes(keyword);
+      const matchCategory = category === '' || item.category === category;
+      return matchKeyword && matchCategory;
+    });
+
+    // 1. Pending Table
+    const pendingList = filtered.filter(r => r.status === 'pending');
+    const tbodyPending = document.getElementById('tbody-pending');
+    tbodyPending.innerHTML = pendingList.length === 0 
+      ? `<tr><td colspan="7" class="text-center py-10 text-slate-400">Không có hồ sơ nào đang chờ duyệt.</td></tr>`
+      : pendingList.map(item => `
+        <tr class="hover:bg-slate-50/70 transition-colors">
+          <td class="py-3 px-4 font-semibold text-blue-600 font-mono">${item.reqId}</td>
+          <td class="py-3 px-4">
+            <span class="font-semibold text-slate-800 line-clamp-1">${item.serviceName}</span>
+            <span class="text-[10px] text-blue-600 font-medium mt-0.5">${item.category}</span>
+          </td>
+          <td class="py-3 px-4 font-medium text-slate-700">${item.partner}</td>
+          <td class="py-3 px-4 text-slate-600 font-medium">${item.submittedAt}</td>
+          <td class="py-3 px-4 text-right font-bold text-slate-800">${Number(item.price || 0).toLocaleString('vi-VN')} ₫</td>
+          <td class="py-3 px-4 text-center">
+            <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200">Chờ duyệt</span>
+          </td>
+          <td class="py-3 px-4 text-center">
+            <button type="button" onclick="openReviewModal('${item.reqId}')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/50 active:scale-95 transition-all text-xs font-semibold shadow-2xs cursor-pointer">
+              <span class="material-symbols-outlined text-[16px]">visibility</span>
+              <span>Chi tiết</span>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+
+    // 2. Approved Table
+    const approvedList = filtered.filter(r => r.status === 'approved');
+    const tbodyApproved = document.getElementById('tbody-approved');
+    tbodyApproved.innerHTML = approvedList.length === 0
+      ? `<tr><td colspan="7" class="text-center py-10 text-slate-400">Không có dịch vụ nào đã duyệt.</td></tr>`
+      : approvedList.map(item => `
+        <tr class="hover:bg-slate-50/70 transition-colors">
+          <td class="py-3 px-4 font-semibold text-blue-600 font-mono">${item.reqId}</td>
+          <td class="py-3 px-4">
+            <span class="font-semibold text-slate-800 line-clamp-1">${item.serviceName}</span>
+            <span class="text-[10px] text-blue-600 font-medium mt-0.5">${item.category}</span>
+          </td>
+          <td class="py-3 px-4 font-medium text-slate-700">${item.partner}</td>
+          <td class="py-3 px-4 text-slate-500">${item.submittedAt}</td>
+          <td class="py-3 px-4 text-emerald-600 font-bold">${item.actionAt || '---'}</td>
+          <td class="py-3 px-4 text-right font-bold text-slate-800">${Number(item.price || 0).toLocaleString('vi-VN')} ₫</td>
+          <td class="py-3 px-4 text-center">
+            <button type="button" onclick="openReviewModal('${item.reqId}')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/50 active:scale-95 transition-all text-xs font-semibold shadow-2xs cursor-pointer">
+              <span class="material-symbols-outlined text-[16px]">visibility</span>
+              <span>Chi tiết</span>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+
+    // 3. Rejected Table
+    const rejectedList = filtered.filter(r => r.status === 'rejected');
+    const tbodyRejected = document.getElementById('tbody-rejected');
+    tbodyRejected.innerHTML = rejectedList.length === 0
+      ? `<tr><td colspan="6" class="text-center py-10 text-slate-400">Không có dịch vụ nào bị từ chối.</td></tr>`
+      : rejectedList.map(item => `
+        <tr class="hover:bg-slate-50/70 transition-colors">
+          <td class="py-3 px-4 font-semibold text-blue-600 font-mono">${item.reqId}</td>
+          <td class="py-3 px-4">
+            <span class="font-semibold text-slate-800 line-clamp-1">${item.serviceName}</span>
+            <span class="text-[10px] text-blue-600 font-medium mt-0.5">${item.category}</span>
+          </td>
+          <td class="py-3 px-4 font-medium text-slate-700">${item.partner}</td>
+          <td class="py-3 px-4 text-rose-600 font-bold">${item.actionAt || '---'}</td>
+          <td class="py-3 px-4 text-slate-600 italic max-w-[240px] truncate" title="${item.adminNote || ''}">
+            ${item.adminNote || 'Chưa có ghi chú lý do'}
+          </td>
+          <td class="py-3 px-4 text-center">
+            <button type="button" onclick="openReviewModal('${item.reqId}')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/50 active:scale-95 transition-all text-xs font-semibold shadow-2xs cursor-pointer">
+              <span class="material-symbols-outlined text-[16px]">visibility</span>
+              <span>Chi tiết</span>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+
+    const count = currentTab === 'pending' ? pendingList.length : (currentTab === 'approved' ? approvedList.length : rejectedList.length);
+    document.getElementById('pagination-info').innerText = `Đang hiển thị ${count} hồ sơ trong bảng`;
+  }
+
+  function setModalMainImage(src) {
+    const mainImg = document.getElementById('modal-main-gallery-view');
+    if (mainImg) mainImg.src = src;
+  }
+
+  function openReviewModal(reqId) {
+    selectedReq = approvalRequests.find(r => r.reqId === reqId);
+    if (!selectedReq) return;
+
+    document.getElementById('modal-req-id').innerText = selectedReq.reqId || '---';
+    document.getElementById('modal-category').innerText = selectedReq.category || '---';
+    document.getElementById('modal-service-name').innerText = selectedReq.serviceName || '---';
+    document.getElementById('modal-partner').innerText = selectedReq.partner || '---';
+    document.getElementById('modal-date').innerText = selectedReq.submittedAt || '---';
+    document.getElementById('modal-price').innerText = Number(selectedReq.price || 0).toLocaleString('vi-VN') + " ₫";
+    document.getElementById('modal-desc').innerText = selectedReq.description || 'Chưa có mô tả.';
+    document.getElementById('modal-admin-note').value = selectedReq.adminNote || "";
+    document.getElementById('modal-lead-time').innerText = selectedReq.leadTime || "---";
+    document.getElementById('modal-setup-time').innerText = selectedReq.setupTime || "---";
+    document.getElementById('modal-capacity').innerText = selectedReq.capacity || "---";
+    document.getElementById('modal-scope').innerText = selectedReq.scope || "---";
+
+    const gallery = selectedReq.gallery || [];
+    document.getElementById('modal-gallery-count').innerText = `${gallery.length} ảnh đính kèm`;
+    const thumbsContainer = document.getElementById('modal-gallery-thumbnails');
+    if (gallery.length > 0) {
+      setModalMainImage(gallery[0]);
+      thumbsContainer.innerHTML = gallery.map((imgUrl, idx) => `
+        <button type="button" onclick="setModalMainImage('${imgUrl}')" class="h-16 rounded-xl overflow-hidden border border-slate-200 hover:border-blue-500 focus:border-blue-500 transition-all bg-slate-50 cursor-pointer">
+          <img src="${imgUrl}" alt="Ảnh ${idx + 1}" class="w-full h-full object-cover">
+        </button>
+      `).join('');
+    } else {
+      setModalMainImage('');
+      thumbsContainer.innerHTML = '<span class="col-span-full text-slate-400 italic">Không có hình ảnh đính kèm.</span>';
+    }
+
+    const badgeBox = document.getElementById('modal-status-badge');
+    const actionBox = document.getElementById('modal-action-buttons');
+    if (selectedReq.status === 'pending') {
+      badgeBox.innerHTML = '<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-600 border border-amber-200">Đang chờ thẩm định</span>';
+      actionBox.classList.remove('hidden');
+    } else if (selectedReq.status === 'approved') {
+      badgeBox.innerHTML = `<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200">Đã duyệt lúc ${selectedReq.actionAt}</span>`;
+      actionBox.classList.add('hidden');
+    } else {
+      badgeBox.innerHTML = `<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-600 border border-rose-200">Bị từ chối lúc ${selectedReq.actionAt}</span>`;
+      actionBox.classList.add('hidden');
+    }
+
+    const matBody = document.getElementById('modal-materials-body');
+    const materials = selectedReq.materials || [];
+    matBody.innerHTML = materials.length === 0
+      ? `<tr><td colspan="4" class="text-center py-4 text-slate-400">Không có kê khai vật tư.</td></tr>`
+      : materials.map(m => `
+        <tr class="hover:bg-slate-50/60 transition-colors">
+          <td class="py-2.5 px-3.5 font-semibold text-slate-800">${m.item}</td>
+          <td class="py-2.5 px-3.5 text-slate-600">${m.spec}</td>
+          <td class="py-2.5 px-3.5 text-center font-bold text-slate-800">${m.estimatedQty}</td>
+          <td class="py-2.5 px-3.5 text-slate-500 italic">${m.note || '-'}</td>
+        </tr>
+      `).join('');
+
+    document.getElementById('review-modal').classList.remove('hidden');
+  }
+
+  function closeReviewModal() {
+    document.getElementById('review-modal').classList.add('hidden');
+    selectedReq = null;
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    updateMetrics();
+    switchApproveTab('pending');
+    document.getElementById('approve-search-input')?.addEventListener('input', renderCurrentTables);
+    document.getElementById('filter-category')?.addEventListener('change', renderCurrentTables);
+    document.getElementById('btn-refresh')?.addEventListener('click', () => {
+      document.getElementById('approve-search-input').value = '';
+      document.getElementById('filter-category').value = '';
+      renderCurrentTables();
+    });
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,402 @@
+{% extends "admin/base-admin.html" %}
+
+{% block title %}Sự kiện Khả dụng - EventDecor Admin{% endblock %}
+
+{% block content %}
+  <!-- BREADCRUMB -->
+  <nav class="flex items-center text-xs font-medium text-slate-400 mb-5 select-none" aria-label="Breadcrumb">
+    <ol class="inline-flex items-center space-x-1.5 md:space-x-2">
+      <li class="inline-flex items-center">
+        <a href="/admin/dashboard" class="hover:text-blue-600 transition-colors">Trang chủ</a>
+      </li>
+      <li><span class="text-slate-300 mx-1">&rsaquo;</span></li>
+      <li class="inline-flex items-center">
+        <span class="text-slate-400">Quản lý Dịch vụ</span>
+      </li>
+      <li><span class="text-slate-300 mx-1">&rsaquo;</span></li>
+      <li aria-current="page">
+        <span class="text-slate-600 font-semibold">Sự kiện khả dụng</span>
+      </li>
+    </ol>
+  </nav>
+
+  <!-- TIÊU ĐỀ TRANG -->
+  <div class="mb-7">
+    <h1 class="text-2xl font-bold text-[#0f172a] tracking-tight">
+      Quản lý Sự kiện Khả dụng
+    </h1>
+    <p class="text-[13.5px] text-slate-400 font-normal mt-1">
+      Theo dõi, cập nhật thông tin và kiểm soát trạng thái hiển thị các gói dịch vụ trên nền tảng
+    </p>
+  </div>
+
+  <!-- 1. THỐNG KÊ TỔNG QUAN ĐẦU TRANG -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-7">
+    <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs flex flex-col">
+      <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Tổng gói đang hiển thị</span>
+      <span id="stat-visible" class="text-2xl font-black text-emerald-600 mt-1">0</span>
+    </div>
+    <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs flex flex-col">
+      <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Đang khóa</span>
+      <span id="stat-hidden" class="text-2xl font-black text-rose-600 mt-1">0</span>
+    </div>
+  </div>
+
+  <!-- 2. KHỐI QUẢN LÝ: BỘ LỌC & BẢNG DỮ LIỆU -->
+  <section class="bg-white border border-slate-200/80 rounded-2xl shadow-2xs overflow-hidden mb-8">
+    <!-- THANH CÔNG CỤ TÌM KIẾM & BỘ LỌC -->
+    <div class="p-5 border-b border-slate-100 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div>
+        <h2 class="text-base font-bold text-[#1e293b] tracking-tight">Danh sách các gói sự kiện</h2>
+        <p class="text-[11px] text-slate-400 mt-0.5">Tìm kiếm theo tên gói, mã sự kiện hoặc đơn vị cung cấp</p>
+      </div>
+
+      <div class="flex items-center gap-3 flex-wrap">
+        <!-- Ô Tìm kiếm -->
+        <div class="relative w-full sm:w-56">
+          <input type="text" id="event-search-input" placeholder="Tìm tên gói, mã EVT, đối tác..." class="w-full bg-white border border-slate-200/90 text-slate-700 text-xs rounded-xl px-3.5 py-2.5 focus:border-blue-500 focus:outline-none transition-all placeholder:text-slate-400 shadow-2xs">
+        </div>
+
+        <!-- Lọc Danh mục -->
+        <div class="relative">
+          <select id="filter-category" class="appearance-none bg-white border border-slate-200/90 text-slate-700 text-xs rounded-xl pl-3.5 pr-8 py-2.5 focus:border-blue-500 focus:outline-none transition-all cursor-pointer shadow-2xs">
+            <option value="">Tất cả danh mục</option>
+            <option value="Tiệc cưới">Tiệc cưới</option>
+            <option value="Sinh nhật">Sinh nhật</option>
+            <option value="Hội nghị">Hội nghị</option>
+            <option value="Khai trương">Khai trương</option>
+            <option value="Âm thanh - Ánh sáng">Âm thanh - Ánh sáng</option>
+          </select>
+          <span class="material-symbols-outlined text-[18px] text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+            arrow_drop_down
+          </span>
+        </div>
+
+        <!-- Lọc Đối tác -->
+        <div class="relative">
+          <select id="filter-partner" class="appearance-none bg-white border border-slate-200/90 text-slate-700 text-xs rounded-xl pl-3.5 pr-8 py-2.5 focus:border-blue-500 focus:outline-none transition-all cursor-pointer shadow-2xs">
+            <option value="">Tất cả đối tác</option>
+          </select>
+          <span class="material-symbols-outlined text-[18px] text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+            arrow_drop_down
+          </span>
+        </div>
+
+        <!-- Sắp xếp theo lượt đặt mua -->
+        <div class="relative">
+          <select id="sort-bookings" class="appearance-none bg-white border border-slate-200/90 text-slate-700 text-xs rounded-xl pl-3.5 pr-8 py-2.5 focus:border-blue-500 focus:outline-none transition-all cursor-pointer shadow-2xs">
+            <option value="">Sắp xếp: Mặc định</option>
+            <option value="desc">Lượt đặt: Cao đến thấp</option>
+            <option value="asc">Lượt đặt: Thấp đến cao</option>
+          </select>
+          <span class="material-symbols-outlined text-[18px] text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+            swap_vert
+          </span>
+        </div>
+
+        <!-- Nút Làm mới -->
+        <button type="button" id="btn-refresh" title="Làm mới bộ lọc" class="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200/90 bg-white text-slate-500 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/50 active:scale-95 transition-all shadow-2xs shrink-0 cursor-pointer">
+          <span class="material-symbols-outlined text-[18px]">refresh</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 3. BẢNG DANH SÁCH SỰ KIỆN -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="bg-slate-50/75 border-b border-slate-100 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+            <th class="py-3.5 px-4 w-28">Mã sự kiện</th>
+            <th class="py-3.5 px-4 min-w-[240px]">Tên gói sự kiện</th>
+            <th class="py-3.5 px-4 min-w-[170px]">Đối tác phụ trách</th>
+            <th class="py-3.5 px-4 min-w-[130px] text-right">Giá niêm yết</th>
+            <th class="py-3.5 px-4 w-28 text-center">Lượt đã đặt</th>
+            <th class="py-3.5 px-4 w-28 text-center">Đánh giá</th>
+            <th class="py-3.5 px-4 w-32 text-center">Hiển thị web</th>
+            <th class="py-3.5 px-4 w-32 text-center">Chỉnh sửa</th>
+          </tr>
+        </thead>
+        <tbody id="events-table-body" class="divide-y divide-slate-100 text-xs">
+          <!-- Render -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- PHÂN TRANG -->
+    <div class="px-5 py-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-slate-500">
+      <span id="pagination-info">Hiển thị danh sách sự kiện</span>
+      <div class="flex items-center gap-1.5 self-end sm:self-auto">
+        <button class="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-50 disabled:opacity-50" disabled>Trước</button>
+        <button class="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium">1</button>
+        <button class="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50">Sau</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MODAL CHỈNH SỬA TRẠNG THÁI HIỂN THỊ TRÊN WEB ==================== -->
+  <div id="visibility-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+    <div class="bg-white border border-slate-200/90 rounded-2xl shadow-2xl w-full max-w-md flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      
+      <!-- ĐẦU MODAL -->
+      <div class="p-5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/50">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-blue-600 text-[22px]">tune</span>
+          <h3 class="text-base font-bold text-slate-800">Cấu hình hiển thị web</h3>
+        </div>
+        <button type="button" onclick="closeVisibilityModal()" class="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 transition-colors cursor-pointer">
+          <span class="material-symbols-outlined text-[20px]">close</span>
+        </button>
+      </div>
+
+      <!-- NỘI DUNG MODAL -->
+      <div class="p-6 space-y-5 text-xs">
+        <div class="p-3.5 bg-slate-50 border border-slate-200/70 rounded-xl">
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-100 text-blue-700" id="modal-event-code-badge"></span>
+            <span id="modal-event-partner" class="text-slate-500 text-[11px]"></span>
+          </div>
+          <h4 id="modal-event-name" class="font-bold text-slate-800 text-sm mt-1"></h4>
+        </div>
+
+        <div class="space-y-3">
+          <label class="block font-bold text-slate-700">Trạng thái trên trang đặt hàng:</label>
+          <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 cursor-pointer hover:bg-blue-50/40 hover:border-blue-200 transition-all has-[:checked]:border-blue-500 has-[:checked]:bg-blue-50/50">
+            <input type="radio" name="event-visibility-option" value="true" class="mt-0.5 text-blue-600 focus:ring-0">
+            <div>
+              <span class="font-semibold text-slate-800 block">Hiển thị công khai</span>
+              <span class="text-slate-500 text-[11px] block mt-0.5">Khách hàng có thể tìm kiếm, xem chi tiết và đặt lịch dịch vụ này.</span>
+            </div>
+          </label>
+
+          <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 cursor-pointer hover:bg-rose-50/40 hover:border-rose-200 transition-all has-[:checked]:border-rose-500 has-[:checked]:bg-rose-50/50">
+            <input type="radio" name="event-visibility-option" value="false" class="mt-0.5 text-rose-600 focus:ring-0">
+            <div>
+              <span class="font-semibold text-slate-800 block">Đang khóa (Tạm ẩn)</span>
+              <span class="text-slate-500 text-[11px] block mt-0.5">Gói sự kiện sẽ bị khóa và ẩn khỏi danh mục đặt hàng của khách.</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- NHÓM NÚT XÁC NHẬN / HỦY BỎ -->
+      <div class="p-4 bg-slate-50/75 border-t border-slate-100 flex items-center justify-end gap-2.5 shrink-0">
+        <button type="button" onclick="closeVisibilityModal()" class="px-4 py-2 bg-white border border-slate-200 text-slate-700 font-semibold rounded-xl hover:bg-slate-100 active:scale-95 transition-all cursor-pointer">
+          Hủy bỏ
+        </button>
+        <button type="button" onclick="saveVisibilitySettings()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl shadow-xs active:scale-95 transition-all cursor-pointer">
+          Xác nhận lưu
+        </button>
+      </div>
+
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    // Dữ liệu sự kiện mẫu
+    const eventList = [];
+
+    let currentData = [...eventList];
+    let selectedEventIdForEdit = null;
+
+    // Cập nhật 2 thẻ số liệu thống kê
+    function updateMetricCards() {
+      const visibleCount = eventList.filter(e => e.isVisible).length;
+      const lockedCount = eventList.filter(e => !e.isVisible).length;
+      const statVisibleEl = document.getElementById('stat-visible');
+      const statHiddenEl = document.getElementById('stat-hidden');
+      if (statVisibleEl) statVisibleEl.innerText = visibleCount;
+      if (statHiddenEl) statHiddenEl.innerText = lockedCount;
+    }
+
+    // Đổ danh sách đối tác vào Dropdown bộ lọc
+    function populatePartnerFilter() {
+      const partnerSelect = document.getElementById('filter-partner');
+      if (!partnerSelect) return;
+      const uniquePartners = [...new Set(eventList.map(e => e.partner))];
+      uniquePartners.forEach(p => {
+        const option = document.createElement('option');
+        option.value = p;
+        option.textContent = p;
+        partnerSelect.appendChild(option);
+      });
+    }
+
+    // Render bảng danh sách sự kiện
+    function renderEventsTable(data) {
+      const tbody = document.getElementById('events-table-body');
+      if (!tbody) return;
+
+      if (data.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" class="text-center py-10 text-slate-400">
+              Không tìm thấy gói sự kiện nào khớp với tiêu chí tìm kiếm.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = data.map(item => `
+        <tr class="hover:bg-slate-50/70 transition-colors">
+          <!-- Cột Mã sự kiện -->
+          <td class="py-3 px-4 font-semibold text-blue-600 font-mono">
+            ${item.id}
+          </td>
+
+          <!-- Cột Tên gói sự kiện -->
+          <td class="py-3 px-4">
+            <div class="flex flex-col">
+              <a href="/event/detail?id=${item.id}" target="_blank" class="font-semibold text-slate-800 hover:text-blue-600 hover:underline transition-colors line-clamp-1" title="Xem trước: ${item.name}">
+                ${item.name}
+              </a>
+              <div class="mt-0.5">
+                <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-medium bg-blue-50 text-blue-600">${item.category}</span>
+              </div>
+            </div>
+          </td>
+
+          <!-- Đối tác phụ trách -->
+          <td class="py-3 px-4">
+            <span class="font-medium text-slate-700">${item.partner}</span>
+          </td>
+
+          <!-- Giá niêm yết -->
+          <td class="py-3 px-4 text-right">
+            <span class="font-bold text-slate-800">${item.price.toLocaleString('vi-VN')} ₫</span>
+          </td>
+
+          <!-- Lượt đã đặt -->
+          <td class="py-3 px-4 text-center">
+            <span class="inline-flex px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700">
+              ${item.bookingCount} lượt
+            </span>
+          </td>
+
+          <!-- Cột Đánh giá -->
+          <td class="py-3 px-4 text-center">
+            <span class="font-semibold text-slate-800">
+              ${Number(item.rating).toFixed(1)}
+            </span>
+          </td>
+
+          <!-- Trạng thái hiển thị web -->
+          <td class="py-3 px-4 text-center">
+            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${item.isVisible ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-rose-50 text-rose-600 border-rose-200'}">
+              <span class="w-1.5 h-1.5 rounded-full ${item.isVisible ? 'bg-emerald-500' : 'bg-rose-500'}"></span>
+              <span>${item.isVisible ? 'Đang mở' : 'Đang khóa'}</span>
+            </span>
+          </td>
+
+          <!-- Cột Chỉnh sửa -->
+          <td class="py-3 px-4 text-center">
+            <button type="button" onclick="openVisibilityModal('${item.id}')" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200/90 bg-white text-slate-700 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/50 active:scale-95 transition-all text-xs font-semibold shadow-2xs cursor-pointer">
+              <span class="material-symbols-outlined text-[16px]">edit</span>
+              <span>Chỉnh sửa</span>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    // Mở Modal Chỉnh sửa trạng thái Ẩn/Hiện
+    function openVisibilityModal(id) {
+      const item = eventList.find(e => e.id === id);
+      if (!item) return;
+
+      selectedEventIdForEdit = id;
+      document.getElementById('modal-event-code-badge').innerText = item.id;
+      document.getElementById('modal-event-partner').innerText = item.partner;
+      document.getElementById('modal-event-name').innerText = item.name;
+
+      const radioOptions = document.getElementsByName('event-visibility-option');
+      for (const radio of radioOptions) {
+        if (radio.value === String(item.isVisible)) {
+          radio.checked = true;
+        }
+      }
+
+      document.getElementById('visibility-modal').classList.remove('hidden');
+    }
+
+    function closeVisibilityModal() {
+      document.getElementById('visibility-modal').classList.add('hidden');
+      selectedEventIdForEdit = null;
+    }
+
+    // Xác nhận lưu trạng thái Ẩn / Hiện từ Modal
+    function saveVisibilitySettings() {
+      if (!selectedEventIdForEdit) return;
+      const item = eventList.find(e => e.id === selectedEventIdForEdit);
+      if (!item) return;
+
+      const radioOptions = document.getElementsByName('event-visibility-option');
+      let selectedValue = null;
+      for (const radio of radioOptions) {
+        if (radio.checked) {
+          selectedValue = radio.value === 'true';
+          break;
+        }
+      }
+
+      if (selectedValue !== null) {
+        item.isVisible = selectedValue;
+        filterEvents();
+        updateMetricCards();
+        closeVisibilityModal();
+      }
+    }
+
+    // Lọc, Tìm kiếm và Sắp xếp sự kiện
+    function filterEvents() {
+      const keyword = (document.getElementById('event-search-input')?.value || '').trim().toLowerCase();
+      const category = document.getElementById('filter-category')?.value || '';
+      const partner = document.getElementById('filter-partner')?.value || '';
+      const sortBookingOrder = document.getElementById('sort-bookings')?.value || '';
+
+      let filtered = eventList.filter(item => {
+        const matchKeyword = item.name.toLowerCase().includes(keyword) ||
+                             item.id.toLowerCase().includes(keyword) ||
+                             item.partner.toLowerCase().includes(keyword);
+        const matchCategory = category === '' || item.category === category;
+        const matchPartner = partner === '' || item.partner === partner;
+        return matchKeyword && matchCategory && matchPartner;
+      });
+
+      if (sortBookingOrder === 'desc') {
+        filtered.sort((a, b) => b.bookingCount - a.bookingCount);
+      } else if (sortBookingOrder === 'asc') {
+        filtered.sort((a, b) => a.bookingCount - b.bookingCount);
+      }
+
+      currentData = filtered;
+      renderEventsTable(currentData);
+
+      const pageInfo = document.getElementById('pagination-info');
+      if (pageInfo) {
+        pageInfo.innerText = `Hiển thị ${currentData.length} trong tổng số ${eventList.length} gói sự kiện`;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      populatePartnerFilter();
+      updateMetricCards();
+      renderEventsTable(eventList);
+
+      document.getElementById('event-search-input')?.addEventListener('input', filterEvents);
+      document.getElementById('filter-category')?.addEventListener('change', filterEvents);
+      document.getElementById('filter-partner')?.addEventListener('change', filterEvents);
+      document.getElementById('sort-bookings')?.addEventListener('change', filterEvents);
+
+      document.getElementById('btn-refresh')?.addEventListener('click', () => {
+        document.getElementById('event-search-input').value = '';
+        document.getElementById('filter-category').value = '';
+        document.getElementById('filter-partner').value = '';
+        document.getElementById('sort-bookings').value = '';
+        filterEvents();
+      });
+    });
+  </script>
+{% endblock %}

@@ -1,4 +1,4 @@
-require("dotenv").config();
+﻿require("dotenv").config();
 const express = require("express");
 const nunjucks = require("nunjucks");
 const path = require("path");
@@ -6,6 +6,9 @@ const fs = require("fs");
 const session = require("express-session");
 const mysql = require("mysql2/promise");
 const bcrypt = require("bcryptjs");
+
+const passport = require("passport");
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,7 +23,7 @@ app.use("/css", express.static(path.join(__dirname, "css")));
 app.use("/img", express.static(path.join(__dirname, "img")));
 app.use("/js", express.static(path.join(__dirname, "js")));
 app.use(express.static(path.join(__dirname, "public"), { index: false }));
-app.use("/admin", express.static(path.join(__dirname, "admin")));
+
 
 // =========================================================================
 // 2. CẤU HÌNH SESSION & MIDDLEWARE
@@ -45,25 +48,24 @@ app.use((req, res, next) => {
 // =========================================================================
 // 3. CẤU HÌNH NUNJUCKS
 // =========================================================================
-nunjucks.configure([
-  path.join(__dirname),           // HTML gốc: home.html, event.html...
-  path.join(__dirname, "admin"),  // Admin pages: admin/*.html
-], {
+const viewsPath = path.join(__dirname, "views");
+
+nunjucks.configure(viewsPath, {
   autoescape: true,
   express: app,
   watch: true,
+  noCache: true,
 });
 app.set("view engine", "html");
-app.set("views", path.join(__dirname));
+app.set("views", viewsPath);
 
 // =========================================================================
 // 4. CƠ SỞ DỮ LIỆU MYSQL
 // =========================================================================
 let pool = mysql.createPool({
   host: process.env.DB_HOST || "localhost",
-  port: Number(process.env.DB_PORT || 3306),
   user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : "hello",
+  password: process.env.DB_PASSWORD || "",
   database: process.env.DB_NAME || "auth_demo",
   waitForConnections: true,
   connectionLimit: 10,
@@ -73,24 +75,25 @@ let pool = mysql.createPool({
 async function checkDatabaseConnection() {
   try {
     await pool.query("SELECT 1");
-    console.log(">>> [MySQL] Kết nối CSDL thành công:", process.env.DB_NAME || "auth_demo");
+    console.log(">>> [MySQL] Kết nối CSDL thành công:", process.env.DB_NAME || "node_auth_demo");
   } catch (error) {
     try {
       pool = mysql.createPool({
-        host: process.env.DB_HOST || "localhost",
-        port: Number(process.env.DB_PORT || 3306),
-        user: process.env.DB_USER || "root",
-        password: "",
-        database: process.env.DB_NAME || "auth_demo",
-        waitForConnections: true,
-        connectionLimit: 10,
-        queueLimit: 0,
-      });
-      await pool.query("SELECT 1");
-      console.log(">>> [MySQL] Kết nối CSDL thành công:", process.env.DB_NAME || "auth_demo");
+      host: process.env.DB_HOST || "localhost",
+      port: Number(process.env.DB_PORT || 3306),
+      user: process.env.DB_USER || "root",
+      password: process.env.DB_PASSWORD || "hello",
+      database: process.env.DB_NAME || "auth_demo",
+      waitForConnections: true,
+      connectionLimit: 10,
+      queueLimit: 0,
+    });
+    await pool.query("SELECT 1");
+    console.log(">>> [MySQL] Kết nối CSDL thành công:", process.env.DB_NAME || "node_auth_demo");
     } catch (e) {
-      console.warn(">>> [MySQL] Chưa kết nối được MySQL:", e.message);
+      console.warn(">>> [MySQL] Chưa kết nối được MySQL. Web dùng dữ liệu fallback.");
     }
+    console.warn(">>> [MySQL] Chưa kết nối được MySQL. Web dùng dữ liệu fallback.");
   }
 }
 checkDatabaseConnection();
@@ -108,8 +111,71 @@ function requireAdmin(req, res, next) {
     return next();
   }
   // Tùy chọn: nếu đang dev có thể tạm bỏ qua hoặc mock user
-  return next(); 
+  return next();
 }
+
+// =========================================================================
+// GOOGLE OAUTH 2.0
+// =========================================================================
+app.use(passport.initialize());
+app.use(passport.session());
+
+
+passport.serializeUser((user, done) => done(null, user));
+passport.deserializeUser((user, done) => done(null, user));
+// 2. Cấu hình chiến lược xác thực với Google
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  passport.use(
+    new GoogleStrategy(
+      {
+        clientID: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        callbackURL: "http://localhost:3000/auth/google/callback",
+      },
+      async (accessToken, refreshToken, profile, done) => {
+        try {
+          const email = profile.emails[0].value.toLowerCase();
+          const username = profile.displayName || "Khách hàng Google";
+
+          const [rows] = await pool.query("SELECT * FROM users WHERE email = ? LIMIT 1", [email]);
+
+          let user;
+          if (rows.length === 0) {
+            const [result] = await pool.query(
+              "INSERT INTO users (username, email, password, role, status, email_verified) VALUES (?, ?, 'oauth_google', 'customer', 'active', TRUE)",
+              [username, email]
+            );
+            user = { id: result.insertId, username, email, role: "customer" };
+          } else {
+            user = { id: rows[0].id, username: rows[0].username, email: rows[0].email, role: rows[0].role };
+          }
+
+          return done(null, user);
+        } catch (err) {
+          return done(err, null);
+        }
+      }
+    )
+  );
+} else {
+  console.warn(">>> [Cảnh báo] Chưa cấu hình GOOGLE_CLIENT_ID và GOOGLE_CLIENT_SECRET trong .env");
+}
+//ROUTE ĐĂNG NHẬP GG
+// 1. Khi bấm nút "Đăng nhập với Google" -> Chuyển sang Google
+app.get(
+  "/auth/google",
+  passport.authenticate("google", { scope: ["profile", "email"] })
+);
+
+// 2. Google xử lý xong rồi đẩy về lại đây
+app.get(
+  "/auth/google/callback",
+  passport.authenticate("google", { failureRedirect: "/login" }),
+  (req, res) => {
+    req.session.user = req.user;
+    res.redirect("/");
+  }
+);
 
 // =========================================================================
 // 5. ROUTE ADMIN
@@ -118,6 +184,7 @@ app.get("/admin", (req, res) => {
   res.redirect("/admin/dashboard");
 });
 
+// 1. Route cố định: Dashboard
 app.get("/admin/dashboard", requireAdmin, (req, res) => {
   res.render("admin/dashboard.html", {
     currentPage: "dashboard.html",
@@ -125,26 +192,32 @@ app.get("/admin/dashboard", requireAdmin, (req, res) => {
   });
 });
 
+app.get("/admin/test-sidebar", (req, res) => {
+  try {
+    res.render("admin/test-sidebar.html", {
+      currentPage: "test-sidebar.html",
+      adminUser: req.session?.user || { username: "QTV Admin", role: "admin" }
+    });
+  } catch (err) {
+    console.error(">>> Render lỗi:", err);
+    res.status(500).send("<pre>" + err.message + "\n" + err.stack + "</pre>");
+  }
+});
+// 3. Route động cho các trang admin khác (Đặt Ở CUỐI CÙNG và render đúng thư mục admin/)
 app.get("/admin/:page", requireAdmin, (req, res) => {
-  const page = req.params.page.replace(/\.html\$/, "");
-  // Chặn traversal đường dẫn
-  if (!/^[a-zA-Z0-9_-]+\$/.test(page)) {
+  const page = req.params.page.replace(/\.html$/, "");
+  if (!/^[a-zA-Z0-9_-]+$/.test(page)) {
     return res.status(400).send("Đường dẫn không hợp lệ!");
   }
 
-  const fileName = `${page}.html`;
-  const filePath = path.join(__dirname, "admin", fileName);
-
-  if (!fs.existsSync(filePath)) {
-    return res.status(404).send("Trang quản trị không tồn tại!");
-  }
+  // Nối thêm "admin/" để nạp đúng file trong thư mục views/admin/
+  const fileName = `admin/${page}.html`;
 
   res.render(fileName, {
-    currentPage: fileName,
+    currentPage: `${page}.html`,
     adminUser: req.session?.user || { username: "QTV", role: "admin" },
   });
 });
-
 // =========================================================================
 // 6. ROUTES CLIENT
 // =========================================================================
@@ -159,184 +232,201 @@ app.get("/", async (req, res) => {
   }
 });
 
+///ROUTE DANH SÁCH DỊCH VỤ SỰ KIỆN (/event)
 app.get("/event", async (req, res) => {
   try {
     const sql = `
-      SELECT s.id, s.name, s.category, s.category_name AS categoryName, 
-             s.base_price AS basePrice, s.image, s.rating, s.completed_count AS completedCount, 
-             s.has_express AS hasExpress, s.is_new AS isNew, s.description, s.created_at AS createdAt, 
-             p.name AS partnerName 
-      FROM services s 
-      JOIN partners p ON s.partner_id = p.id 
+      SELECT
+        s.id,
+        s.name,
+        s.category,
+        s.category_name AS categoryName,
+        CAST(s.base_price AS SIGNED) AS basePrice,
+        COALESCE(s.image, '') AS image,
+        CAST(COALESCE(s.rating, 5.0) AS DECIMAL(2,1)) AS rating,
+        COALESCE(s.completed_count, 0) AS completedCount,
+        IF(s.has_express = 1, true, false) AS hasExpress,
+        IF(s.is_new = 1, true, false) AS isNew,
+        s.short_description AS shortDescription,
+        s.description,
+        s.created_at AS createdAt,
+        p.name AS partnerName,
+        p.badge_gradient AS badgeGradient
+      FROM services s
+      JOIN partners p ON s.partner_id = p.id
+      WHERE s.is_visible = 1
       ORDER BY s.created_at DESC
     `;
     const [services] = await pool.query(sql);
-    res.render("event.html", { servicesJson: JSON.stringify(services) });
+    res.render("event.html", {
+      servicesJson: JSON.stringify(services)
+    });
   } catch (error) {
     console.error(">>> [MySQL] Lỗi đọc danh sách dịch vụ:", error.message);
     res.render("event.html", { servicesJson: "[]" });
   }
 });
 
+
+// ROUTE CHI TIẾT DỊCH VỤ (/event/detail)
 app.get("/event/detail", async (req, res) => {
-  const serviceId = req.query.id || "SRV-101";
+  const serviceId = req.query.id;
+  if (!serviceId) {
+    return res.redirect("/event");
+  }
+
   try {
+    // 1. Truy vấn thông tin dịch vụ chính + đối tác
     const serviceSql = `
-      SELECT s.id, s.name, s.category, s.category_name AS categoryName, 
-             CAST(s.base_price AS SIGNED) AS basePrice, COALESCE(s.image, '') AS image, 
-             CAST(s.rating AS DECIMAL(2,1)) AS rating, s.completed_count AS completedCount, 
-             IF(s.has_express = 1, true, false) AS hasExpress, 
-             CAST(COALESCE(s.express_fee, 500000) AS SIGNED) AS expressFee, 
-             s.description, p.name AS partnerName 
-      FROM services s 
-      JOIN partners p ON s.partner_id = p.id 
-      WHERE s.id = ?
+      SELECT
+        s.id,
+        s.name,
+        s.category,
+        s.category_name AS categoryName,
+        CAST(s.base_price AS SIGNED) AS basePrice,
+        COALESCE(s.image, '') AS image,
+        CAST(COALESCE(s.rating, 5.0) AS DECIMAL(2,1)) AS rating,
+        COALESCE(s.completed_count, 0) AS completedCount,
+        IF(s.has_express = 1, true, false) AS hasExpress,
+        CAST(COALESCE(s.express_fee, 500000) AS SIGNED) AS expressFee,
+        s.short_description AS shortDescription,
+        s.description,
+        p.id AS partnerId,
+        p.name AS partnerName,
+        p.phone AS partnerPhone,
+        p.email AS partnerEmail,
+        p.rating AS partnerRating,
+        p.experience AS partnerExperience
+      FROM services s
+      JOIN partners p ON s.partner_id = p.id
+      WHERE s.id = ? AND s.is_visible = 1
     `;
     const [services] = await pool.query(serviceSql, [serviceId]);
-    if (services.length === 0) return res.redirect("/event");
+
+    if (services.length === 0) {
+      console.warn(`>>> [MySQL] Không tìm thấy dịch vụ hoặc dịch vụ bị ẩn: ${serviceId}`);
+      return res.redirect("/event");
+    }
 
     const serviceData = services[0];
-    const [galleryRows] = await pool.query(
-      "SELECT image_url AS url, caption FROM service_gallery WHERE service_id = ?",
-      [serviceId]
-    );
-    const [optionsRows] = await pool.query(
-      "SELECT option_key AS id, name, CAST(price AS SIGNED) AS price FROM service_options WHERE service_id = ?",
-      [serviceId]
-    );
 
-    serviceData.gallery = galleryRows.length > 0 ? galleryRows : [{ url: serviceData.image, caption: serviceData.name }];
-    serviceData.extraOptions = optionsRows;
+   // Gallery ảnh
+    try {
+      const [galleryRows] = await pool.query(
+        "SELECT image_url AS url, caption FROM service_gallery WHERE service_id = ?",
+        [serviceId]
+      );
+      serviceData.gallery = galleryRows.length > 0
+        ? galleryRows
+        : [{ url: serviceData.image, caption: serviceData.name }];
+    } catch (galleryErr) {
+      serviceData.gallery = [{ url: serviceData.image, caption: serviceData.name }];
+    }
 
-    res.render("detail-event.html", { serviceDetailJson: JSON.stringify(serviceData) });
+    // Các tùy chọn Options
+    try {
+      const [optionsRows] = await pool.query(
+        `SELECT
+          id,
+          group_name AS groupName,
+          option_name AS name,
+          CAST(price_adjustment AS SIGNED) AS price,
+          IF(is_default = 1, true, false) AS isDefault
+        FROM service_options
+        WHERE service_id = ?
+        ORDER BY group_name ASC, id ASC`,
+        [serviceId]
+      );
+      serviceData.extraOptions = optionsRows;
+    } catch (optErr) {
+      console.error(">>> [MySQL] Lỗi đọc service_options:", optErr.message);
+      serviceData.extraOptions = [];
+    }
+
+    // Render template detail-event.html
+    res.render("detail-event.html", {
+      serviceDetailJson: JSON.stringify(serviceData)
+    });
   } catch (error) {
-    console.error(">>> [MySQL Lỗi chi tiết dịch vụ]:", error.message);
+    console.error(">>> [MySQL] Lỗi chi tiết dịch vụ:", error.message);
     res.redirect("/event");
   }
 });
 
+// ROUTE CHI TIẾT DỊCH VỤ (/event/detail)
 app.get("/partner", async (req, res) => {
   try {
-    const [partners] = await pool.query("SELECT * FROM partners");
+    const [partners] = await pool.query(`
+      SELECT id, name, image, description, email
+      FROM partners
+      ORDER BY id ASC
+    `);
     res.render("partner.html", { part: partners });
   } catch (error) {
+    console.error(">>> [MySQL] Lỗi lấy danh sách đối tác:", error.message);
     res.render("partner.html", { part: [] });
   }
 });
 
+// ROUTE CHI TIẾT ĐỐI TÁC (/partner/:id)
 app.get("/partner/:id", async (req, res) => {
   const id = Number(req.params.id);
-  if (!Number.isInteger(id) || id < 1) return res.status(404).send("Không tìm thấy đối tác");
+  if (!Number.isInteger(id) || id < 1) {
+    return res.status(404).redirect("/partner");
+  }
 
   try {
-    const sql = `
-      SELECT p.id, p.name, p.image, p.description, p.address, p.phone, p.email, s.name AS specialty_name 
-      FROM partners p 
-      LEFT JOIN partner_specialties ps ON ps.partner_id = p.id 
-      LEFT JOIN specialties s ON s.id = ps.specialty_id 
-      WHERE p.id = ?
-    `;
-    const [rows] = await pool.query(sql, [id]);
-    if (rows.length === 0) return res.status(404).send("Không tìm thấy đối tác");
+    // 1. Lấy thông tin đối tác
+    const [partnerRows] = await pool.query(
+      "SELECT id, name, image, description, email FROM partners WHERE id = ?",
+      [id]
+    );
 
-    const [other] = await pool.query("SELECT id, name FROM partners WHERE id <> ? LIMIT 2", [id]);
-    return res.render("detailed-partner.html", {
-      parts: rows[0],
-      spec: rows.map((r) => r.specialty_name).filter(Boolean),
-      other,
+    if (partnerRows.length === 0) {
+      return res.status(404).redirect("/partner");
+    }
+    const partner = partnerRows[0];
+
+    // 2. Lấy danh sách dịch vụ của đối tác
+    const [services] = await pool.query(
+      `SELECT id, name, category_name AS categoryName, base_price AS basePrice,
+              image, rating, completed_count AS completedCount, description
+       FROM services
+       WHERE partner_id = ?
+       ORDER BY created_at DESC`,
+      [id]
+    );
+
+    // 3. Lấy danh sách đánh giá/bình luận (nếu chưa có bảng hoặc lỗi thì fallback rỗng)
+    let reviews = [];
+    try {
+      const [reviewRows] = await pool.query(
+        `SELECT r.id, r.user_name AS userName, r.rating, r.comment, r.created_at AS createdAt
+         FROM partner_reviews r
+         WHERE r.partner_id = ?
+         ORDER BY r.created_at DESC`,
+        [id]
+      );
+      reviews = reviewRows;
+    } catch (e) {
+      reviews = [];
+    }
+
+    res.render("detail-partner.html", {
+      partner,
+      services,
+      reviews
     });
   } catch (error) {
-    return res.status(500).send("Lỗi truy vấn CSDL đối tác");
+    console.error(">>> [MySQL] Lỗi xem chi tiết đối tác:", error.message);
+    res.status(500).send("Lỗi truy vấn CSDL chi tiết đối tác.");
   }
 });
 
-app.get("/cart", (req, res) => res.render("cart.html"));
-// =========================================================================
-// ROUTE & API ĐƠN HÀNG CỦA TÔI (MY ORDERS)
-// =========================================================================
-app.get("/my-orders", async (req, res) => {
-  const userId = req.session?.user?.id || 2; // Mặc định tài khoản demo id = 2 nếu chưa đăng nhập
-  try {
-    const [rows] = await pool.query(`
-      SELECT 
-        o.id,
-        o.order_code AS orderCode,
-        o.user_id AS userId,
-        o.customer_name AS customerName,
-        o.customer_phone AS customerPhone,
-        o.customer_email AS customerEmail,
-        CAST(o.total_amount AS SIGNED) AS totalAmount,
-        o.payment_method AS paymentMethod,
-        o.payment_status AS paymentStatus,
-        o.order_status AS orderStatus,
-        COALESCE(o.execution_time, 'Thỏa thuận sau') AS executionTime,
-        DATE_FORMAT(o.completed_at, '%d/%m/%Y %H:%i') AS completedAt,
-        DATE_FORMAT(o.cancelled_at, '%d/%m/%Y %H:%i') AS cancelledAt,
-        COALESCE(o.cancel_reason, '') AS cancelReason,
-        DATE_FORMAT(o.created_at, '%d/%m/%Y %H:%i') AS createdAt,
-        COALESCE(oi.service_name, 'Dịch vụ trang trí sự kiện') AS serviceName,
-        COALESCE(oi.partner_name, 'Đối tác EventDecor') AS partnerName
-      FROM orders o
-      LEFT JOIN (
-        SELECT order_id, MAX(service_name) AS service_name, MAX(partner_name) AS partner_name 
-        FROM order_items 
-        GROUP BY order_id
-      ) oi ON oi.order_id = o.id
-      WHERE o.user_id = ? OR ? = 0 OR ? = 1
-      ORDER BY o.id DESC
-    `, [userId, userId === 1 ? 1 : 0, req.session?.user?.role === 'admin' ? 1 : 0]);
 
-    res.render("my-orders.html", {
-      ordersJson: JSON.stringify(rows)
-    });
-  } catch (error) {
-    console.error(">>> [MySQL] Lỗi lấy danh sách đơn hàng:", error.message);
-    res.render("my-orders.html", { ordersJson: "[]" });
-  }
-});
-
-app.get("/api/orders", async (req, res) => {
-  const userId = req.session?.user?.id || 2;
-  try {
-    const [rows] = await pool.query(`
-      SELECT 
-        o.id,
-        o.order_code AS orderCode,
-        o.user_id AS userId,
-        o.customer_name AS customerName,
-        o.customer_phone AS customerPhone,
-        o.customer_email AS customerEmail,
-        CAST(o.total_amount AS SIGNED) AS totalAmount,
-        o.payment_method AS paymentMethod,
-        o.payment_status AS paymentStatus,
-        o.order_status AS orderStatus,
-        COALESCE(o.execution_time, 'Thỏa thuận sau') AS executionTime,
-        DATE_FORMAT(o.completed_at, '%d/%m/%Y %H:%i') AS completedAt,
-        DATE_FORMAT(o.cancelled_at, '%d/%m/%Y %H:%i') AS cancelledAt,
-        COALESCE(o.cancel_reason, '') AS cancelReason,
-        DATE_FORMAT(o.created_at, '%d/%m/%Y %H:%i') AS createdAt,
-        COALESCE(oi.service_name, 'Dịch vụ trang trí sự kiện') AS serviceName,
-        COALESCE(oi.partner_name, 'Đối tác EventDecor') AS partnerName
-      FROM orders o
-      LEFT JOIN (
-        SELECT order_id, MAX(service_name) AS service_name, MAX(partner_name) AS partner_name 
-        FROM order_items 
-        GROUP BY order_id
-      ) oi ON oi.order_id = o.id
-      WHERE o.user_id = ? OR ? = 0 OR ? = 1
-      ORDER BY o.id DESC
-    `, [userId, userId === 1 ? 1 : 0, req.session?.user?.role === 'admin' ? 1 : 0]);
-
-    res.json(rows);
-  } catch (error) {
-    console.error(">>> [MySQL API] Lỗi lấy danh sách đơn:", error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
 
 // =========================================================================
-// API HỦY ĐƠN HÀNG THEO ĐÚNG QUY TRÌNH NGHIỆP VỤ
-// (Giai đoạn 1 & 2 được hủy; Giai đoạn 3 & 4 không được hủy)
+// API & ROUTE: QUY TRÌNH HỦY ĐƠN HÀNG (EVENTDECOR ORDER CANCELLATION)
 // =========================================================================
 app.post("/api/orders/cancel", async (req, res) => {
   const { orderCode, cancelReason } = req.body;
@@ -359,14 +449,14 @@ app.post("/api/orders/cancel", async (req, res) => {
     const order = rows[0];
 
     // Kiểm tra quy trình: Giai đoạn 3 (processing) & Giai đoạn 4 (done) không được hủy
-    if (['processing', 'done'].includes(order.order_status)) {
+    if (["processing", "done"].includes(order.order_status)) {
       return res.status(400).json({
         success: false,
         message: "Theo quy trình vận hành EventDecor, đơn hàng đã bước vào giai đoạn thi công mặt bằng hoặc đã hoàn thành. Bạn không thể hủy đơn trực tiếp. Vui lòng liên hệ hotline/đối tác."
       });
     }
 
-    if (order.order_status === 'cancelled') {
+    if (order.order_status === "cancelled") {
       return res.status(400).json({
         success: false,
         message: "Đơn hàng này đã được hủy bỏ trước đó."
@@ -394,7 +484,7 @@ app.post("/api/orders/cancel", async (req, res) => {
     } catch (histErr) {}
 
     // Nếu đã thanh toán: ghi nhận hoàn tiền
-    if (order.payment_status === 'paid') {
+    if (order.payment_status === "paid") {
       try {
         const refundTxnCode = `REF-${Date.now()}`;
         await pool.query(
@@ -422,8 +512,8 @@ app.post("/api/orders/cancel", async (req, res) => {
 app.get("/profile", requireAuth, async (req, res) => {
   const sessionUser = req.session.user;
   let currentUser = {
-    phone: '0900000002',
-    address: 'TP. Hồ Chí Minh',
+    phone: "0900000002",
+    address: "TP. Hồ Chí Minh",
     ...sessionUser
   };
 
@@ -556,6 +646,164 @@ app.post("/api/user/change-password", requireAuth, async (req, res) => {
   }
 });
 
+app.get("/cart", (req, res) => res.render("cart.html"));
+app.get("/my-orders", async (req, res) => {
+  try {
+    // Nếu có đăng nhập thì lọc theo user.id, nếu đang test chưa login thì lấy tất cả đơn
+    const userId = req.session?.user?.id;
+    let querySql = `
+      SELECT
+        o.id,
+        o.order_code AS orderCode,
+        o.order_status AS status,
+        CAST(o.total_amount AS SIGNED) AS price,
+        DATE_FORMAT(o.created_at, '%Y-%m-%d') AS date,
+        COALESCE(o.execution_time, 'Thỏa thuận') AS event_date,
+        DATE_FORMAT(o.completed_at, '%Y-%m-%d') AS completed_at,
+        oi.service_name AS service,
+        oi.partner_name AS partner,
+        COALESCE(s.image, '') AS image
+      FROM orders o
+      LEFT JOIN order_items oi ON o.id = oi.order_id
+      LEFT JOIN services s ON oi.service_id = s.id
+    `;
+
+    const params = [];
+    if (userId) {
+      querySql += ` WHERE o.user_id = ? `;
+      params.push(userId);
+    }
+    querySql += ` ORDER BY o.id DESC `;
+
+    const [orders] = await pool.query(querySql, params);
+
+    // Render template my-orders.html với dữ liệu JSON
+    res.render("my-orders.html", {
+      ordersJson: JSON.stringify(orders)
+    });
+  } catch (error) {
+    console.error(">>> [MySQL] Lỗi lấy danh sách my-orders:", error.message);
+    res.render("my-orders.html", { ordersJson: "[]" });
+  }
+});
+
+// ROUTE CHI TIẾT ĐƠN HÀNG (/order/detail)
+app.get("/order/detail", async (req, res) => {
+  const queryParam = req.query.id;
+  if (!queryParam) {
+    return res.redirect("/my-orders");
+  }
+
+  try {
+    // 1. Lấy thông tin đơn hàng từ MySQL
+    const [orderRows] = await pool.query(`
+      SELECT
+        o.id,
+        o.order_code AS orderCode,
+        DATE_FORMAT(o.created_at, '%d/%m/%Y %H:%i') AS createdAt,
+        o.order_status AS orderStatus,
+        o.payment_method AS paymentMethod,
+        o.payment_status AS paymentStatus,
+        CAST(o.total_amount AS SIGNED) AS totalAmount,
+        o.customer_name AS customerName,
+        o.customer_phone AS customerPhone,
+        o.customer_email AS customerEmail,
+        COALESCE(o.execution_time, 'Thỏa thuận sau') AS executionTime,
+        DATE_FORMAT(o.completed_at, '%d/%m/%Y %H:%i') AS completedAt,
+        COALESCE(o.event_location, 'Chưa cập nhật địa chỉ') AS eventLocation,
+        COALESCE(o.note, '') AS note
+      FROM orders o
+      WHERE o.order_code = ? OR CAST(o.id AS CHAR) = ?
+      LIMIT 1
+    `, [queryParam, queryParam]);
+
+    if (orderRows.length === 0) {
+      return res.redirect("/my-orders");
+    }
+    const order = orderRows[0];
+
+    // 2. Lấy thông tin dịch vụ từ order_items và services
+    const [itemRows] = await pool.query(`
+      SELECT
+        oi.service_name AS serviceName,
+        oi.partner_name AS partnerName,
+        COALESCE(oi.scale, 'Quy mô tiêu chuẩn') AS scale,
+        COALESCE(oi.event_title, 'Chưa đặt tên sự kiện') AS eventTitle,
+        COALESCE(oi.selected_options, 'Gói cơ bản') AS selectedOptions,
+        COALESCE(s.image, '') AS image,
+        COALESCE(s.short_description, s.description, '') AS shortDescription
+      FROM order_items oi
+      LEFT JOIN services s ON oi.service_id = s.id
+      WHERE oi.order_id = ?
+      LIMIT 1
+    `, [order.id]);
+
+    const item = itemRows.length > 0 ? itemRows[0] : {
+      serviceName: "Gói trang trí sự kiện",
+      partnerName: "Đối tác EventDecor",
+      scale: "Tiêu chuẩn",
+      eventTitle: "",
+      selectedOptions: "",
+      image: "",
+      shortDescription: "Thông tin dịch vụ theo thỏa thuận hợp đồng."
+    };
+
+    // 3. Lấy các mốc thời gian từ lịch sử đơn hàng và giao dịch
+    let partnerConfirmedTime = null;
+    let paymentSuccessTime = null;
+
+    try {
+      const [histRows] = await pool.query(`
+        SELECT to_status, DATE_FORMAT(created_at, '%d/%m/%Y %H:%i') AS action_time
+        FROM order_status_history
+        WHERE order_id = ?
+      `, [order.id]);
+
+      histRows.forEach(h => {
+        if (h.to_status === 'pending_payment' || h.to_status === 'processing') {
+          partnerConfirmedTime = h.action_time;
+        }
+      });
+    } catch (e) {}
+
+    try {
+      const [transRows] = await pool.query(`
+        SELECT DATE_FORMAT(paid_at, '%d/%m/%Y %H:%i') AS paid_time
+        FROM order_transactions
+        WHERE order_id = ? AND status = 'success'
+        ORDER BY id DESC LIMIT 1
+      `, [order.id]);
+
+      if (transRows.length > 0) {
+        paymentSuccessTime = transRows[0].paid_time;
+      }
+    } catch (e) {}
+
+    // Việt hóa tên phương thức thanh toán
+    let viPaymentMethod = "Chuyển khoản trực tuyến qua mã VietQR";
+    if (order.paymentMethod === 'cod') viPaymentMethod = "Thanh toán trực tiếp khi bàn giao (COD)";
+    else if (order.paymentMethod === 'momo') viPaymentMethod = "Ví điện tử MoMo";
+    else if (order.paymentMethod === 'vnpay') viPaymentMethod = "Cổng thanh toán VNPAY";
+
+    const payload = {
+      ...order,
+      paymentMethod: viPaymentMethod,
+      partnerConfirmedTime: partnerConfirmedTime || (order.orderStatus !== 'pending_partner' ? order.createdAt : null),
+      paymentSuccessTime: paymentSuccessTime || (order.paymentStatus === 'paid' ? order.createdAt : null),
+      item
+    };
+
+    res.render("order-detail.html", {
+      orderDetailJson: JSON.stringify(payload)
+    });
+
+  } catch (error) {
+    console.error(">>> [MySQL] Lỗi chi tiết đơn:", error.message);
+    res.redirect("/my-orders");
+  }
+});
+
+
 app.get("/cart.html", (req, res) => res.redirect("/cart"));
 app.get("/payment", requireAuth, (req, res) => res.render("payment.html"));
 app.get("/payment.html", (req, res) => res.redirect("/payment"));
@@ -567,38 +815,30 @@ app.post("/contact", (req, res) => {
 app.get("/reset-password", (req, res) => res.render("reset-password.html"));
 
 // =========================================================================
-// 7. ROUTES AUTH (HỖ TRỢ CẢ FORM POST VÀ FETCH API)
+// 7. ROUTES AUTH
 // =========================================================================
 app.get("/register", (req, res) => res.render("register.html"));
 app.get("/login", (req, res) => res.render("login.html"));
 
-async function handleRegister(req, res) {
-  const fullName = req.body.name || req.body.fullName;
-  const email = req.body.email;
-  const password = req.body.password;
-  const confirmPassword = req.body.confirm_password || req.body.confirmPassword;
-  const isAjax = req.xhr || req.headers.accept?.includes("application/json");
+
+app.post("/api/register", async (req, res) => {
+  const { fullName, email, password, confirmPassword } = req.body;
 
   if (!fullName || !email || !password) {
-    const msg = "Vui lòng nhập đầy đủ họ tên, email và mật khẩu.";
-    return isAjax ? res.status(400).json({ message: msg }) : res.send(`<script>alert('${msg}'); window.history.back();</script>`);
+    return res.status(400).json({ message: "Vui lòng nhập đầy đủ họ tên, email và mật khẩu." });
   }
-
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+\$/;
   const normalizedEmail = email.trim().toLowerCase();
   if (!emailRegex.test(normalizedEmail)) {
-    const msg = "Địa chỉ email không đúng định dạng.";
-    return isAjax ? res.status(400).json({ message: msg }) : res.send(`<script>alert('${msg}'); window.history.back();</script>`);
+    return res.status(400).json({ message: "Địa chỉ email không đúng định dạng." });
   }
 
   if (password.length < 6) {
-    const msg = "Mật khẩu phải có độ dài từ 6 ký tự trở lên.";
-    return isAjax ? res.status(400).json({ message: msg }) : res.send(`<script>alert('${msg}'); window.history.back();</script>`);
+    return res.status(400).json({ message: "Mật khẩu phải có độ dài từ 6 ký tự trở lên." });
   }
 
   if (confirmPassword && password !== confirmPassword) {
-    const msg = "Mật khẩu xác nhận không khớp.";
-    return isAjax ? res.status(400).json({ message: msg }) : res.send(`<script>alert('${msg}'); window.history.back();</script>`);
+    return res.status(400).json({ message: "Mật khẩu xác nhận không khớp." });
   }
 
   try {
@@ -608,78 +848,51 @@ async function handleRegister(req, res) {
     );
 
     if (existing.length > 0) {
-      const msg = "Email này đã được đăng ký tài khoản.";
-      return isAjax ? res.status(409).json({ message: msg }) : res.send(`<script>alert('${msg}'); window.history.back();</script>`);
+      return res.status(409).json({ message: "Email này đã được đăng ký tài khoản." });
     }
-
     const passwordHash = await bcrypt.hash(password, 10);
-    const [insertResult] = await pool.query(
-      `INSERT INTO users (username, email, password, phone, address, role, status, email_verified)
-       VALUES (?, ?, ?, '0900000002', 'TP. Hồ Chí Minh', 'customer', 'active', TRUE)`,
+    await pool.query(
+      `INSERT INTO users (username, email, password, role, status, email_verified)
+       VALUES (?, ?, ?, 'customer', 'active', TRUE)`,
       [fullName.trim(), normalizedEmail, passwordHash]
     );
 
-    req.session.user = {
-      id: insertResult.insertId,
-      username: fullName.trim(),
-      email: normalizedEmail,
-      phone: '0900000002',
-      address: 'TP. Hồ Chí Minh',
-      role: 'customer'
-    };
-
-    if (isAjax) {
-      return res.status(201).json({ success: true, message: "Đăng ký tài khoản thành công! Đang chuyển hướng..." });
-    }
-    return res.redirect("/");
+    return res.status(201).json({
+      success: true,
+      message: "Đăng ký tài khoản thành công! Đang chuyển hướng..."
+    });
 
   } catch (error) {
     console.error(">>> [MySQL Lỗi đăng ký]:", error);
-    const msg = "Lỗi hệ thống khi lưu tài khoản: " + (error.sqlMessage || error.message);
-    return isAjax ? res.status(500).json({ message: msg }) : res.send(`<script>alert('${msg}'); window.history.back();</script>`);
+    return res.status(500).json({
+      message: "Lỗi hệ thống khi lưu tài khoản: " + (error.sqlMessage || error.message)
+    });
   }
-}
+});
 
-app.post("/register", handleRegister);
-app.post("/api/register", handleRegister);
 
-// Xử lý đăng nhập tài khoản
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
-  if (!email || !password) {
-    return res.send("<script>alert('Vui lòng nhập đầy đủ email và mật khẩu!'); window.history.back();</script>");
-  }
-
-  const normalizedEmail = email.trim().toLowerCase();
+  if (!email || !password) return res.send("<script>alert('Vui lòng nhập đầy đủ email và mật khẩu!'); window.history.back();</script>");
 
   try {
-    const [rows] = await pool.query("SELECT * FROM users WHERE email = ? LIMIT 1", [normalizedEmail]);
+    const normalizedEmail = email.trim().toLowerCase();
+    const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [normalizedEmail]);
+    if (rows.length === 0) return res.send("<script>alert('Sai email hoặc mật khẩu.'); window.history.back();</script>");
 
-    if (rows.length > 0) {
-      const user = rows[0];
-      const dbPassword = user.password || user.password_hash;
-      const isMatch = (dbPassword && (dbPassword.startsWith("$2a$") || dbPassword.startsWith("$2b$")))
-        ? await bcrypt.compare(password, dbPassword)
-        : password === dbPassword;
+    const user = rows[0];
+    const dbPassword = user.password || user.password_hash;
+    const isMatch = dbPassword.startsWith("$2a$") || dbPassword.startsWith("$2b$")
+      ? await bcrypt.compare(password, dbPassword)
+      : password === dbPassword;
 
-      if (isMatch) {
-        req.session.user = {
-          id: user.id,
-          username: user.username,
-          email: user.email,
-          phone: user.phone || '0900000002',
-          address: user.address || 'TP. Hồ Chí Minh',
-          role: user.role || "customer"
-        };
-        return res.redirect(user.role === "admin" ? "/admin/dashboard" : "/");
-      }
-    }
+    if (!isMatch) return res.send("<script>alert('Sai email hoặc mật khẩu.'); window.history.back();</script>");
+
+    req.session.user = { id: user.id, username: user.username, email: user.email, role: user.role || "customer" };
+    return res.redirect(user.role === "admin" ? "/admin/dashboard" : "/");
   } catch (error) {
-    console.error(">>> [MySQL] Lỗi kết nối CSDL đăng nhập:", error.message);
-    return res.status(500).send("Lỗi xử lý kết nối CSDL khi đăng nhập: " + error.message);
+    return res.status(500).send("Lỗi xử lý đăng nhập hệ thống.");
   }
-
-  return res.send("<script>alert('Sai email hoặc mật khẩu. Vui lòng kiểm tra lại!'); window.history.back();</script>");
 });
 
 app.get("/logout", (req, res) => {

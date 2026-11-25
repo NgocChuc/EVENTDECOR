@@ -1,0 +1,504 @@
+{% extends "admin/base-admin.html" %}
+
+{% block title %}Quản lý Tài khoản Đối tác - EventDecor Admin{% endblock %}
+
+{% block content %}
+<!-- BREADCRUMB -->
+<nav class="flex items-center text-xs font-medium text-slate-400 mb-5 select-none" aria-label="Breadcrumb">
+  <ol class="inline-flex items-center space-x-1.5 md:space-x-2">
+    <li class="inline-flex items-center">
+      <a href="/admin/dashboard" class="hover:text-blue-600 transition-colors">Trang chủ</a>
+    </li>
+    <li><span class="text-slate-300 mx-1">&rsaquo;</span></li>
+    <li class="inline-flex items-center">
+      <span class="text-slate-400">Quản lý Tài khoản</span>
+    </li>
+    <li><span class="text-slate-300 mx-1">&rsaquo;</span></li>
+    <li aria-current="page">
+      <span class="text-slate-600 font-semibold">Tài khoản Đối tác</span>
+    </li>
+  </ol>
+</nav>
+
+<!-- TIÊU ĐỀ TRANG -->
+<div class="mb-7">
+  <h1 class="text-2xl font-bold text-[#0f172a] tracking-tight">
+    Quản lý Tài khoản Đối tác
+  </h1>
+  <p class="text-[13.5px] text-slate-400 font-normal mt-1">
+    Theo dõi danh sách nhà cung cấp dịch vụ, thông tin doanh nghiệp và lịch sử thi công
+  </p>
+</div>
+
+<!-- Ô CHỈ SỐ THỐNG KÊ NHANH -->
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-7">
+  <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs flex flex-col">
+    <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Tổng đối tác liên kết</span>
+    <span id="stat-total" class="text-2xl font-black text-slate-800 mt-1">0</span>
+  </div>
+  <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs flex flex-col">
+    <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Tổng gói dịch vụ đang mở</span>
+    <span id="stat-packages" class="text-2xl font-black text-blue-600 mt-1">0</span>
+  </div>
+  <div class="bg-white border border-slate-200/80 rounded-2xl p-4 shadow-2xs flex flex-col">
+    <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Tổng đơn đã thi công</span>
+    <span id="stat-orders" class="text-2xl font-black text-emerald-600 mt-1">0</span>
+  </div>
+</div>
+
+<!-- KHỐI QUẢN LÝ: BỘ LỌC VÀ BẢNG DỮ LIỆU -->
+<section class="bg-white border border-slate-200/80 rounded-2xl shadow-2xs overflow-hidden mb-8">
+  <!-- BỘ LỌC VÀ TÌM KIẾM BẢNG CHÍNH -->
+  <div class="p-5 border-b border-slate-100 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div>
+      <h2 class="text-base font-bold text-[#1e293b] tracking-tight">Danh sách đơn vị đối tác</h2>
+      <p class="text-[11px] text-slate-400 mt-0.5">Bấm vào tên hoặc biểu tượng xem để mở hồ sơ pháp lý và lịch sử thi công</p>
+    </div>
+    <div class="flex items-center gap-3 flex-wrap">
+      <div class="relative w-full sm:w-80">
+        <input type="text" id="partner-search-input" placeholder="Tìm tên, MST, SĐT, mã ĐT..." class="w-full bg-white border border-slate-200/90 text-slate-700 text-xs rounded-xl px-3.5 py-2.5 focus:border-blue-500 focus:outline-none transition-all placeholder:text-slate-400 shadow-2xs">
+      </div>
+      <button type="button" id="btn-refresh" title="Làm mới bộ lọc" class="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200/90 bg-white text-slate-500 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/50 active:scale-95 transition-all shadow-2xs shrink-0 cursor-pointer">
+        <span class="material-symbols-outlined text-[18px]">refresh</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- BẢNG DỮ LIỆU ĐỐI TÁC -->
+  <div class="overflow-x-auto">
+    <table class="w-full text-left border-collapse">
+      <thead>
+        <tr class="bg-slate-50/75 border-b border-slate-100 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+          <th class="py-3.5 px-4 w-28">Mã đối tác</th>
+          <th class="py-3.5 px-4 min-w-[220px]">Tên đơn vị đối tác</th>
+          <th class="py-3.5 px-4 min-w-[180px]">Đại diện & Liên hệ</th>
+          <th class="py-3.5 px-4 w-32 text-center">Gói dịch vụ</th>
+          <th class="py-3.5 px-4 w-32 text-center">Đã thi công</th>
+          <th class="py-3.5 px-4 w-24 text-center">Chi tiết</th>
+        </tr>
+      </thead>
+      <tbody id="partners-table-body" class="divide-y divide-slate-100 text-xs"></tbody>
+    </table>
+  </div>
+
+  <!-- PHÂN TRANG -->
+  <div class="px-5 py-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-slate-500">
+    <span id="pagination-info">Hiển thị danh sách đối tác</span>
+    <div class="flex items-center gap-1.5 self-end sm:self-auto">
+      <button class="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-400 hover:bg-slate-50 disabled:opacity-50 cursor-pointer" disabled>Trước</button>
+      <button class="px-3 py-1.5 rounded-lg bg-blue-600 text-white font-medium cursor-pointer">1</button>
+      <button class="px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-50 cursor-pointer">Sau</button>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== MODAL CHI TIẾT HỒ SƠ ==================== -->
+<div id="partner-modal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
+  <div class="bg-white border border-slate-200/90 rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden">
+    <!-- ĐẦU MODAL -->
+    <div class="p-5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/50">
+      <div class="flex items-center gap-2.5">
+        <span class="material-symbols-outlined text-blue-600 text-[22px]">store</span>
+        <h3 class="text-base font-bold text-slate-800">Hồ sơ Doanh nghiệp & Dịch vụ Đối tác</h3>
+      </div>
+      <button type="button" onclick="closePartnerModal()" class="w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-200/60 transition-colors cursor-pointer">
+        <span class="material-symbols-outlined text-[20px]">close</span>
+      </button>
+    </div>
+
+    <!-- NỘI DUNG CUỘN CỦA MODAL -->
+    <div class="flex-1 overflow-y-auto p-6 space-y-6 custom-scroll">
+      <!-- 1. THÔNG TIN DOANH NGHIỆP & PHÁP LÝ -->
+      <div id="modal-partner-info" class="bg-slate-50/75 border border-slate-200/80 rounded-2xl p-5"></div>
+
+      <!-- 2. MÔ TẢ GIỚI THIỆU -->
+      <div class="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-2xs">
+        <div class="flex items-center justify-between mb-2">
+          <h4 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-[16px] text-blue-600">description</span>
+            <span>Giới thiệu về đơn vị thi công:</span>
+          </h4>
+          <span class="text-[11px] text-slate-400">Nội dung đối tác cung cấp</span>
+        </div>
+        <p class="text-xs text-slate-600 leading-relaxed bg-slate-50/60 p-3.5 rounded-xl border border-slate-100" id="modal-partner-bio">
+          Đơn vị chưa cập nhật nội dung mô tả giới thiệu.
+        </p>
+      </div>
+
+      <!-- 3. TABS VÀ CÁC BẢNG CON -->
+      <div class="border border-slate-200/80 rounded-2xl overflow-hidden bg-white shadow-2xs">
+        <div class="flex items-center border-b border-slate-200 bg-slate-50/60 px-4 gap-2 flex-wrap">
+          <button type="button" onclick="switchPartnerTab('packages')" id="tab-btn-packages" class="px-4 py-3 text-xs font-bold border-b-2 border-blue-600 text-blue-600 flex items-center gap-2 transition-colors cursor-pointer">
+            <span class="material-symbols-outlined text-[18px]">inventory_2</span>
+            <span>Gói dịch vụ đang mở (<span id="tab-count-packages">0</span>)</span>
+          </button>
+          <button type="button" onclick="switchPartnerTab('orders')" id="tab-btn-orders" class="px-4 py-3 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center gap-2 transition-colors cursor-pointer">
+            <span class="material-symbols-outlined text-[18px]">event_available</span>
+            <span>Đơn đã thi công (<span id="tab-count-orders">0</span>)</span>
+          </button>
+          <button type="button" onclick="switchPartnerTab('payouts')" id="tab-btn-payouts" class="px-4 py-3 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center gap-2 transition-colors cursor-pointer">
+            <span class="material-symbols-outlined text-[18px]">payments</span>
+            <span>Đối soát doanh thu (<span id="tab-count-payouts">0</span>)</span>
+          </button>
+        </div>
+
+        <!-- TAB 1: GÓI DỊCH VỤ -->
+        <div id="tab-content-packages" class="p-4">
+          <div class="mb-3">
+            <div class="relative w-full">
+              <span class="material-symbols-outlined text-[18px] text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">search</span>
+              <input type="text" id="filter-pkg-search" placeholder="Tìm theo tên gói dịch vụ, mã gói..." class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-xl pl-9 pr-3.5 py-2.5 focus:outline-none focus:border-blue-500 transition-all placeholder:text-slate-400">
+            </div>
+          </div>
+          <div class="overflow-x-auto border border-slate-100 rounded-xl">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase border-b border-slate-200/70">
+                  <th class="py-2.5 px-3 w-28">Mã gói</th>
+                  <th class="py-2.5 px-3 min-w-[220px]">Tên gói dịch vụ</th>
+                  <th class="py-2.5 px-3 min-w-[140px]">Danh mục</th>
+                  <th class="py-2.5 px-3 text-right min-w-[120px]">Giá niêm yết</th>
+                  <th class="py-2.5 px-3 text-center w-28">Chi tiết</th>
+                </tr>
+              </thead>
+              <tbody id="packages-table-body" class="divide-y divide-slate-100 text-slate-700"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TAB 2: ĐƠN THI CÔNG -->
+        <div id="tab-content-orders" class="p-4 hidden">
+          <div class="flex items-center gap-3 mb-3 flex-wrap">
+            <div class="relative flex-1 min-w-[200px]">
+              <input type="text" id="filter-order-search" placeholder="Tìm theo mã đơn, khách hàng, tên dịch vụ..." class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+            </div>
+            <div class="relative">
+              <select id="filter-order-time" class="appearance-none bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-lg pl-3 pr-7 py-2 focus:outline-none cursor-pointer">
+                <option value="">Tất cả thời gian</option>
+                <option value="2026">Năm 2026</option>
+                <option value="2025">Năm 2025</option>
+              </select>
+              <span class="material-symbols-outlined text-[16px] text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">arrow_drop_down</span>
+            </div>
+          </div>
+          <div class="overflow-x-auto border border-slate-100 rounded-xl">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase border-b border-slate-200/70">
+                  <th class="py-2.5 px-3 w-28">Mã đơn</th>
+                  <th class="py-2.5 px-3 min-w-[200px]">Dịch vụ thực hiện</th>
+                  <th class="py-2.5 px-3 min-w-[150px]">Khách hàng</th>
+                  <th class="py-2.5 px-3 w-32">Ngày tổ chức</th>
+                  <th class="py-2.5 px-3 text-right">Doanh thu đơn</th>
+                </tr>
+              </thead>
+              <tbody id="orders-table-body" class="divide-y divide-slate-100 text-slate-700"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- TAB 3: ĐỐI SOÁT DOANH THU -->
+        <div id="tab-content-payouts" class="p-4 hidden">
+          <div class="flex items-center gap-3 mb-3 flex-wrap">
+            <div class="relative flex-1 min-w-[200px]">
+              <input type="text" id="filter-payout-search" placeholder="Tìm theo kỳ đối soát (VD: Tháng 09/2026)..." class="w-full bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500">
+            </div>
+          </div>
+          <div class="overflow-x-auto border border-slate-100 rounded-xl">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-50 text-[11px] font-semibold text-slate-500 uppercase border-b border-slate-200/70">
+                  <th class="py-2.5 px-3 w-32">Kỳ đối soát</th>
+                  <th class="py-2.5 px-3 w-32">Ngày chốt</th>
+                  <th class="py-2.5 px-3 text-right">Tổng thực hiện</th>
+                  <th class="py-2.5 px-3 text-right font-bold text-slate-800">Thực nhận</th>
+                </tr>
+              </thead>
+              <tbody id="payouts-table-body" class="divide-y divide-slate-100 text-slate-700"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ĐUÔI MODAL -->
+    <div class="p-4 bg-slate-50/75 border-t border-slate-100 flex items-center justify-between shrink-0">
+      <span class="text-[11px] text-slate-400">Dữ liệu đối tác cập nhật tự động</span>
+      <button type="button" onclick="closePartnerModal()" class="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 font-semibold text-xs rounded-xl hover:bg-slate-100 active:scale-95 transition-all cursor-pointer">
+        Đóng cửa sổ
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Dữ liệu đối tác trống sẵn sàng nhận từ server
+  let partnerList = [];
+  let currentData = [];
+  let selectedPartner = null;
+
+  function updateStats() {
+    const total = partnerList.length;
+    const packages = partnerList.reduce((sum, p) => sum + (Number(p.packagesCount) || 0), 0);
+    const orders = partnerList.reduce((sum, p) => sum + (Number(p.completedOrders) || 0), 0);
+
+    document.getElementById('stat-total').innerText = total;
+    document.getElementById('stat-packages').innerText = packages;
+    document.getElementById('stat-orders').innerText = orders;
+  }
+
+  function renderMainTable(data) {
+    const tbody = document.getElementById('partners-table-body');
+    if (!tbody) return;
+
+    if (!data || data.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="text-center py-10 text-slate-400">
+            Không tìm thấy đối tác nào phù hợp với từ khóa tìm kiếm.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tbody.innerHTML = data.map(item => `
+      <tr class="hover:bg-slate-50/70 transition-colors">
+        <td class="py-3 px-4 font-semibold text-blue-600 font-mono">
+          ${item.id}
+        </td>
+        <td class="py-3 px-4">
+          <span class="font-semibold text-slate-800 hover:text-blue-600 cursor-pointer" onclick="openPartnerDetail('${item.id}')">${item.name}</span>
+        </td>
+        <td class="py-3 px-4">
+          <div class="flex flex-col">
+            <span class="text-slate-800 font-medium">${item.representative || '-'}</span>
+            <span class="text-[11px] text-slate-400">${item.phone || '-'}</span>
+          </div>
+        </td>
+        <td class="py-3 px-4 text-center">
+          <a href="/admin/available-event?partner=${encodeURIComponent(item.name || '')}" title="Xem các gói sự kiện của ${item.name || ''}" class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold transition-all border border-blue-200 shadow-2xs">
+            <span>${item.packagesCount || 0} gói</span>
+            <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+          </a>
+        </td>
+        <td class="py-3 px-4 text-center font-semibold text-slate-700">${item.completedOrders || 0}</td>
+        <td class="py-3 px-4 text-center">
+          <button type="button" onclick="openPartnerDetail('${item.id}')" title="Xem chi tiết & Hồ sơ" class="w-8 h-8 rounded-lg inline-flex items-center justify-center text-slate-500 hover:text-blue-600 hover:bg-blue-50 border border-slate-200 transition-all shadow-2xs cursor-pointer">
+            <span class="material-symbols-outlined text-[18px]">visibility</span>
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function openPartnerDetail(id) {
+    selectedPartner = partnerList.find(p => p.id === id);
+    if (!selectedPartner) return;
+
+    const categoriesHtml = (selectedPartner.categories || []).map(cat => 
+      `<span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 text-blue-600 border border-blue-200 mr-1.5 mb-1">${cat}</span>`
+    ).join('') || '<span class="text-slate-400 italic">Chưa đăng ký danh mục</span>';
+
+    const infoContainer = document.getElementById('modal-partner-info');
+    infoContainer.innerHTML = `
+      <div class="pb-4 border-b border-slate-200/80">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="px-2 py-0.5 rounded-md text-[11px] font-bold bg-blue-100 text-blue-700 font-mono">${selectedPartner.id}</span>
+          <h4 class="text-base font-bold text-slate-800">${selectedPartner.name}</h4>
+        </div>
+        <p class="text-xs text-slate-500 mt-1">Pháp nhân: <b class="text-slate-700">${selectedPartner.companyName || '-'}</b> · MST: <b class="text-slate-700">${selectedPartner.taxCode || '-'}</b></p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 text-xs">
+        <div>
+          <span class="text-slate-400 block mb-0.5">Người đại diện / Hotline</span>
+          <span class="font-semibold text-slate-700">${selectedPartner.representative || '-'} · ${selectedPartner.phone || '-'}</span>
+        </div>
+        <div>
+          <span class="text-slate-400 block mb-0.5">Email liên hệ hợp tác</span>
+          <span class="font-semibold text-slate-700">${selectedPartner.email || '-'}</span>
+        </div>
+        <div class="sm:col-span-2">
+          <span class="text-slate-400 block mb-1">Các danh mục hoạt động</span>
+          <div class="flex flex-wrap items-center">
+            ${categoriesHtml}
+          </div>
+        </div>
+        <div class="sm:col-span-2">
+          <span class="text-slate-400 block mb-0.5">Tài khoản ngân hàng thụ hưởng</span>
+          <span class="font-medium text-slate-700">${selectedPartner.bankInfo || 'Chưa cung cấp'}</span>
+        </div>
+        <div class="sm:col-span-2">
+          <span class="text-slate-400 block mb-0.5">Địa chỉ văn phòng / Kho xưởng</span>
+          <span class="font-medium text-slate-700">${selectedPartner.address || 'Chưa cung cấp'}</span>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('modal-partner-bio').innerText = selectedPartner.bio || "Đơn vị chưa cập nhật nội dung mô tả giới thiệu.";
+
+    const packages = selectedPartner.packages || [];
+    const orders = selectedPartner.orders || [];
+    const payouts = selectedPartner.payouts || [];
+
+    document.getElementById('tab-count-packages').innerText = packages.length;
+    document.getElementById('tab-count-orders').innerText = orders.length;
+    document.getElementById('tab-count-payouts').innerText = payouts.length;
+
+    document.getElementById('filter-pkg-search').value = '';
+    document.getElementById('filter-order-search').value = '';
+    document.getElementById('filter-order-time').value = '';
+    document.getElementById('filter-payout-search').value = '';
+
+    renderDetailPackages();
+    renderDetailOrders();
+    renderDetailPayouts();
+
+    switchPartnerTab('packages');
+    document.getElementById('partner-modal').classList.remove('hidden');
+  }
+
+  function renderDetailPackages() {
+    if (!selectedPartner) return;
+    const search = (document.getElementById('filter-pkg-search')?.value || '').trim().toLowerCase();
+    const filtered = (selectedPartner.packages || []).filter(pkg => {
+      const name = (pkg.name || '').toLowerCase();
+      const code = (pkg.code || '').toLowerCase();
+      return name.includes(search) || code.includes(search);
+    });
+
+    const tbody = document.getElementById('packages-table-body');
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-400">Không tìm thấy gói dịch vụ phù hợp.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(pkg => `
+      <tr class="hover:bg-slate-50/50">
+        <td class="py-2.5 px-3 font-semibold text-blue-600 font-mono">${pkg.code}</td>
+        <td class="py-2.5 px-3">
+          <a href="/admin/detail-event-admin?id=${pkg.code}" target="_blank" class="font-medium text-slate-800 hover:text-blue-600 hover:underline transition-colors line-clamp-1" title="${pkg.name}">
+            ${pkg.name}
+          </a>
+        </td>
+        <td class="py-2.5 px-3 text-slate-600">${pkg.category || '-'}</td>
+        <td class="py-2.5 px-3 text-right font-bold text-slate-800">${Number(pkg.price || 0).toLocaleString('vi-VN')} ₫</td>
+        <td class="py-2.5 px-3 text-center">
+          <a href="/admin/detail-event-admin?id=${pkg.code}" target="_blank" title="Xem chi tiết gói dịch vụ" class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition-all font-medium text-[11px] shadow-2xs">
+            <span>Xem</span>
+            <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+          </a>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function renderDetailOrders() {
+    if (!selectedPartner) return;
+    const search = (document.getElementById('filter-order-search')?.value || '').trim().toLowerCase();
+    const timeFilter = document.getElementById('filter-order-time')?.value || '';
+
+    const filtered = (selectedPartner.orders || []).filter(o => {
+      const code = (o.code || '').toLowerCase();
+      const service = (o.service || '').toLowerCase();
+      const customer = (o.customer || '').toLowerCase();
+      const matchText = code.includes(search) || service.includes(search) || customer.includes(search);
+      const matchTime = timeFilter === '' || (o.date || '').includes(timeFilter);
+      return matchText && matchTime;
+    });
+
+    const tbody = document.getElementById('orders-table-body');
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" class="text-center py-6 text-slate-400">Không tìm thấy đơn thi công phù hợp.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(o => `
+      <tr class="hover:bg-slate-50/50">
+        <td class="py-2.5 px-3 font-semibold text-blue-600 font-mono">${o.code}</td>
+        <td class="py-2.5 px-3 font-medium text-slate-800">${o.service}</td>
+        <td class="py-2.5 px-3 text-slate-600">${o.customer}</td>
+        <td class="py-2.5 px-3 text-slate-500">${o.date || '-'}</td>
+        <td class="py-2.5 px-3 text-right font-bold text-slate-800">${Number(o.total || 0).toLocaleString('vi-VN')} ₫</td>
+      </tr>
+    `).join('');
+  }
+
+  function renderDetailPayouts() {
+    if (!selectedPartner) return;
+    const search = (document.getElementById('filter-payout-search')?.value || '').trim().toLowerCase();
+    const filtered = (selectedPartner.payouts || []).filter(p => {
+      const period = (p.period || '').toLowerCase();
+      const date = (p.date || '').toLowerCase();
+      return period.includes(search) || date.includes(search);
+    });
+
+    const tbody = document.getElementById('payouts-table-body');
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4" class="text-center py-6 text-slate-400">Không có bản ghi đối soát nào khớp.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(p => `
+      <tr class="hover:bg-slate-50/50">
+        <td class="py-2.5 px-3 font-semibold text-slate-800">${p.period}</td>
+        <td class="py-2.5 px-3 text-slate-500">${p.date || '-'}</td>
+        <td class="py-2.5 px-3 text-right text-slate-700">${Number(p.totalSales || 0).toLocaleString('vi-VN')} ₫</td>
+        <td class="py-2.5 px-3 text-right font-bold text-slate-800">${Number(p.netPayout || 0).toLocaleString('vi-VN')} ₫</td>
+      </tr>
+    `).join('');
+  }
+
+  function closePartnerModal() {
+    document.getElementById('partner-modal').classList.add('hidden');
+  }
+
+  function switchPartnerTab(tabName) {
+    const tabs = ['packages', 'orders', 'payouts'];
+    tabs.forEach(t => {
+      const btn = document.getElementById(`tab-btn-${t}`);
+      const content = document.getElementById(`tab-content-${t}`);
+      if (t === tabName) {
+        btn.className = "px-4 py-3 text-xs font-bold border-b-2 border-blue-600 text-blue-600 flex items-center gap-2 transition-colors cursor-pointer";
+        content.classList.remove('hidden');
+      } else {
+        btn.className = "px-4 py-3 text-xs font-semibold border-b-2 border-transparent text-slate-500 hover:text-slate-700 flex items-center gap-2 transition-colors cursor-pointer";
+        content.classList.add('hidden');
+      }
+    });
+  }
+
+  function filterPartners() {
+    const keyword = (document.getElementById('partner-search-input')?.value || '').trim().toLowerCase();
+    currentData = partnerList.filter(item => {
+      const name = (item.name || '').toLowerCase();
+      const rep = (item.representative || '').toLowerCase();
+      const tax = (item.taxCode || '').toLowerCase();
+      const id = (item.id || '').toLowerCase();
+      const phone = (item.phone || '').toLowerCase();
+      return name.includes(keyword) || rep.includes(keyword) || tax.includes(keyword) || id.includes(keyword) || phone.includes(keyword);
+    });
+
+    renderMainTable(currentData);
+    document.getElementById('pagination-info').innerText = `Hiển thị ${currentData.length} trong tổng số ${partnerList.length} đối tác`;
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    updateStats();
+    renderMainTable(partnerList);
+
+    document.getElementById('partner-search-input')?.addEventListener('input', filterPartners);
+    document.getElementById('btn-refresh')?.addEventListener('click', () => {
+      document.getElementById('partner-search-input').value = '';
+      filterPartners();
+    });
+
+    document.getElementById('filter-pkg-search')?.addEventListener('input', renderDetailPackages);
+    document.getElementById('filter-order-search')?.addEventListener('input', renderDetailOrders);
+    document.getElementById('filter-order-time')?.addEventListener('change', renderDetailOrders);
+    document.getElementById('filter-payout-search')?.addEventListener('input', renderDetailPayouts);
+  });
+</script>
+{% endblock %}

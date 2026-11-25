@@ -1,0 +1,200 @@
+<!-- HEADER -->
+<header class="h-16 w-full bg-white border-b border-slate-200 px-6 flex items-center justify-between z-30 shadow-2xs gap-4 relative">
+  <!-- Trái: Ô tìm kiếm -->
+  <div class="flex-1 max-w-md min-w-0">
+    <div class="relative flex items-center w-full">
+      <span class="material-symbols-outlined text-[20px] absolute left-3 text-slate-400 pointer-events-none">
+        search
+      </span>
+      <input type="text" placeholder="Tìm kiếm đối tác, dịch vụ, báo cáo..."
+        class="w-full bg-[#f1f5f9] hover:bg-[#e2e8f0]/80 focus:bg-white focus:border-blue-500 border border-transparent text-slate-700 text-xs rounded-xl pl-10 pr-4 py-2 focus:outline-none transition-all placeholder:text-slate-400 shadow-2xs">
+    </div>
+  </div>
+
+  <!-- Phải: Các nút công cụ & Thông tin tài khoản -->
+  <div class="flex items-center gap-3.5 flex-shrink-0">
+    
+    <!-- 1. NÚT LỊCH (KÈM DROPDOWN LỊCH) -->
+    <div class="relative flex-shrink-0" id="calendar-dropdown-wrapper">
+      <button type="button" id="btn-calendar-toggle" title="Lịch sự kiện" onclick="toggleCalendarDropdown(event)"
+        class="w-9 h-9 rounded-xl bg-white border border-slate-200/90 flex items-center justify-center text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/50 transition-all shadow-2xs flex-shrink-0">
+        <span class="material-symbols-outlined text-[20px]">calendar_today</span>
+      </button>
+
+      <!-- BẢNG LỊCH MINI DROPDOWN -->
+      <div id="calendar-dropdown"
+        class="hidden absolute right-0 top-12 w-72 bg-white border border-slate-200/90 rounded-2xl shadow-xl z-50 p-4 animate-in fade-in zoom-in-95 duration-150">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+          <span class="text-xs font-bold text-slate-800" id="cal-month-year">Tháng 10, 2026</span>
+          <div class="flex items-center gap-1">
+            <button type="button" onclick="prevMonth()" class="w-6 h-6 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100">
+              <span class="material-symbols-outlined text-[16px]">chevron_left</span>
+            </button>
+            <button type="button" onclick="nextMonth()" class="w-6 h-6 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100">
+              <span class="material-symbols-outlined text-[16px]">chevron_right</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Thứ trong tuần -->
+        <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-400 py-2">
+          <span>T2</span><span>T3</span><span>T4</span><span>T5</span><span>T6</span><span>T7</span><span>CN</span>
+        </div>
+
+        <!-- Ngày trong tháng -->
+        <div class="grid grid-cols-7 gap-1 text-center text-xs text-slate-700 font-medium" id="cal-days-grid">
+          <!-- Render ngày động -->
+        </div>
+
+        <div class="pt-3 border-t border-slate-100 mt-2 flex items-center justify-between text-[11px]">
+          <span class="text-slate-400">Hôm nay: <b class="text-slate-700 font-medium" id="cal-today-text">14/10/2026</b></span>
+          <button type="button" onclick="resetToToday()" class="text-blue-600 font-semibold hover:underline">Về hôm nay</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. NÚT THÔNG BÁO (KÈM BẢNG DROPDOWN TRỐNG) -->
+    <div class="relative flex-shrink-0" id="notification-dropdown-wrapper">
+      <button type="button" id="btn-notification-toggle" title="Thông báo" onclick="toggleNotificationDropdown(event)"
+        class="w-9 h-9 rounded-xl bg-white border border-slate-200/90 flex items-center justify-center text-slate-600 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50/50 transition-all shadow-2xs">
+        <span class="material-symbols-outlined text-[20px]">notifications</span>
+      </button>
+
+      <!-- Chấm đỏ báo tin mới (sẽ ẩn nếu không có tin) -->
+      <span id="notif-badge" class="absolute top-1 right-1 w-2 h-2 rounded-full bg-red-500 ring-2 ring-white"></span>
+
+      <!-- BẢNG THÔNG BÁO MỚI (ĐANG ĐỂ TRỐNG THEO YÊU CẦU) -->
+      <div id="notification-dropdown"
+        class="hidden absolute right-0 top-12 w-80 sm:w-96 bg-white border border-slate-200/90 rounded-2xl shadow-xl z-50 flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        
+        <!-- Đầu bảng thông báo -->
+        <div class="p-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+          <div class="flex items-center gap-1.5">
+            <span class="material-symbols-outlined text-slate-700 text-[18px]">notifications</span>
+            <h4 class="text-xs font-bold text-slate-800">Thông báo mới</h4>
+          </div>
+          <span class="text-[10px] text-slate-400">Hệ thống EventDecor</span>
+        </div>
+
+        <!-- Khung danh sách (Để trống placeholder) -->
+        <div class="p-8 text-center text-slate-400 flex flex-col items-center justify-center" id="notification-list-container">
+          <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center mb-2 text-slate-400">
+            <span class="material-symbols-outlined text-[20px]">notifications_off</span>
+          </div>
+          <span class="text-xs font-medium text-slate-600">Chưa có thông báo mới nào</span>
+          <p class="text-[11px] text-slate-400 mt-0.5">Các cập nhật về đơn hàng, duyệt dịch vụ và khiếu nại sẽ hiển thị tại đây.</p>
+        </div>
+
+        <!-- Đáy bảng thông báo -->
+        <div class="p-2.5 border-t border-slate-100 bg-slate-50/50 text-center">
+          <button type="button" class="text-[11px] font-semibold text-blue-600 hover:text-blue-700">
+            Đánh dấu đã đọc tất cả
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Khối Info Admin -->
+    <div class="flex items-center gap-3 pl-3.5 border-l border-slate-200 flex-shrink-0">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-[#0284c7] to-[#0f766e] flex items-center justify-center text-white font-bold text-xs shadow-2xs ring-1 ring-black/5 flex-shrink-0 select-none">
+        <span>AN</span>
+      </div>
+      <div class="flex flex-col text-left whitespace-nowrap">
+        <span id="admin-name" class="text-xs font-bold text-slate-800 leading-tight">Admin</span>
+        <span id="admin-role" class="text-[10px] font-medium text-slate-500 leading-tight mt-0.5">Quản trị viên</span>
+      </div>
+    </div>
+
+  </div>
+</header>
+
+<!-- JAVASCRIPT ĐIỀU KHIỂN DROPDOWN & LỊCH -->
+<script>
+  let currentCalDate = new Date(); // Dùng thời gian hệ thống
+
+  // Bật/tắt dropdown Lịch
+  function toggleCalendarDropdown(e) {
+    if (e) e.stopPropagation();
+    const calDropdown = document.getElementById('calendar-dropdown');
+    const notifDropdown = document.getElementById('notification-dropdown');
+    
+    notifDropdown.classList.add('hidden'); // Đóng thông báo nếu đang mở
+    calDropdown.classList.toggle('hidden');
+    if (!calDropdown.classList.contains('hidden')) {
+      renderCalendar();
+    }
+  }
+
+  // Bật/tắt dropdown Thông báo
+  function toggleNotificationDropdown(e) {
+    if (e) e.stopPropagation();
+    const notifDropdown = document.getElementById('notification-dropdown');
+    const calDropdown = document.getElementById('calendar-dropdown');
+
+    calDropdown.classList.add('hidden'); // Đóng lịch nếu đang mở
+    notifDropdown.classList.toggle('hidden');
+  }
+
+  // Đóng khi click bất kỳ vị trí nào bên ngoài
+  document.addEventListener('click', function(e) {
+    const calWrapper = document.getElementById('calendar-dropdown-wrapper');
+    const notifWrapper = document.getElementById('notification-dropdown-wrapper');
+    const calDropdown = document.getElementById('calendar-dropdown');
+    const notifDropdown = document.getElementById('notification-dropdown');
+
+    if (calWrapper && !calWrapper.contains(e.target)) {
+      calDropdown.classList.add('hidden');
+    }
+    if (notifWrapper && !notifWrapper.contains(e.target)) {
+      notifDropdown.classList.add('hidden');
+    }
+  });
+
+  // Render Lịch Mini
+  function renderCalendar() {
+    const month = currentCalDate.getMonth();
+    const year = currentCalDate.getFullYear();
+
+    document.getElementById('cal-month-year').innerText = `Tháng ${month + 1}, ${year}`;
+    
+    const today = new Date();
+    document.getElementById('cal-today-text').innerText = `${String(today.getDate()).padStart(2, '0')}/${String(today.getMonth() + 1).padStart(2, '0')}/${today.getFullYear()}`;
+
+    const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7; // Chuyển Chủ Nhật về cuối tuần (T2 -> CN)
+    const lastDay = new Date(year, month + 1, 0).getDate();
+
+    const grid = document.getElementById('cal-days-grid');
+    grid.innerHTML = '';
+
+    // Ô trống đầu tháng
+    for (let i = 0; i < firstDayIndex; i++) {
+      grid.innerHTML += `<span class="py-1.5 text-slate-300"></span>`;
+    }
+
+    // Các ngày trong tháng
+    for (let d = 1; d <= lastDay; d++) {
+      const isToday = (d === today.getDate() && month === today.getMonth() && year === today.getFullYear());
+      const activeClass = isToday 
+        ? 'bg-blue-600 text-white font-bold rounded-lg shadow-xs' 
+        : 'hover:bg-slate-100 rounded-lg text-slate-700';
+
+      grid.innerHTML += `<button type="button" class="py-1.5 text-xs transition-all ${activeClass}">${d}</button>`;
+    }
+  }
+
+  function prevMonth() {
+    currentCalDate.setMonth(currentCalDate.getMonth() - 1);
+    renderCalendar();
+  }
+
+  function nextMonth() {
+    currentCalDate.setMonth(currentCalDate.getMonth() + 1);
+    renderCalendar();
+  }
+
+  function resetToToday() {
+    currentCalDate = new Date();
+    renderCalendar();
+  }
+</script>

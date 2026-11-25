@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="vi" class="h-full scroll-smooth bg-[#fff7eb]">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chi tiết đơn hàng - EventDecor</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Font: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .light-frosted-card {
+      background: rgba(255, 255, 255, 0.78);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(174, 196, 212, 0.45) !important;
+      outline: none !important;
+      box-shadow: 0 10px 30px -5px rgba(174, 196, 212, 0.25), 0 4px 14px -2px rgba(121, 13, 22, 0.05);
+      transition: background-color 0.25s ease, box-shadow 0.25s ease;
+    }
+    .light-frosted-card:hover {
+      background: rgba(255, 255, 255, 0.95);
+      border-color: rgba(174, 196, 212, 0.45) !important;
+      box-shadow: 0 16px 36px -4px rgba(174, 196, 212, 0.35);
+    }
+    .frosted-pill {
+      background: rgba(249, 240, 224, 0.85);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(174, 196, 212, 0.5) !important;
+      outline: none !important;
+      transition: background-color 0.2s ease;
+    }
+    .frosted-pill:hover {
+      background: rgba(255, 255, 255, 0.95);
+      border-color: rgba(174, 196, 212, 0.5) !important;
+    }
+  </style>
+</head>
+
+<body class="min-h-full flex flex-col text-slate-800 bg-[#fff7eb] relative overflow-x-hidden selection:bg-[#790d16]/20 selection:text-[#790d16]">
+
+  <!-- NẠP HEADER DÙNG CHUNG -->
+  {% include "header.html" %}
+
+  <!-- HIỆU ỨNG SƯƠNG MỜ VÀ TÁN SẮC NỀN -->
+  <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <div class="absolute -top-32 left-1/4 w-[700px] h-[450px] bg-[#aec4d4]/35 rounded-full blur-[140px]"></div>
+    <div class="absolute top-[28%] -right-40 w-[550px] h-[550px] bg-[#790d16]/8 rounded-full blur-[160px]"></div>
+    <div class="absolute top-[55%] -left-40 w-[600px] h-[600px] bg-[#a2ab73]/15 rounded-full blur-[150px]"></div>
+    <div class="absolute top-[75%] right-10 w-[650px] h-[550px] bg-[#f9f0e0] rounded-full blur-[160px]"></div>
+    <div class="absolute inset-0 bg-[radial-gradient(rgba(174,196,212,0.3)_1px,transparent_1px)] [background-size:24px_24px] opacity-70"></div>
+  </div>
+
+  <div class="relative z-10 flex-1 flex flex-col">
+
+    <!-- THANH BREADCRUMB -->
+    <div class="max-w-5xl w-full mx-auto px-4 sm:px-6 pt-4">
+      <nav aria-label="Breadcrumb" class="py-1">
+        <ol class="inline-flex items-center text-xs font-medium text-slate-400 select-none">
+          <li>
+            <a href="/" class="hover:text-[#790d16] transition-colors">Trang chủ</a>
+          </li>
+          <li>
+            <span class="mx-2 text-slate-300">/</span>
+            <a href="/my-orders" class="hover:text-[#790d16] transition-colors">Đơn hàng của tôi</a>
+          </li>
+          <li>
+            <span class="mx-2 text-slate-300">/</span>
+            <span class="text-slate-700 font-bold" id="crumb-order-code">Chi tiết đơn hàng</span>
+          </li>
+        </ol>
+      </nav>
+    </div>
+
+    <!-- MAIN CONTAINER -->
+    <main class="max-w-5xl w-full mx-auto px-4 sm:px-6 py-6 space-y-7 flex-1">
+
+      <!-- TIÊU ĐỀ TRANG, NÚT HỦY ĐƠN & XUẤT HỢP ĐỒNG -->
+      <section class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-[#aec4d4]/40">
+        <div>
+          <div class="flex items-center gap-3">
+            <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+              Chi Tiết Đơn Hàng
+            </h1>
+            <span id="badge-order-status" class="px-3 py-1 rounded-xl text-xs font-bold border">
+              Đang tải...
+            </span>
+          </div>
+          <p class="text-xs text-slate-500 mt-1">
+            Mã đơn hàng: <span id="display-order-code" class="font-mono font-bold text-[#790d16]"></span>
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap">
+          <a href="/my-orders" class="px-4 py-2.5 rounded-xl frosted-pill text-slate-700 hover:text-[#790d16] text-xs font-bold transition-all shadow-2xs">
+            Quay lại danh sách
+          </a>
+
+          <!-- NÚT YÊU CẦU HỦY ĐƠN (chỉ hiện khi chưa thi công) -->
+          <button type="button" id="btn-open-cancel" onclick="openCancelModal()" class="hidden px-4 py-2.5 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-bold transition-all active:scale-95">
+            Yêu cầu hủy đơn
+          </button>
+
+          <!-- NÚT XUẤT HỢP ĐỒNG -->
+          <button type="button" onclick="exportContract()" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#cc3a63] to-[#790d16] hover:brightness-110 text-white text-xs font-bold transition-all shadow-xs active:scale-95">
+            Xuất hợp đồng
+          </button>
+        </div>
+      </section>
+
+      <!-- KHỐI CẢNH BÁO / LÝ DO HỦY (Chỉ hiện khi đơn đã bị hủy) -->
+      <section id="cancel-banner" class="hidden p-4 rounded-2xl bg-red-50/90 border border-red-200 text-xs space-y-1">
+        <span class="font-bold text-red-700 block text-sm">Đơn hàng này đã bị hủy</span>
+        <p class="text-slate-600">
+          Lý do: <span id="display-cancel-reason" class="font-semibold text-slate-800">Khách hàng yêu cầu hủy</span>
+        </p>
+      </section>
+
+      <!-- ==================== 1. KHỐI TIẾN TRÌNH 4 GIAI ĐOẠN ==================== -->
+      <section class="light-frosted-card rounded-3xl p-6 sm:p-7 space-y-5">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-[#788248]">
+          Tiến trình thực hiện đơn hàng
+        </h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          <!-- GIAI ĐOẠN 1: Khởi tạo đơn -->
+          <div id="timeline-step-1" class="p-4 rounded-2xl border transition-all duration-300 space-y-2">
+            <span class="text-[10px] font-mono font-bold text-slate-400 uppercase block">Giai đoạn 01</span>
+            <h3 class="font-bold text-slate-900 text-xs sm:text-sm">Khởi tạo đơn</h3>
+            <p class="text-[11px] text-slate-500 leading-relaxed">
+              Xác nhận mã bảo mật gửi qua email từ trang thanh toán.
+            </p>
+            <div class="pt-2 border-t border-slate-100/60">
+              <span class="text-[10px] text-slate-400 block">Thời gian xác thực:</span>
+              <span id="time-step-1" class="text-xs font-bold text-slate-800">--:--</span>
+            </div>
+          </div>
+
+          <!-- GIAI ĐOẠN 2: Xác nhận & Thanh toán -->
+          <div id="timeline-step-2" class="p-4 rounded-2xl border transition-all duration-300 space-y-2">
+            <span class="text-[10px] font-mono font-bold text-slate-400 uppercase block">Giai đoạn 02</span>
+            <h3 class="font-bold text-slate-900 text-xs sm:text-sm">Xác nhận & Thanh toán</h3>
+            <p class="text-[11px] text-slate-500 leading-relaxed">
+              Đối tác duyệt lịch và hệ thống xác nhận thanh toán.
+            </p>
+            <div class="pt-2 border-t border-slate-100/60 space-y-1">
+              <div>
+                <span class="text-[10px] text-slate-400 block">Đối tác duyệt:</span>
+                <span id="time-partner-confirm" class="text-[11px] font-bold text-slate-800">Chờ xác nhận</span>
+              </div>
+              <div>
+                <span class="text-[10px] text-slate-400 block">Thanh toán:</span>
+                <span id="time-payment-confirm" class="text-[11px] font-bold text-slate-800">Chờ thanh toán</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- GIAI ĐOẠN 3: Đối tác thực hiện -->
+          <div id="timeline-step-3" class="p-4 rounded-2xl border transition-all duration-300 space-y-2">
+            <span class="text-[10px] font-mono font-bold text-slate-400 uppercase block">Giai đoạn 03</span>
+            <h3 class="font-bold text-slate-900 text-xs sm:text-sm">Đối tác thực hiện</h3>
+            <p class="text-[11px] text-slate-500 leading-relaxed">
+              Chuẩn bị nguyên phụ liệu và thi công (khi đã thanh toán).
+            </p>
+            <div class="pt-2 border-t border-slate-100/60">
+              <span class="text-[10px] text-slate-400 block">Trạng thái thi công:</span>
+              <span id="status-step-3" class="text-xs font-bold text-slate-800">Chưa bắt đầu</span>
+            </div>
+          </div>
+
+          <!-- GIAI ĐOẠN 4: Bàn giao & Hoàn thành -->
+          <div id="timeline-step-4" class="p-4 rounded-2xl border transition-all duration-300 space-y-2">
+            <span class="text-[10px] font-mono font-bold text-slate-400 uppercase block">Giai đoạn 04</span>
+            <h3 class="font-bold text-slate-900 text-xs sm:text-sm">Bàn giao & Hoàn thành</h3>
+            <p class="text-[11px] text-slate-500 leading-relaxed">
+              Nghiệm thu hiện trường sảnh tiệc trước giờ khai tiệc.
+            </p>
+            <div class="pt-2 border-t border-slate-100/60">
+              <span class="text-[10px] text-slate-400 block">Thời gian hoàn tất:</span>
+              <span id="time-step-4" class="text-xs font-bold text-slate-800">Chưa nghiệm thu</span>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ==================== 2. KHỐI THÔNG TIN VỀ GÓI ==================== -->
+      <section class="light-frosted-card rounded-3xl p-6 sm:p-7 space-y-5">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-[#788248]">
+          Thông tin gói dịch vụ
+        </h2>
+
+        <div class="flex flex-col sm:flex-row gap-5 items-start">
+          <div id="service-img-wrapper" class="hidden w-full sm:w-44 aspect-[16/11] rounded-2xl overflow-hidden bg-slate-100 shrink-0 border border-[#aec4d4]/40">
+            <img id="service-img" src="" alt="Hình ảnh dịch vụ" class="w-full h-full object-cover">
+          </div>
+
+          <div class="space-y-3 flex-1 min-w-0">
+            <div>
+              <h3 id="service-name" class="font-black text-slate-900 text-base sm:text-lg leading-snug"></h3>
+              <p class="text-xs text-slate-500 mt-0.5">
+                Đối tác thực hiện: <span id="partner-name" class="font-bold text-[#790d16]"></span>
+              </p>
+            </div>
+
+            <p id="service-short-desc" class="text-xs sm:text-sm text-slate-600 leading-relaxed"></p>
+
+            <div class="pt-3 border-t border-[#aec4d4]/30 space-y-2 text-xs">
+              <span class="font-bold text-slate-800 block">Các tùy chọn của khách hàng:</span>
+              
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                <div class="p-3 bg-white/70 border border-[#aec4d4]/40 rounded-xl space-y-0.5">
+                  <span class="text-[10px] text-slate-400 block font-medium">Quy mô sự kiện:</span>
+                  <span id="opt-scale" class="font-bold text-slate-800"></span>
+                </div>
+
+                <div class="p-3 bg-white/70 border border-[#aec4d4]/40 rounded-xl space-y-0.5">
+                  <span class="text-[10px] text-slate-400 block font-medium">Tên hiển thị bảng chào / Backdrop:</span>
+                  <span id="opt-title" class="font-bold text-slate-800"></span>
+                </div>
+              </div>
+
+              <div class="p-3 bg-white/70 border border-[#aec4d4]/40 rounded-xl space-y-1">
+                <span class="text-[10px] text-slate-400 block font-medium">Tùy chọn bổ sung (Option):</span>
+                <p id="opt-extra" class="font-semibold text-slate-700 leading-relaxed"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== 3. KHỐI THÔNG TIN SỰ KIỆN & LIÊN HỆ ==================== -->
+      <section class="light-frosted-card rounded-3xl p-6 sm:p-7 space-y-4">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-[#788248]">
+          Thông tin sự kiện & Liên hệ
+        </h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs">
+          <div class="p-3.5 bg-white/70 border border-[#aec4d4]/40 rounded-2xl space-y-1 sm:col-span-2">
+            <span class="text-[10px] text-slate-400 block font-medium">Địa điểm tổ chức sự kiện:</span>
+            <p id="info-location" class="font-bold text-slate-900 text-sm leading-snug"></p>
+          </div>
+
+          <div class="p-3.5 bg-white/70 border border-[#aec4d4]/40 rounded-2xl space-y-1">
+            <span class="text-[10px] text-slate-400 block font-medium">Liên hệ khách hàng:</span>
+            <p id="info-customer-name" class="font-bold text-slate-800"></p>
+            <p id="info-customer-contact" class="text-slate-500 font-mono"></p>
+          </div>
+
+          <div class="p-3.5 bg-white/70 border border-[#aec4d4]/40 rounded-2xl space-y-1">
+            <span class="text-[10px] text-slate-400 block font-medium">Ngày đặt hàng (Xác thực OTP):</span>
+            <p id="info-order-date" class="font-bold text-slate-800"></p>
+            <p class="text-slate-500">Giờ thi công: <span id="info-execution-time" class="font-semibold text-[#790d16]"></span></p>
+          </div>
+
+          <div class="p-3.5 bg-white/70 border border-[#aec4d4]/40 rounded-2xl flex items-center justify-between">
+            <div>
+              <span class="text-[10px] text-slate-400 block font-medium">Tình trạng thanh toán:</span>
+              <span id="info-payment-status" class="font-black text-sm"></span>
+            </div>
+            <span id="badge-payment-status" class="px-3 py-1 rounded-xl text-xs font-bold border"></span>
+          </div>
+
+          <div class="p-3.5 bg-white/70 border border-[#aec4d4]/40 rounded-2xl flex items-center justify-between">
+            <div>
+              <span class="text-[10px] text-slate-400 block font-medium">Tình trạng bàn giao:</span>
+              <span id="info-delivery-status" class="font-black text-sm"></span>
+            </div>
+            <span id="badge-delivery-status" class="px-3 py-1 rounded-xl text-xs font-bold border"></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==================== 4. KHỐI GIÁ TRỊ ĐƠN HÀNG ==================== -->
+      <section class="light-frosted-card rounded-3xl p-6 sm:p-7 space-y-5">
+        <h2 class="text-xs font-bold uppercase tracking-widest text-[#788248]">
+          Giá trị đơn hàng & Phương thức thanh toán
+        </h2>
+
+        <div class="space-y-3 text-xs max-w-xl">
+          <div class="flex justify-between py-1.5 border-b border-slate-200/60 text-slate-600">
+            <span>Chi phí gói dịch vụ:</span>
+            <span id="bill-service-price" class="font-mono font-bold text-slate-900"></span>
+          </div>
+          <div class="flex justify-between py-1.5 border-b border-slate-200/60 text-slate-600">
+            <span>Tùy chọn bổ sung & Quy mô:</span>
+            <span class="font-mono font-bold text-slate-900">+0 ₫</span>
+          </div>
+          <div class="flex justify-between py-1.5 border-b border-slate-200/60 text-[#788248] font-semibold">
+            <span>Chiết khấu ưu đãi sàn:</span>
+            <span class="font-mono">-0 ₫</span>
+          </div>
+          <div class="flex justify-between py-2 border-b border-slate-200/60 text-slate-800">
+            <span class="font-bold">Phương thức giao dịch:</span>
+            <span id="bill-payment-method" class="font-semibold text-slate-900 text-right"></span>
+          </div>
+          <div class="flex items-center justify-between pt-2">
+            <span class="text-sm font-black text-slate-900">Tổng thanh toán:</span>
+            <span id="bill-total-price" class="text-2xl font-black text-[#790d16] font-mono"></span>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- FOOTER ĐỒNG BỘ HOME -->
+    <footer class="mt-auto border-t border-[#aec4d4]/30 py-8 text-center text-xs text-slate-500 bg-white/40 backdrop-blur-md">
+      <div class="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+          <span class="text-[#790d16] font-black text-sm tracking-wider">EVENTDECOR</span>
+          <span class="text-slate-300">|</span>
+          <span>Nền tảng kết nối dịch vụ sự kiện chuyên nghiệp</span>
+        </div>
+        <p>&copy; 2026 EventDecor. All rights reserved.</p>
+      </div>
+    </footer>
+
+  </div>
+
+  <!-- ==================== MODAL XÁC NHẬN HỦY ĐƠN HÀNG ==================== -->
+  <div id="cancel-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 sm:p-7 space-y-5 border border-[#aec4d4]/50 animate-in fade-in zoom-in-95 duration-150">
+      
+      <div class="flex items-start justify-between pb-3 border-b border-slate-100">
+        <div>
+          <h3 class="text-lg font-black text-slate-900">Xác nhận hủy đơn hàng</h3>
+          <p class="text-xs text-slate-500 mt-0.5">Mã đơn: <span id="cancel-modal-code" class="font-mono font-bold text-[#790d16]"></span></p>
+        </div>
+        <button type="button" onclick="closeCancelModal()" class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold flex items-center justify-center text-sm transition-all">
+          X
+        </button>
+      </div>
+
+      <div class="p-4 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-800 leading-relaxed">
+        <strong>Lưu ý:</strong> Sau khi xác nhận hủy, đơn hàng sẽ dừng toàn bộ quy trình và không thể hoàn tác. Nếu đã thanh toán cọc, tiền sẽ được hoàn trả theo chính sách thỏa thuận.
+      </div>
+
+      <div class="space-y-1.5">
+        <label class="text-xs font-bold text-slate-700 block">Lý do hủy đơn <span class="font-normal text-slate-400">(không bắt buộc)</span></label>
+        <textarea id="cancel-reason" rows="3" placeholder="Ví dụ: Thay đổi ngày tổ chức sự kiện, thay đổi địa điểm..." class="w-full border border-[#aec4d4]/60 rounded-2xl p-3.5 text-xs text-slate-700 focus:outline-none focus:border-[#790d16] bg-slate-50/50 resize-none transition-colors"></textarea>
+      </div>
+
+      <div class="flex gap-3 pt-2">
+        <button type="button" onclick="closeCancelModal()" class="flex-1 py-2.5 border border-[#aec4d4]/60 rounded-xl text-slate-700 font-bold text-xs hover:bg-slate-50 active:scale-95 transition-all">
+          Không, giữ lại
+        </button>
+        <button type="button" id="btn-confirm-cancel" onclick="submitCancelOrder()" class="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl text-xs active:scale-95 transition-all shadow-xs">
+          Xác nhận hủy
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== JAVASCRIPT: LOGIC BINDING CSDL & TIMELINE ==================== -->
+  <script>
+    let orderDetail = null;
+    try {
+      const rawPayload = '{{ orderDetailJson | safe }}';
+      orderDetail = rawPayload ? JSON.parse(rawPayload) : null;
+    } catch (e) {
+      console.warn("Lỗi parse orderDetailJson:", e);
+    }
+
+    if (!orderDetail) {
+      orderDetail = {
+        orderCode: "ORD-2026-001",
+        createdAt: "22/10/2026 09:30",
+        orderStatus: "pending_partner",
+        paymentMethod: "Chuyển khoản trực tuyến qua mã VietQR",
+        paymentStatus: "pending",
+        totalAmount: 5500000,
+        customerName: "Nguyễn Văn Khách",
+        customerPhone: "0900000002",
+        customerEmail: "customer@gmail.com",
+        executionTime: "08:00 ngày 25/10/2026",
+        completedAt: null,
+        cancelReason: null,
+        partnerConfirmedTime: null,
+        paymentSuccessTime: null,
+        eventLocation: "194 Hoàng Văn Thụ, Phường 9, Quận Phú Nhuận, TP.HCM",
+        item: {
+          serviceName: "Gói Trang Trí Tiệc Cưới Phong Cách Tối Giản VIP",
+          partnerName: "Công ty TNHH Nghệ Thuật Alpha",
+          shortDescription: "Backdrop vòm cung 3 lớp hoa cao cấp kèm bàn đón khách Gallery pha lê.",
+          image: "",
+          scale: "Quy mô vừa (100 - 250 khách)",
+          eventTitle: "Hôn Lễ: Hoàng Long & Thảo Vy",
+          selectedOptions: "Tone Trắng Tinh Khôi (Cơ bản), Đèn chiếu sáng vàng ấm 3000K"
+        }
+      };
+    }
+
+    function formatVND(amount) {
+      return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(Number(amount) || 0);
+    }
+
+    function renderOrderDetail(data) {
+      document.getElementById('crumb-order-code').innerText = data.orderCode;
+      document.getElementById('display-order-code').innerText = data.orderCode;
+
+      // 1. Khối thông tin gói
+      document.getElementById('service-name').innerText = data.item.serviceName || 'Gói dịch vụ sự kiện';
+      document.getElementById('partner-name').innerText = data.item.partnerName || 'Đối tác chính thức';
+      document.getElementById('service-short-desc').innerText = data.item.shortDescription || 'Chưa có thông tin mô tả ngắn.';
+      
+      // Xử lý ảnh từ CSDL (nếu trống thì ẩn hẳn khung)
+      const imgWrapper = document.getElementById('service-img-wrapper');
+      const imgTag = document.getElementById('service-img');
+      if (data.item.image && typeof data.item.image === 'string' && data.item.image.trim() !== '') {
+        imgTag.src = data.item.image.trim();
+        imgWrapper.classList.remove('hidden');
+      } else {
+        imgWrapper.classList.add('hidden');
+      }
+
+      document.getElementById('opt-scale').innerText = data.item.scale || 'Quy mô tiêu chuẩn';
+      document.getElementById('opt-title').innerText = data.item.eventTitle || 'Không yêu cầu bảng tên';
+      document.getElementById('opt-extra').innerText = data.item.selectedOptions || 'Gói tiêu chuẩn không chọn thêm';
+
+      // 2. Khối thông tin sự kiện & liên hệ
+      document.getElementById('info-location').innerText = data.eventLocation || 'Chưa cập nhật địa chỉ';
+      document.getElementById('info-customer-name').innerText = data.customerName || 'Khách hàng';
+      document.getElementById('info-customer-contact').innerText = `${data.customerPhone || ''} • ${data.customerEmail || ''}`;
+      document.getElementById('info-order-date').innerText = data.createdAt || '--:--';
+      document.getElementById('info-execution-time').innerText = data.executionTime || 'Thỏa thuận sau';
+
+      // Tình trạng thanh toán
+      const payStatusText = document.getElementById('info-payment-status');
+      const payStatusBadge = document.getElementById('badge-payment-status');
+      if (data.paymentStatus === 'paid') {
+        payStatusText.innerText = "Đã thanh toán";
+        payStatusText.className = "font-black text-sm text-emerald-700";
+        payStatusBadge.className = "px-3 py-1 rounded-xl text-xs font-bold border bg-emerald-50 text-emerald-800 border-emerald-200";
+        payStatusBadge.innerText = "Đã hoàn tất";
+      } else {
+        payStatusText.innerText = "Chưa thanh toán";
+        payStatusText.className = "font-black text-sm text-amber-700";
+        payStatusBadge.className = "px-3 py-1 rounded-xl text-xs font-bold border bg-amber-50 text-amber-800 border-amber-200";
+        payStatusBadge.innerText = "Chờ thanh toán";
+      }
+
+      // Tình trạng bàn giao
+      const deliveryText = document.getElementById('info-delivery-status');
+      const deliveryBadge = document.getElementById('badge-delivery-status');
+      if (data.orderStatus === 'done') {
+        deliveryText.innerText = "Đã bàn giao";
+        deliveryText.className = "font-black text-sm text-emerald-700";
+        deliveryBadge.className = "px-3 py-1 rounded-xl text-xs font-bold border bg-emerald-50 text-emerald-800 border-emerald-200";
+        deliveryBadge.innerText = "Đã nghiệm thu";
+      } else {
+        deliveryText.innerText = "Chưa bàn giao";
+        deliveryText.className = "font-black text-sm text-slate-700";
+        deliveryBadge.className = "px-3 py-1 rounded-xl text-xs font-bold border bg-slate-50 text-slate-600 border-slate-200";
+        deliveryBadge.innerText = "Đang xử lý";
+      }
+
+      // 3. Khối giá trị đơn hàng
+      document.getElementById('bill-service-price').innerText = formatVND(data.totalAmount);
+      document.getElementById('bill-payment-method').innerText = data.paymentMethod || 'Chuyển khoản trực tuyến qua mã VietQR';
+      document.getElementById('bill-total-price').innerText = formatVND(data.totalAmount);
+
+      // 4. Xử lý hiển thị nút hủy đơn
+      const btnCancel = document.getElementById('btn-open-cancel');
+      if (["pending_partner", "pending_payment"].includes(data.orderStatus)) {
+        btnCancel.classList.remove('hidden');
+      } else {
+        btnCancel.classList.add('hidden');
+      }
+
+      // Nếu đơn đã hủy -> hiện banner lý do hủy
+      const cancelBanner = document.getElementById('cancel-banner');
+      if (data.orderStatus === 'cancelled') {
+        cancelBanner.classList.remove('hidden');
+        if (data.cancelReason) {
+          document.getElementById('display-cancel-reason').innerText = data.cancelReason;
+        }
+      } else {
+        cancelBanner.classList.add('hidden');
+      }
+
+      // 5. Render tiến trình 4 giai đoạn
+      renderTimeline(data);
+    }
+
+    function renderTimeline(data) {
+      const badge = document.getElementById('badge-order-status');
+      const step1 = document.getElementById('timeline-step-1');
+      const step2 = document.getElementById('timeline-step-2');
+      const step3 = document.getElementById('timeline-step-3');
+      const step4 = document.getElementById('timeline-step-4');
+
+      const activeCls = "p-4 rounded-2xl border-2 border-[#790d16] bg-white shadow-xs text-slate-800 space-y-2";
+      const doneCls = "p-4 rounded-2xl border border-emerald-300 bg-emerald-50/70 text-slate-800 space-y-2";
+      const pendingCls = "p-4 rounded-2xl border border-slate-200 bg-white/40 text-slate-400 space-y-2";
+
+      [step1, step2, step3, step4].forEach(s => s.className = pendingCls);
+
+      // Giai đoạn 1 luôn hoàn thành khi đơn đã tạo (khách xác nhận OTP)
+      step1.className = doneCls;
+      document.getElementById('time-step-1').innerText = data.createdAt || '--:--';
+
+      if (data.partnerConfirmedTime) {
+        document.getElementById('time-partner-confirm').innerText = data.partnerConfirmedTime;
+      }
+      if (data.paymentSuccessTime) {
+        document.getElementById('time-payment-confirm').innerText = data.paymentSuccessTime;
+      }
+
+      if (data.orderStatus === 'pending_partner') {
+        badge.className = "px-3 py-1 rounded-xl text-xs font-bold border bg-amber-50 text-amber-800 border-amber-200";
+        badge.innerText = "Chờ đối tác xác nhận";
+        step2.className = activeCls;
+      } else if (data.orderStatus === 'pending_payment') {
+        badge.className = "px-3 py-1 rounded-xl text-xs font-bold border bg-orange-50 text-orange-800 border-orange-200";
+        badge.innerText = "Chờ thanh toán";
+        step2.className = activeCls;
+      } else if (data.orderStatus === 'processing') {
+        badge.className = "px-3 py-1 rounded-xl text-xs font-bold border bg-blue-50 text-blue-800 border-blue-200";
+        badge.innerText = "Đang thực hiện thi công";
+        step2.className = doneCls;
+        step3.className = activeCls;
+        document.getElementById('status-step-3').innerText = "Đang chuẩn bị & thi công sảnh";
+      } else if (data.orderStatus === 'done') {
+        badge.className = "px-3 py-1 rounded-xl text-xs font-bold border bg-emerald-50 text-emerald-800 border-emerald-200";
+        badge.innerText = "Đã hoàn thành";
+        step2.className = doneCls;
+        step3.className = doneCls;
+        step4.className = doneCls;
+        document.getElementById('status-step-3').innerText = "Đã thi công xong";
+        document.getElementById('time-step-4').innerText = data.completedAt || data.executionTime || 'Đã nghiệm thu';
+      } else if (data.orderStatus === 'cancelled') {
+        badge.className = "px-3 py-1 rounded-xl text-xs font-bold border bg-red-50 text-red-700 border-red-200";
+        badge.innerText = "Đã hủy đơn";
+      }
+    }
+
+    // ==================== XỬ LÝ MODAL HỦY ĐƠN HÀNG ====================
+    function openCancelModal() {
+      document.getElementById('cancel-modal-code').innerText = orderDetail.orderCode;
+      document.getElementById('cancel-reason').value = '';
+      const modal = document.getElementById('cancel-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeCancelModal() {
+      const modal = document.getElementById('cancel-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    async function submitCancelOrder() {
+      const reason = document.getElementById('cancel-reason').value.trim();
+      const btn = document.getElementById('btn-confirm-cancel');
+      btn.disabled = true;
+      btn.innerText = "Đang xử lý...";
+
+      try {
+        const response = await fetch("/api/orders/cancel", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            orderCode: orderDetail.orderCode,
+            cancelReason: reason
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          alert("Đã hủy đơn hàng thành công!");
+          closeCancelModal();
+          // Cập nhật lại UI tại chỗ
+          orderDetail.orderStatus = "cancelled";
+          orderDetail.cancelReason = reason || "Khách hàng yêu cầu hủy đơn";
+          renderOrderDetail(orderDetail);
+        } else {
+          alert(result.message || "Không thể hủy đơn hàng.");
+        }
+      } catch (err) {
+        alert("Lỗi kết nối khi gửi yêu cầu hủy đơn.");
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Xác nhận hủy";
+      }
+    }
+
+    document.getElementById('cancel-modal').addEventListener('click', e => {
+      if (e.target === e.currentTarget) closeCancelModal();
+    });
+
+    function exportContract() {
+      window.print();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderOrderDetail(orderDetail);
+    });
+  </script>
+</body>
+</html>
